@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAMS+ — Faculty Activity Management System</title>
+<meta name="description" content="Faculty Activity Management System — Dr. Krishna Kumar M, Dept. of Physics and Electronics, CHRIST (Deemed to be University), Bengaluru.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f1f3d">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2064%2064%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%231c2f5a%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2308142c%22/%3E%3C/linearGradient%3E%3ClinearGradient%20id%3D%22gold%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f0c674%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c99a3c%22/%3E%3C/linearGradient%3E%3CradialGradient%20id%3D%22glow%22%20cx%3D%220.35%22%20cy%3D%220.28%22%20r%3D%220.8%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%233157a0%22%20stop-opacity%3D%220.95%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231c2f5a%22%20stop-opacity%3D%220%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2232%22%20fill%3D%22url%28%23bg%29%22/%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2232%22%20fill%3D%22url%28%23glow%29%22/%3E%3C%21--%20orbital%20ring%20%28physics%29%20--%3E%3Cellipse%20cx%3D%2232%22%20cy%3D%2234%22%20rx%3D%2225%22%20ry%3D%2210.5%22%20fill%3D%22none%22%20stroke%3D%22%237db0ff%22%20stroke-width%3D%222.4%22%20opacity%3D%220.55%22%20transform%3D%22rotate%28-20%2032%2034%29%22/%3E%3Ccircle%20cx%3D%2255.7%22%20cy%3D%2226.2%22%20r%3D%222.6%22%20fill%3D%22%239cc6ff%22%20transform%3D%22rotate%28-20%2032%2034%29%22/%3E%3C%21--%20graduation%20cap%20%28teaching%29%2C%20enlarged%20%2B%20bolder%20for%20small-size%20legibility%20--%3E%3Cg%20transform%3D%22translate%2832%2C29%29%22%3E%3Cpath%20d%3D%22M0%20-12%20L19.5%20-4%20L0%204%20L-19.5%20-4%20Z%22%20fill%3D%22url%28%23gold%29%22/%3E%3Cpath%20d%3D%22M-9%20-0.6%20L-9%208%20Q0%2013.2%209%208%20L9%20-0.6%20L0%203.2%20Z%22%20fill%3D%22%23f8efd9%22/%3E%3Cline%20x1%3D%2219.5%22%20y1%3D%22-4%22%20x2%3D%2219.5%22%20y2%3D%228%22%20stroke%3D%22%23e0b558%22%20stroke-width%3D%222%22/%3E%3Ccircle%20cx%3D%2219.5%22%20cy%3D%229.6%22%20r%3D%222.3%22%20fill%3D%22%23e0b558%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="alternate icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FAMS+">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#0f1f3d; --navy-2:#16264a; --navy-3:#1c2b4a;
+  --gold:#c99a3c; --gold-2:#e0b558;
+  --bg:#f0f3fa; --card:#ffffff; --border:#e3e7f0; --border-strong:#cbd1db;
+  --text:#1c2333; --text-dim:#5c6478; --text-faint:#8a92a6;
+  --ok:#1f8a52; --ok-wash:#e4f4ec;
+  --warn:#b9741c; --warn-wash:#fbf0dd;
+  --danger:#b3273b; --danger-wash:#fbeae9;
+  --info:#2a63c9; --info-wash:#e7eef8;
+  --radius:10px; --shadow:0 1px 3px rgba(20,30,60,.08), 0 1px 2px rgba(20,30,60,.06);
+  --shadow-md:0 4px 14px rgba(20,30,60,.10);
+  --shadow-lg:0 10px 30px rgba(15,25,60,.18);
+
+  /* area accent colours — one per functional zone, used across the
+     sidebar, stat cards, badges and analytics so each part of FAMS+
+     reads as its own "colour family" at a glance instead of one flat
+     navy-and-gold palette everywhere. */
+  --a-teaching:#2a63c9;   --a-teaching-wash:#e7eef8;
+  --a-exams:#7c3aed;      --a-exams-wash:#f1eafd;
+  --a-mentoring:#0891b2;  --a-mentoring-wash:#e3f4f7;
+  --a-lab:#0e9f6e;        --a-lab-wash:#e2f7ee;
+  --a-extra:#d97706;      --a-extra-wash:#fdf1de;
+  --a-research:#059669;   --a-research-wash:#e1f5ee;
+  --a-projects:#c99a3c;   --a-projects-wash:#faf3e3;
+  --a-incharge:#dc2626;   --a-incharge-wash:#fce9e9;
+  --a-committees:#ea580c; --a-committees-wash:#fdece0;
+  --a-meetings:#4f46e5;   --a-meetings-wash:#eceafc;
+  --a-reminders:#db2777;  --a-reminders-wash:#fce7f0;
+  --a-resp:#0f766e;       --a-resp-wash:#e1f2f0;
+  --a-diary:#7c5cbf;      --a-diary-wash:#f0ecfa;
+
+  font-size:15px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+.hidden{display:none !important;}
+body{font-family:'Inter',sans-serif;color:var(--text);background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+a{color:var(--info);text-decoration:none;}
+button{font-family:inherit;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.content{animation:fadeUp .28s ease both;}
+
+/* ---------- layout shell ---------- */
+#app{display:flex;min-height:100vh;}
+.sidebar{width:254px;flex:0 0 254px;background:linear-gradient(190deg,var(--navy) 0%,#0a1730 100%);color:#e8ecf7;display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:40;transition:transform .2s;box-shadow:2px 0 18px rgba(0,0,0,.12);}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);}
+.sidebar-brand svg{flex:0 0 auto;}
+.sidebar-brand .name{font-weight:800;font-size:18px;letter-spacing:.3px;line-height:1.15;}
+.sidebar-brand .name span{color:var(--gold-2);}
+.sidebar-brand .name .tag{font-weight:500;font-size:10.5px;letter-spacing:.02em;color:#8b96b8;margin-top:2px;}
+.sidebar-nav{flex:1;padding:10px 8px;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#c7cfe6;
+  cursor:pointer;font-size:13.5px;font-weight:500;margin-bottom:2px;transition:background .12s,color .12s,transform .12s;}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff;transform:translateX(2px);}
+.nav-item.active{background:linear-gradient(90deg,rgba(201,154,60,.24),rgba(201,154,60,.06));color:#fff;box-shadow:inset 2px 0 0 var(--gold-2);}
+.nav-item .chip{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex:0 0 auto;background:rgba(255,255,255,.08);}
+.nav-section{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#7d87a5;padding:14px 12px 4px;}
+.sidebar-footer{padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#9aa4c2;}
+.main{flex:1;margin-left:254px;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:12px 22px;display:flex;
+  align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30;}
+.topbar .clock{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-dim);}
+.content{flex:1;padding:22px;max-width:1240px;width:100%;}
+.menu-toggle{display:none;}
+@media (max-width:900px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .menu-toggle{display:flex;}
+}
+
+/* ---------- cards / generic ---------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;transition:box-shadow .15s,transform .15s;}
+.card h3{margin:0 0 12px;font-size:15.5px;display:flex;align-items:center;gap:8px;}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.page-head h2{margin:0;font-size:20px;}
+.page-head p{margin:2px 0 0;color:var(--text-dim);font-size:13px;}
+.grid{display:grid;gap:14px;}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+@media (max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;border-radius:8px;
+  font-size:13.5px;font-weight:600;border:1.5px solid transparent;cursor:pointer;transition:.12s;}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:hover{background:#0a1730;}
+.btn-gold{background:var(--gold);color:#20200a;}
+.btn-gold:hover{background:var(--gold-2);}
+.btn-ghost{background:transparent;color:var(--navy);border-color:var(--border-strong);}
+.btn-ghost:hover{background:#f1f3f9;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-sm{padding:6px 11px;font-size:12px;border-radius:6px;}
+.btn:disabled{opacity:.55;cursor:not-allowed;}
+
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-dim);margin-bottom:5px;}
+.input,select.input,textarea.input{width:100%;padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:14px;background:#fbfcfe;font-family:inherit;transition:.12s;}
+.input:focus{outline:none;border-color:var(--info);box-shadow:0 0 0 3px rgba(42,99,201,.12);}
+textarea.input{resize:vertical;min-height:70px;}
+
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;box-shadow:var(--shadow);}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{text-align:left;padding:10px 12px;background:#f8f9fc;border-bottom:1.5px solid var(--border);font-weight:700;
+  font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);white-space:nowrap;}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+tr:hover td{background:#fafbfd;}
+.row-actions{display:flex;gap:6px;white-space:nowrap;}
+
+.badge{display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:99px;font-size:11px;font-weight:700;}
+.badge-ok{background:var(--ok-wash);color:var(--ok);}
+.badge-warn{background:var(--warn-wash);color:var(--warn);}
+.badge-danger{background:var(--danger-wash);color:var(--danger);}
+.badge-info{background:var(--info-wash);color:var(--info);}
+.badge-neutral{background:#eef0f3;color:var(--text-dim);}
+
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px;display:flex;align-items:center;gap:13px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;}
+.stat-num{font-size:23px;font-weight:800;line-height:1.1;}
+.stat-label{font-size:12px;color:var(--text-dim);}
+.stat-trend{font-size:11px;font-weight:600;margin-top:2px;}
+.stat-trend.up{color:var(--ok);}
+.stat-trend.down{color:var(--danger);}
+.stat-trend.flat{color:var(--text-faint);}
+
+.empty{padding:40px 20px;text-align:center;color:var(--text-faint);}
+.empty svg{opacity:.4;margin-bottom:10px;}
+
+/* ---------- dashboard: hero / quick actions / progress rings / activity feed ---------- */
+.hero{background:linear-gradient(120deg,var(--navy) 0%,#22336b 55%,#3a2a68 100%);color:#fff;border-radius:14px;
+  padding:24px 26px;margin-bottom:18px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg);}
+.hero::before{content:'';position:absolute;top:-40%;right:-8%;width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,154,60,.28),transparent 65%);}
+.hero::after{content:'';position:absolute;bottom:-60%;left:10%;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(111,163,255,.16),transparent 65%);}
+.hero-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;position:relative;z-index:1;}
+.hero-greeting{font-size:21px;font-weight:800;letter-spacing:.2px;}
+.hero-sub{font-size:12.5px;color:#c3cbe8;margin-top:4px;}
+.hero-clock{text-align:right;}
+.hero-clock .time{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;}
+.hero-clock .date{font-size:11.5px;color:#c3cbe8;margin-top:2px;}
+
+.quick-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 18px;position:relative;z-index:1;}
+.qa-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:99px;font-size:12.5px;font-weight:600;
+  background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.22);cursor:pointer;transition:.15s;}
+.qa-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px);}
+
+.ring-wrap{display:flex;align-items:center;gap:14px;}
+.ring{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;position:relative;}
+.ring .ring-num{font-size:15px;font-weight:800;color:var(--text);}
+.ring-label{font-size:12.5px;font-weight:600;color:var(--text);}
+.ring-sub{font-size:11.5px;color:var(--text-dim);margin-top:1px;}
+
+.activity-feed{display:flex;flex-direction:column;}
+.activity-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.activity-item:last-child{border-bottom:none;}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-top:4px;}
+.activity-time{color:var(--text-faint);font-size:11px;white-space:nowrap;}
+
+.urgency-overdue{border-left:3px solid var(--danger);}
+.urgency-today{border-left:3px solid var(--warn);}
+.urgency-soon{border-left:3px solid var(--gold);}
+.urgency-later{border-left:3px solid var(--info);}
+
+/* ---------- auth screens ---------- */
+.center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:radial-gradient(circle at 20% 20%, rgba(201,154,60,.10), transparent 45%),
+             radial-gradient(circle at 80% 80%, rgba(42,99,201,.10), transparent 45%), var(--bg);}
+.auth-card{width:400px;max-width:92vw;background:var(--card);border-radius:16px;box-shadow:var(--shadow-lg);
+  padding:34px 30px;position:relative;overflow:hidden;}
+.auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;
+  background:linear-gradient(90deg,var(--navy),var(--gold));}
+.logo-wrap{text-align:center;margin-bottom:20px;}
+.logo-wrap svg{filter:drop-shadow(0 6px 14px rgba(15,25,60,.28));margin-bottom:8px;}
+.brand-h1{font-weight:800;font-size:26px;margin:10px 0 4px;color:var(--navy);}
+.brand-h1 span{color:var(--gold);}
+.auth-sub{font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin:18px 0 6px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:.15s;}
+.pin-dot.filled{background:var(--navy);border-color:var(--navy);}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 4px;}
+.key{padding:14px 0;font-size:19px;font-weight:600;color:var(--text);background:#fbfcfe;
+  border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:.12s;user-select:none;}
+.key:hover{background:#f1f3f9;border-color:var(--navy);}
+.key:active{transform:scale(0.94);background:#e8ecf7;}
+.key-ghost{font-size:12.5px;font-weight:600;color:var(--text-dim);}
+.error-box{color:var(--danger);font-size:13px;margin-top:12px;min-height:16px;}
+.error-box.info{color:var(--info);}
+
+/* ---------- quote card ---------- */
+.quote-card{background:linear-gradient(120deg,#3a2a68 0%,#5b3a96 55%,#c99a3c 160%);color:#fff;border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:16px;font-size:13.5px;line-height:1.5;position:relative;overflow:hidden;box-shadow:var(--shadow-md);}
+.quote-card::before{content:'\201C';position:absolute;top:-18px;right:10px;font-size:90px;font-family:Georgia,serif;
+  color:rgba(255,255,255,.12);line-height:1;}
+.quote-card .attr{margin-top:6px;font-size:11.5px;opacity:.8;position:relative;}
+
+/* ---------- modal / drawer ---------- */
+.overlay{position:fixed;inset:0;background:rgba(15,25,60,.45);display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:20px;}
+.overlay.hidden{display:none;}
+.modal{background:var(--card);border-radius:14px;box-shadow:var(--shadow-lg);max-width:600px;width:100%;
+  max-height:88vh;overflow-y:auto;padding:22px;}
+.modal h3{margin:0 0 14px;}
+.drawer-overlay{position:fixed;inset:0;background:rgba(15,25,60,.4);z-index:90;display:flex;justify-content:flex-end;}
+.drawer-overlay.hidden{display:none;}
+.drawer{background:var(--card);width:460px;max-width:94vw;height:100%;overflow-y:auto;padding:22px;box-shadow:var(--shadow-lg);}
+.drawer-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.drawer-tab{padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;}
+.drawer-tab.active{color:var(--navy);border-color:var(--navy);}
+
+.toast-wrap{position:fixed;bottom:18px;right:18px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--navy);color:#fff;padding:11px 16px;border-radius:8px;font-size:13px;box-shadow:var(--shadow-lg);
+  animation:toastIn .18s ease;}
+.toast.err{background:var(--danger);}
+.toast.ok{background:var(--ok);}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.offline-banner{background:var(--warn);color:#20200a;text-align:center;padding:6px;font-size:12.5px;font-weight:600;}
+.offline-banner.hidden{display:none;}
+
+.search-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.search-bar .input{max-width:280px;}
+.notes-list{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.note-item{background:#f8f9fc;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-size:12.5px;}
+.note-item .ts{color:var(--text-faint);font-size:11px;margin-bottom:3px;}
+</style>
+</head>
+<body>
+<div id="offline-banner" class="offline-banner hidden">You're offline — showing last-loaded data. Changes will fail to save until you're back online.</div>
+<div id="root"></div>
+<div id="toast-wrap" class="toast-wrap"></div>
+<div id="modal-overlay" class="overlay hidden"><div id="modal-body" class="modal"></div></div>
+<div id="drawer-overlay" class="drawer-overlay hidden"><div id="drawer-body" class="drawer"></div></div>
+
+<script>
+/* ============================================================
+   CONFIG — paste your deployed Apps Script Web App URL below,
+   and match APP_KEY / ADMIN_SETUP_KEY to backend/Code.gs exactly.
+   ============================================================ */
+const DATA_API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const APP_KEY = 'change-this-to-your-own-random-string-2026';
+const APP_NAME = 'FAMS+';
+const INSTITUTION_NAME = 'CHRIST (Deemed to be University), Bengaluru';
+const DEPARTMENT_NAME = 'Dept. of Physics and Electronics';
+
+function backendConfigured(){ return typeof DATA_API_URL === 'string' && DATA_API_URL.startsWith('http'); }
+
+/* ============================================================
+   API LAYER — plain fetch() calls, no google.script.run. This is
+   the single biggest reliability difference from the old build:
+   fetch() either gets you real JSON or a real network error, with
+   no silent-null failure mode in between.
+   ============================================================ */
+async function apiGetAll(keys){
+  const res = await fetch(DATA_API_URL + '?action=getAll&keys=' + encodeURIComponent(keys.join(',')) + '&key_check=' + encodeURIComponent(APP_KEY));
+  if(!res.ok) throw new Error('Backend returned ' + res.status);
+  const json = await res.json();
+  if(json && json.error) throw new Error(json.error);
+  return json.values || {};
+}
+async function apiSetRaw(key, value){
+  const res = await fetch(DATA_API_URL, { method:'POST', body: JSON.stringify({ key, value, appKey: APP_KEY }) });
+  if(!res.ok) throw new Error('Backend returned ' + res.status);
+  const json = await res.json().catch(()=>({}));
+  if(json && json.error) throw new Error(json.error);
+  return true;
+}
+async function apiNotify(type, payload){
+  try{
+    const res = await fetch(DATA_API_URL, { method:'POST', body: JSON.stringify({ action:'notify', type, payload, appKey: APP_KEY }) });
+    const json = await res.json().catch(()=>({}));
+    if(!json.ok) console.error('[FAMS+] notification failed:', type, json.error);
+    return json;
+  }catch(e){ console.error('[FAMS+] notification failed to send (network error):', type, e); return { ok:false, error: String(e) }; }
+}
+async function apiTestEmail(to){
+  const res = await fetch(DATA_API_URL, { method:'POST', body: JSON.stringify({ action:'testEmail', to, appKey: APP_KEY }) });
+  return res.json().catch(()=>({ ok:false, error:'Could not parse response' }));
+}
+async function apiMailMerge(recipients, subject, bodyTemplate){
+  const res = await fetch(DATA_API_URL, { method:'POST', body: JSON.stringify({ action:'mailMerge', recipients, subject, bodyTemplate, appKey: APP_KEY }) });
+  return res.json().catch(()=>({ ok:false, error:'Could not parse response' }));
+}
+
+/* ============================================================
+   SMALL UTILITIES
+   ============================================================ */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,9); }
+function nowIso(){ return new Date().toISOString(); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDate(iso){
+  if(!iso) return '';
+  try{ const d = new Date(iso+'T00:00:00'); return d.getDate()+' '+d.toLocaleDateString('en-US',{month:'short'})+' '+d.getFullYear(); }
+  catch(e){ return iso; }
+}
+function fmtDateTime(iso){
+  if(!iso) return '';
+  try{ const d = new Date(iso); return d.toLocaleDateString('en-GB')+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+  catch(e){ return iso; }
+}
+function waLink(phone){
+  if(!phone) return '#';
+  const digits = String(phone).replace(/\D/g,'');
+  return 'https://wa.me/' + (digits.length===10 ? '91'+digits : digits);
+}
+async function sha256(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function toast(msg, kind){
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind ? ' '+kind : '');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(), 4200);
+}
+function closeModal(){ document.getElementById('modal-overlay').classList.add('hidden'); document.getElementById('modal-body').innerHTML=''; }
+function openModal(html){ document.getElementById('modal-body').innerHTML = html; document.getElementById('modal-overlay').classList.remove('hidden'); }
+function closeDrawer(){ document.getElementById('drawer-overlay').classList.add('hidden'); document.getElementById('drawer-body').innerHTML=''; }
+function openDrawer(html){ document.getElementById('drawer-body').innerHTML = html; document.getElementById('drawer-overlay').classList.remove('hidden'); }
+document.getElementById('modal-overlay').addEventListener('click', e=>{ if(e.target.id==='modal-overlay') closeModal(); });
+document.getElementById('drawer-overlay').addEventListener('click', e=>{ if(e.target.id==='drawer-overlay') closeDrawer(); });
+
+window.addEventListener('online', ()=>document.getElementById('offline-banner').classList.add('hidden'));
+window.addEventListener('offline', ()=>document.getElementById('offline-banner').classList.remove('hidden'));
+window.addEventListener('error', e=>console.error('[FAMS+] uncaught error:', e.error||e.message));
+window.addEventListener('unhandledrejection', e=>console.error('[FAMS+] unhandled rejection:', e.reason));
+
+/* ============================================================
+   LOGO — an inline SVG mark (graduation cap + orbital ring, for
+   "faculty" + "physics/electronics") instead of an emoji or a
+   static image file, so it's crisp at any size and themeable via
+   the gradients below without shipping a separate image asset.
+   Gradient ids are suffixed per-call since the mark is embedded
+   more than once in the same document (sidebar, login, etc.).
+   ============================================================ */
+function logoMarkSvg(size, tag){
+  const u = 'lg' + (tag || Math.random().toString(36).slice(2,7));
+  return '<svg viewBox="0 0 64 64" width="' + size + '" height="' + size + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+    + '<defs>'
+    + '<linearGradient id="' + u + 'bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1c2f5a"/><stop offset="1" stop-color="#08142c"/></linearGradient>'
+    + '<linearGradient id="' + u + 'gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0c674"/><stop offset="1" stop-color="#c99a3c"/></linearGradient>'
+    + '<radialGradient id="' + u + 'glow" cx="0.35" cy="0.28" r="0.8"><stop offset="0" stop-color="#3157a0" stop-opacity="0.95"/><stop offset="1" stop-color="#1c2f5a" stop-opacity="0"/></radialGradient>'
+    + '</defs>'
+    + '<circle cx="32" cy="32" r="32" fill="url(#' + u + 'bg)"/>'
+    + '<circle cx="32" cy="32" r="32" fill="url(#' + u + 'glow)"/>'
+    + '<ellipse cx="32" cy="34" rx="25" ry="10.5" fill="none" stroke="#7db0ff" stroke-width="2.4" opacity="0.55" transform="rotate(-20 32 34)"/>'
+    + '<circle cx="55.7" cy="26.2" r="2.6" fill="#9cc6ff" transform="rotate(-20 32 34)"/>'
+    + '<g transform="translate(32,29)">'
+    + '<path d="M0 -12 L19.5 -4 L0 4 L-19.5 -4 Z" fill="url(#' + u + 'gold)"/>'
+    + '<path d="M-9 -0.6 L-9 8 Q0 13.2 9 8 L9 -0.6 L0 3.2 Z" fill="#f8efd9"/>'
+    + '<line x1="19.5" y1="-4" x2="19.5" y2="8" stroke="#e0b558" stroke-width="2"/>'
+    + '<circle cx="19.5" cy="9.6" r="2.3" fill="#e0b558"/>'
+    + '</g></svg>';
+}
+
+/* ============================================================
+   MODULES — every module is a plain data description (fields,
+   label, which main-menu group it lives under). There is no
+   runtime "Menu Builder" / generic schema engine — modules are
+   fixed, defined once here. This trades "add brand-new modules
+   from the UI with zero code" for "far fewer moving parts and
+   nothing that can silently get out of sync between menus." A
+   generic list/form/detail renderer (further below) still means
+   writing a new module is just adding one entry here, not a
+   whole new screen's worth of custom code.
+   ============================================================ */
+const MAIN_MENUS = [
+  { key:'dashboard', label:'Dashboard' },
+  { key:'work-diary', label:'Work Diary' },
+  { key:'teaching', label:'Teaching' },
+  { key:'exams', label:'Exams' },
+  { key:'mentoring', label:'Student Mentoring' },
+  { key:'laboratory', label:'Laboratory' },
+  { key:'extra-classes', label:'Extra / Additional Classes' },
+  { key:'research', label:'Research' },
+  { key:'projects', label:'Projects & Grants' },
+  { key:'incharge', label:'In-Charge Roles' },
+  { key:'committees', label:'Committees & Events' },
+  { key:'meetings', label:'Meetings' },
+  { key:'reminders', label:'Reminders & Office Follow-ups' },
+  { key:'responsibilities', label:'Class Teacher / Responsibilities' },
+  { key:'analytics', label:'Analytics' },
+  { key:'reports', label:'Reports' },
+  { key:'calendar', label:'Calendar' },
+  { key:'admin', label:'Admin & Settings' }
+];
+
+const MODULES = {
+  'work-diary': { label:'Work Diary', menu:'work-diary', icon:'📔', titleField:'summary', dateField:'date', fields:[
+    {key:'date', label:'Date', type:'date', required:true, default:'__today__'},
+    {key:'category', label:'Category', type:'select', options:['Teaching','Research','Mentoring','Admin/In-Charge','Committee/Meeting','Other'], default:'Teaching'},
+    {key:'summary', label:'What did you work on', type:'textarea', required:true},
+    {key:'hoursSpent', label:'Hours Spent', type:'number'}
+  ]},
+  'timetable': { label:'Timetable', menu:'teaching', icon:'📘', titleField:'subject', dateField:'startTime', fields:[
+    {key:'day', label:'Day', type:'select', options:['Mon','Tue','Wed','Thu','Fri','Sat'], required:true},
+    {key:'startTime', label:'Start Time', type:'time', required:true},
+    {key:'endTime', label:'End Time', type:'time', required:true},
+    {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'section', label:'Section', type:'text'},
+    {key:'venue', label:'Venue', type:'text'},
+    {key:'status', label:'Status', type:'select', options:['Scheduled','Cancelled','Rescheduled'], default:'Scheduled'}
+  ]},
+  'leave-records': { label:'Leave / OD', menu:'teaching', icon:'🗓️', titleField:'type', dateField:'fromDate', fields:[
+    {key:'type', label:'Type', type:'select', options:['OD','CL','Medical Leave','Earned Leave','Other'], required:true},
+    {key:'fromDate', label:'From Date', type:'date', required:true},
+    {key:'toDate', label:'To Date', type:'date', required:true},
+    {key:'reason', label:'Reason', type:'textarea'},
+    {key:'status', label:'Status', type:'select', options:['Applied','Approved','Rejected'], default:'Applied'}
+  ]},
+  'holidays': { label:'Holidays', menu:'teaching', icon:'🏖️', titleField:'name', dateField:'date', fields:[
+    {key:'date', label:'Date', type:'date', required:true},
+    {key:'name', label:'Holiday Name', type:'text', required:true},
+    {key:'type', label:'Type', type:'select', options:['University Holiday','National Holiday','Local Holiday'], default:'University Holiday'}
+  ]},
+  'class-log': { label:'Class Log', menu:'teaching', icon:'📝', titleField:'topic', dateField:'date', fields:[
+    {key:'date', label:'Date', type:'date', required:true},
+    {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'section', label:'Section', type:'text'},
+    {key:'topic', label:'Topic Covered', type:'textarea', required:true},
+    {key:'status', label:'Status', type:'select', options:['Held','Cancelled','Rescheduled'], default:'Held'}
+  ]},
+  'invigilation-duties': { label:'Invigilation Duty', menu:'exams', icon:'🖊️', titleField:'examName', dateField:'date', fields:[
+    {key:'examName', label:'Exam Name', type:'text', required:true},
+    {key:'date', label:'Date', type:'date', required:true},
+    {key:'session', label:'Session', type:'select', options:['Forenoon','Afternoon','Evening'], default:'Forenoon'},
+    {key:'venue', label:'Venue', type:'text'},
+    {key:'role', label:'Role', type:'select', options:['Invigilator','Chief Superintendent','Squad Member'], default:'Invigilator'}
+  ]},
+  'question-bank': { label:'Question Bank', menu:'exams', icon:'❓', titleField:'question', dateField:null, fields:[
+    {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'unit', label:'Unit/Module', type:'text'},
+    {key:'question', label:'Question', type:'textarea', required:true},
+    {key:'type', label:'Type', type:'select', options:['MCQ','Short Answer','Long Answer','Numerical'], default:'Short Answer'},
+    {key:'difficulty', label:'Difficulty', type:'select', options:['Easy','Medium','Hard'], default:'Medium'},
+    {key:'marks', label:'Marks', type:'number'}
+  ]},
+  'evaluations': { label:'Evaluation', menu:'exams', icon:'✅', titleField:'examName', dateField:'deadline', fields:[
+    {key:'examName', label:'Exam Name', type:'text', required:true},
+    {key:'scriptsAssigned', label:'Scripts Assigned', type:'number'},
+    {key:'scriptsEvaluated', label:'Scripts Evaluated', type:'number'},
+    {key:'deadline', label:'Deadline', type:'date'},
+    {key:'status', label:'Status', type:'select', options:['Not Started','In Progress','Completed'], default:'Not Started'}
+  ]},
+  'mentees': { label:'Mentees', menu:'mentoring', icon:'🎓', titleField:'name', dateField:null, fields:[
+    {key:'regNo', label:'Registration No.', type:'text', required:true},
+    {key:'name', label:'Name', type:'text', required:true},
+    {key:'program', label:'Program', type:'text'},
+    {key:'semester', label:'Semester', type:'text'},
+    {key:'email', label:'Email', type:'email'},
+    {key:'phone', label:'Phone', type:'phone'},
+    {key:'parentContact', label:'Parent Contact', type:'phone'}
+  ]},
+  'mentee-meetings': { label:'Mentoring Meetings', menu:'mentoring', icon:'💬', titleField:'discussion', dateField:'date', fields:[
+    {key:'menteeId', label:'Mentee', type:'reference', ref:'mentees', required:true},
+    {key:'date', label:'Date', type:'date', required:true},
+    {key:'discussion', label:'Discussion', type:'textarea'},
+    {key:'advice', label:'Advice Given', type:'textarea'},
+    {key:'nextFollowUp', label:'Next Follow-up Date', type:'date'}
+  ]},
+  'lab-timetable': { label:'Lab Timetable', menu:'laboratory', icon:'🧪', titleField:'labCourse', dateField:null, fields:[
+    {key:'day', label:'Day', type:'select', options:['Mon','Tue','Wed','Thu','Fri','Sat'], required:true},
+    {key:'time', label:'Time', type:'text'},
+    {key:'labCourse', label:'Lab Course', type:'text', required:true},
+    {key:'batch', label:'Batch', type:'text'},
+    {key:'venue', label:'Venue', type:'text'}
+  ]},
+  'lab-exams': { label:'Lab Exams', menu:'laboratory', icon:'🔬', titleField:'labCourse', dateField:'date', fields:[
+    {key:'labCourse', label:'Lab Course', type:'text', required:true},
+    {key:'date', label:'Date', type:'date', required:true},
+    {key:'batch', label:'Batch', type:'text'},
+    {key:'externalExaminer', label:'External Examiner', type:'text'}
+  ]},
+  'extra-classes': { label:'Extra / Additional Classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
+    {key:'type', label:'Type', type:'select', options:['Extra Class','Compensatory Class','Makeup Class'], default:'Extra Class'},
+    {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'reason', label:'Reason', type:'text'},
+    {key:'date', label:'Date', type:'date', required:true},
+    {key:'time', label:'Time', type:'text'}
+  ]},
+  'research-targets': { label:'Targets & Progress', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
+    {key:'description', label:'Target Description', type:'textarea', required:true},
+    {key:'progressPercent', label:'Progress %', type:'number'},
+    {key:'targetDate', label:'Target Date', type:'date'},
+    {key:'status', label:'Status', type:'select', options:['Not Started','In Progress','Completed'], default:'Not Started'}
+  ]},
+  'publications': { label:'Publications', menu:'research', icon:'📄', titleField:'title', dateField:null, fields:[
+    {key:'title', label:'Title', type:'text', required:true},
+    {key:'authors', label:'Authors', type:'text'},
+    {key:'venue', label:'Journal / Conference', type:'text'},
+    {key:'type', label:'Type', type:'select', options:['Journal','Conference','Book Chapter'], default:'Journal'},
+    {key:'status', label:'Status', type:'select', options:['Planned','Submitted','Under Review','Accepted','Published'], default:'Planned'},
+    {key:'doi', label:'DOI / Link', type:'text'},
+    {key:'collaborators', label:'Collaborators', type:'text'}
+  ]},
+  'collaborations': { label:'Collaborations', menu:'research', icon:'🤝', titleField:'collaborator', dateField:null, fields:[
+    {key:'collaborator', label:'Collaborator', type:'text', required:true},
+    {key:'institution', label:'Institution', type:'text'},
+    {key:'nature', label:'Nature of Collaboration', type:'textarea'},
+    {key:'status', label:'Status', type:'select', options:['Proposed','Active','Completed'], default:'Proposed'}
+  ]},
+  'research-events': { label:'Research Events', menu:'research', icon:'🎤', titleField:'eventName', dateField:'date', fields:[
+    {key:'eventName', label:'Event Name', type:'text', required:true},
+    {key:'role', label:'Role', type:'select', options:['Organized','Participated','Chaired Session','Keynote'], default:'Participated'},
+    {key:'date', label:'Date', type:'date'}
+  ]},
+  'peer-reviews': { label:'Peer Review / Editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
+    {key:'venue', label:'Journal / Conference', type:'text', required:true},
+    {key:'role', label:'Role', type:'select', options:['Reviewer','Editorial Board','Guest Editor'], default:'Reviewer'},
+    {key:'paperTitle', label:'Paper Title', type:'text'},
+    {key:'status', label:'Status', type:'select', options:['Assigned','In Progress','Completed'], default:'Assigned'}
+  ]},
+  'research-contacts': { label:'Researcher / Faculty Network', menu:'research', icon:'🌐', titleField:'name', dateField:'lastContactDate', fields:[
+    {key:'name', label:'Name', type:'text', required:true},
+    {key:'institution', label:'Institution', type:'text'},
+    {key:'designation', label:'Designation', type:'text'},
+    {key:'expertise', label:'Area of Expertise', type:'text'},
+    {key:'email', label:'Email', type:'email'},
+    {key:'phone', label:'Phone', type:'phone'},
+    {key:'contactType', label:'Contact Type', type:'select', options:['Talk/Seminar','Collaboration','Project','General'], default:'General'},
+    {key:'lastContactDate', label:'Last Contact Date', type:'date'}
+  ]},
+  'project-grants': { label:'Projects & Grants', menu:'projects', icon:'💰', titleField:'title', dateField:'endDate', fields:[
+    {key:'title', label:'Title', type:'text', required:true},
+    {key:'fundingAgency', label:'Funding Agency', type:'text'},
+    {key:'status', label:'Status', type:'select', options:['Planned','Applied','Ongoing','Completed','Closed'], default:'Planned'},
+    {key:'amount', label:'Amount (₹)', type:'number'},
+    {key:'startDate', label:'Start Date', type:'date'},
+    {key:'endDate', label:'End Date', type:'date'},
+    {key:'collaborators', label:'Collaborators', type:'text'}
+  ]},
+  'incharge-roles': { label:'My Roles', menu:'incharge', icon:'🛡️', titleField:'roleName', dateField:'endDate', fields:[
+    {key:'roleName', label:'Role Name', type:'text', required:true},
+    {key:'durationType', label:'Duration', type:'select', options:['Semester','Annual','Ongoing'], default:'Semester'},
+    {key:'startDate', label:'Start Date', type:'date'},
+    {key:'endDate', label:'End Date', type:'date'},
+    {key:'status', label:'Status', type:'select', options:['Active','Completed'], default:'Active'}
+  ]},
+  'incharge-members': { label:'Members', menu:'incharge', icon:'👥', titleField:'studentName', dateField:null, fields:[
+    {key:'roleId', label:'Role', type:'reference', ref:'incharge-roles'},
+    {key:'studentName', label:'Student Name', type:'text', required:true},
+    {key:'regNo', label:'Registration No.', type:'text'},
+    {key:'email', label:'Email', type:'email'},
+    {key:'phone', label:'Phone', type:'phone'},
+    {key:'supervisor', label:'Supervisor', type:'text'},
+    {key:'progressStatus', label:'Progress Status', type:'select', options:['On Track','Delayed','Completed'], default:'On Track'}
+  ]},
+  'committees': { label:'Committees', menu:'committees', icon:'🏛️', titleField:'name', dateField:null, fields:[
+    {key:'name', label:'Committee Name', type:'text', required:true},
+    {key:'myRole', label:'My Role', type:'text'},
+    {key:'academicYear', label:'Academic Year', type:'text'},
+    {key:'status', label:'Status', type:'select', options:['Active','Completed'], default:'Active'}
+  ]},
+  'committee-members': { label:'Committee Members', menu:'committees', icon:'👤', titleField:'name', dateField:null, fields:[
+    {key:'committeeId', label:'Committee', type:'reference', ref:'committees'},
+    {key:'name', label:'Name', type:'text', required:true},
+    {key:'role', label:'Role', type:'text'},
+    {key:'email', label:'Email', type:'email'},
+    {key:'phone', label:'Phone', type:'phone'}
+  ]},
+  'meetings': { label:'Meetings', menu:'meetings', icon:'📅', titleField:'title', dateField:'date', fields:[
+    {key:'title', label:'Title', type:'text', required:true},
+    {key:'relatedMenu', label:'Related To', type:'select', options: MAIN_MENUS.map(m=>m.label)},
+    {key:'date', label:'Date', type:'date', required:true},
+    {key:'attendees', label:'Attendees', type:'textarea'},
+    {key:'minutes', label:'Minutes', type:'textarea'},
+    {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'}
+  ]},
+  'action-items': { label:'Action Items', menu:'meetings', icon:'☑️', titleField:'action', dateField:'dueDate', fields:[
+    {key:'meetingId', label:'Meeting', type:'reference', ref:'meetings'},
+    {key:'action', label:'Action', type:'text', required:true},
+    {key:'owner', label:'Owner', type:'text'},
+    {key:'dueDate', label:'Due Date', type:'date'},
+    {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
+  ]},
+  'reminders': { label:'Reminders', menu:'reminders', icon:'🔔', titleField:'title', dateField:'dueDate', fields:[
+    {key:'title', label:'Title', type:'text', required:true},
+    {key:'dueDate', label:'Due Date', type:'date'},
+    {key:'relatedMenu', label:'Related To', type:'select', options: MAIN_MENUS.map(m=>m.label)},
+    {key:'priority', label:'Priority', type:'select', options:['Low','Medium','High'], default:'Medium'},
+    {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
+  ]},
+  'office-followups': { label:'Office Follow-ups', menu:'reminders', icon:'📮', titleField:'subject', dateField:'followUpDate', fields:[
+    {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'office', label:'Office', type:'text'},
+    {key:'submittedDate', label:'Submitted Date', type:'date'},
+    {key:'followUpDate', label:'Follow-up Date', type:'date'},
+    {key:'status', label:'Status', type:'select', options:['Pending','Resolved'], default:'Pending'}
+  ]},
+  'responsibilities': { label:'Responsibilities', menu:'responsibilities', icon:'📋', titleField:'title', dateField:null, fields:[
+    {key:'title', label:'Title (e.g. Class Teacher)', type:'text', required:true},
+    {key:'classSection', label:'Class / Section', type:'text'},
+    {key:'academicYear', label:'Academic Year', type:'text'}
+  ]},
+  'responsibility-contacts': { label:'Contacts', menu:'responsibilities', icon:'👤', titleField:'name', dateField:null, fields:[
+    {key:'responsibilityId', label:'Responsibility', type:'reference', ref:'responsibilities'},
+    {key:'name', label:'Name', type:'text', required:true},
+    {key:'regNo', label:'Registration No.', type:'text'},
+    {key:'email', label:'Email', type:'email'},
+    {key:'phone', label:'Phone', type:'phone'}
+  ]}
+};
+const MODULE_KEYS = Object.keys(MODULES);
+
+/* ============================================================
+   MOTIVATIONAL QUOTES — shown on the Dashboard, rotates daily
+   (deterministic by day-of-year so it doesn't change on every
+   reload, only once a day).
+   ============================================================ */
+const QUOTES = [
+  { text:'The best way to predict the future is to create it.', by:'Peter Drucker' },
+  { text:'Teaching is the one profession that creates all other professions.', by:'Unknown' },
+  { text:'Research is what I\'m doing when I don\'t know what I\'m doing.', by:'Wernher von Braun' },
+  { text:'Education is not the filling of a pail, but the lighting of a fire.', by:'W. B. Yeats' },
+  { text:'The mind is not a vessel to be filled, but a fire to be kindled.', by:'Plutarch' },
+  { text:'Small daily improvements are the key to staggering long-term results.', by:'Unknown' },
+  { text:'A teacher affects eternity; he can never tell where his influence stops.', by:'Henry Adams' },
+  { text:'Success is the sum of small efforts, repeated day in and day out.', by:'Robert Collier' },
+  { text:'The expert in anything was once a beginner.', by:'Helen Hayes' },
+  { text:'Well done is better than well said.', by:'Benjamin Franklin' },
+  { text:'What we learn with pleasure we never forget.', by:'Alfred Mercier' },
+  { text:'Knowledge which is acquired under compulsion has no hold on the mind.', by:'Plato' },
+  { text:'Do the best you can until you know better. Then when you know better, do better.', by:'Maya Angelou' },
+  { text:'It always seems impossible until it\'s done.', by:'Nelson Mandela' },
+  { text:'The only way to do great work is to love what you do.', by:'Steve Jobs' }
+];
+function dayOfYear(){
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  return Math.floor((now - start) / 86400000);
+}
+function quoteOfTheDay(){ return QUOTES[dayOfYear() % QUOTES.length]; }
+
+/* ============================================================
+   APP STATE & DATA LAYER
+   ------------------------------------------------------------
+   STATE.data[moduleKey] holds the module's full record array,
+   loaded once at boot via a single apiGetAll() call (one sheet
+   read on the backend, not one round trip per module). Every
+   write goes straight back to the backend (JSON.stringify the
+   whole array under that module's key) AND updates STATE.data
+   in place, so the UI never has to re-fetch to see its own
+   change reflected.
+   ============================================================ */
+const STATE = { meta:null, config:null, data:{}, loaded:false };
+
+function getCollection(key){ return STATE.data[key] || []; }
+function getActive(key){ return getCollection(key).filter(r=>!r.deleted); }
+function getRecord(key, id){ return getCollection(key).find(r=>r.id===id) || null; }
+
+function defaultConfig(){
+  return { academicYear:'', semester:'', digestHour:7, backupHour:23 };
+}
+
+async function loadAllData(){
+  const keys = MODULE_KEYS.concat(['app-meta','app-config']);
+  const values = await apiGetAll(keys);
+  MODULE_KEYS.forEach(k=>{
+    try{ STATE.data[k] = values[k] ? JSON.parse(values[k]) : []; }
+    catch(e){ STATE.data[k] = []; }
+  });
+  try{ STATE.meta = values['app-meta'] ? JSON.parse(values['app-meta']) : null; }
+  catch(e){ STATE.meta = null; }
+  try{ STATE.config = values['app-config'] ? Object.assign(defaultConfig(), JSON.parse(values['app-config'])) : defaultConfig(); }
+  catch(e){ STATE.config = defaultConfig(); }
+  STATE.loaded = true;
+}
+
+async function saveCollection(key, arr){
+  STATE.data[key] = arr;
+  await apiSetRaw(key, JSON.stringify(arr));
+}
+async function saveMeta(){ await apiSetRaw('app-meta', JSON.stringify(STATE.meta)); }
+async function saveConfig(){ await apiSetRaw('app-config', JSON.stringify(STATE.config)); }
+
+async function createRecord(moduleKey, data){
+  const arr = getCollection(moduleKey).slice();
+  const rec = Object.assign({ id: uid(), createdAt: nowIso(), updatedAt: nowIso(), notes: [], deleted:false }, data);
+  arr.push(rec);
+  await saveCollection(moduleKey, arr);
+  return rec;
+}
+async function updateRecord(moduleKey, id, patch){
+  const arr = getCollection(moduleKey).slice();
+  const idx = arr.findIndex(r=>r.id===id);
+  if(idx===-1) throw new Error('Record not found');
+  arr[idx] = Object.assign({}, arr[idx], patch, { updatedAt: nowIso() });
+  await saveCollection(moduleKey, arr);
+  return arr[idx];
+}
+async function softDeleteRecord(moduleKey, id){ return updateRecord(moduleKey, id, { deleted:true }); }
+async function restoreRecord(moduleKey, id){ return updateRecord(moduleKey, id, { deleted:false }); }
+async function purgeRecord(moduleKey, id){
+  const arr = getCollection(moduleKey).filter(r=>r.id!==id);
+  await saveCollection(moduleKey, arr);
+}
+async function addNote(moduleKey, id, text){
+  const arr = getCollection(moduleKey).slice();
+  const idx = arr.findIndex(r=>r.id===id);
+  if(idx===-1) return;
+  const notes = (arr[idx].notes || []).slice();
+  notes.push({ id: uid(), text, at: nowIso() });
+  arr[idx] = Object.assign({}, arr[idx], { notes, updatedAt: nowIso() });
+  await saveCollection(moduleKey, arr);
+}
+
+/** Resolves a 'reference' field's value (a record id in another module) to
+ *  a human-readable label using that module's titleField. */
+function refLabel(moduleKey, id){
+  if(!id) return '';
+  const rec = getRecord(moduleKey, id);
+  if(!rec) return '(deleted)';
+  const mod = MODULES[moduleKey];
+  return rec[mod.titleField] || '(untitled)';
+}
+
+/* ============================================================
+   AUTH — a single-faculty app, so "auth" is just: has a PIN been
+   set (first-run), and does the PIN typed in match it. Session
+   is a plain expiry timestamp in localStorage — good enough for
+   a personal device, and explicitly NOT presented as enterprise
+   -grade security (same disclaimer as the reference project).
+   ============================================================ */
+const SESSION_KEY = 'fams_session_until';
+const SESSION_HOURS = 16;
+const PIN_FAIL_KEY = 'fams_pin_fails';
+const PIN_LOCK_KEY = 'fams_pin_lock_until';
+const PIN_MAX_FAILS = 5;
+const PIN_LOCK_MINUTES = 5;
+
+function isAuthed(){ return Number(localStorage.getItem(SESSION_KEY) || 0) > Date.now(); }
+function startSession(){ localStorage.setItem(SESSION_KEY, String(Date.now() + SESSION_HOURS*3600*1000)); }
+function endSession(){ localStorage.removeItem(SESSION_KEY); }
+
+function pinLocked(){ return Number(localStorage.getItem(PIN_LOCK_KEY) || 0) > Date.now(); }
+function pinLockRemainingSec(){ return Math.max(0, Math.ceil((Number(localStorage.getItem(PIN_LOCK_KEY) || 0) - Date.now())/1000)); }
+function registerPinFail(){
+  const fails = Number(localStorage.getItem(PIN_FAIL_KEY) || 0) + 1;
+  if(fails >= PIN_MAX_FAILS){
+    localStorage.setItem(PIN_LOCK_KEY, String(Date.now() + PIN_LOCK_MINUTES*60000));
+    localStorage.setItem(PIN_FAIL_KEY, '0');
+  }else{
+    localStorage.setItem(PIN_FAIL_KEY, String(fails));
+  }
+}
+function clearPinFails(){ localStorage.removeItem(PIN_FAIL_KEY); localStorage.removeItem(PIN_LOCK_KEY); }
+
+async function doFirstRunSetup(name, email, phone, pin){
+  const pinHash = await sha256(pin);
+  STATE.meta = { facultyName: name, email: email, phone: phone || '', pinHash: pinHash, setupAt: nowIso() };
+  await saveMeta();
+  startSession();
+}
+async function doLogin(pin){
+  if(pinLocked()) throw new Error('Too many attempts. Try again in ' + Math.ceil(pinLockRemainingSec()/60) + ' min.');
+  if(!STATE.meta) throw new Error('Not set up yet.');
+  const hash = await sha256(pin);
+  if(hash !== STATE.meta.pinHash){
+    registerPinFail();
+    throw new Error('Incorrect PIN.');
+  }
+  clearPinFails();
+  startSession();
+}
+async function doChangePin(oldPin, newPin){
+  const oldHash = await sha256(oldPin);
+  if(oldHash !== STATE.meta.pinHash) throw new Error('Current PIN is incorrect.');
+  STATE.meta.pinHash = await sha256(newPin);
+  await saveMeta();
+}
+function doLogout(){ endSession(); location.hash = ''; render(); }
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+const SPECIAL_SCREENS = { dashboard:'📊', 'work-diary':'📔', analytics:'📈', reports:'📤', calendar:'🗓️', admin:'⚙️' };
+
+/* Area accent colours — one per functional zone (mirrors the --a-* CSS
+   custom properties in :root) so the sidebar, dashboard stat cards and
+   analytics all read as distinct "colour families" instead of one flat
+   navy-and-gold palette everywhere. Kept as plain hex here (rather than
+   referencing the CSS vars) so call sites can cheaply append an alpha
+   suffix like color+'22' for tinted backgrounds. */
+const AREA_COLORS = {
+  dashboard:'#c99a3c', 'work-diary':'#7c5cbf', teaching:'#2a63c9', exams:'#7c3aed',
+  mentoring:'#0891b2', laboratory:'#0e9f6e', 'extra-classes':'#d97706', research:'#059669',
+  projects:'#c99a3c', incharge:'#dc2626', committees:'#ea580c', meetings:'#4f46e5',
+  reminders:'#db2777', responsibilities:'#0f766e', analytics:'#6fa3f5', reports:'#8a92a6',
+  calendar:'#4f46e5', admin:'#9aa4c2'
+};
+
+function parseRoute(){
+  const h = (location.hash || '#/dashboard').replace(/^#\/?/, '');
+  const parts = h.split('/').filter(Boolean);
+  if(parts[0] === 'module' && parts[1]) return { screen:'module', moduleKey:parts[1] };
+  if(parts[0] && (SPECIAL_SCREENS[parts[0]] || ['analytics','reports','calendar','admin','dashboard'].indexOf(parts[0])!==-1)) return { screen:parts[0] };
+  return { screen:'dashboard' };
+}
+function isModuleRoute(key){ const r = parseRoute(); return r.screen==='module' && r.moduleKey===key; }
+function isScreenRoute(key){ const r = parseRoute(); return r.screen===key; }
+function navigate(href){ location.hash = href; }
+
+/* ============================================================
+   BOOT / TOP-LEVEL RENDER
+   ============================================================ */
+const ROOT = document.getElementById('root');
+let clockTimer = null;
+
+async function boot(){
+  if(!backendConfigured()){ ROOT.innerHTML = renderSetupNeededScreen(); return; }
+  try{
+    await loadAllData();
+  }catch(e){
+    ROOT.innerHTML = renderLoadErrorScreen(e);
+    const btn = document.getElementById('retry-load-btn');
+    if(btn) btn.addEventListener('click', boot);
+    return;
+  }
+  window.addEventListener('hashchange', render);
+  render();
+}
+
+function render(){
+  if(!STATE.meta){ ROOT.innerHTML = renderFirstRunScreen(); wireFirstRunScreen(); return; }
+  if(!isAuthed()){ ROOT.innerHTML = renderLoginScreen(); wireLoginScreen(); return; }
+  ROOT.innerHTML = renderShellSkeleton();
+  wireShell();
+  renderRoute();
+  startClock();
+}
+
+function startClock(){
+  if(clockTimer) clearInterval(clockTimer);
+  const tick = ()=>{
+    const el = document.getElementById('live-clock');
+    if(!el){ clearInterval(clockTimer); return; }
+    el.textContent = new Date().toLocaleString('en-IN', { weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    const heroClock = document.getElementById('hero-clock');
+    if(heroClock) heroClock.textContent = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  };
+  tick();
+  clockTimer = setInterval(tick, 30000);
+}
+
+function renderRoute(){
+  const r = parseRoute();
+  const content = document.getElementById('content');
+  const titleEl = document.getElementById('topbar-title');
+  if(r.screen === 'module'){
+    const mod = MODULES[r.moduleKey];
+    if(!mod){ content.innerHTML = '<div class="empty">Unknown module.</div>'; return; }
+    titleEl.textContent = mod.label;
+    if(r.moduleKey === 'timetable'){
+      content.innerHTML = renderTimetableScreen();
+      wireTimetableScreen();
+    }else{
+      content.innerHTML = renderModuleList(r.moduleKey);
+      wireModuleList(r.moduleKey);
+    }
+  }else if(r.screen === 'dashboard'){
+    titleEl.textContent = 'Dashboard';
+    content.innerHTML = renderDashboard();
+    wireDashboard();
+  }else if(r.screen === 'analytics'){
+    titleEl.textContent = 'Analytics';
+    content.innerHTML = renderAnalytics();
+    wireAnalytics();
+  }else if(r.screen === 'reports'){
+    titleEl.textContent = 'Reports';
+    content.innerHTML = renderReports();
+    wireReports();
+  }else if(r.screen === 'calendar'){
+    titleEl.textContent = 'Calendar';
+    content.innerHTML = renderCalendar();
+  }else if(r.screen === 'admin'){
+    titleEl.textContent = 'Admin & Settings';
+    content.innerHTML = renderAdmin();
+    wireAdmin();
+  }else{
+    titleEl.textContent = 'Dashboard';
+    content.innerHTML = renderDashboard();
+    wireDashboard();
+  }
+}
+
+/* ============================================================
+   SCREENS — setup-needed / load-error / first-run / login
+   ============================================================ */
+function renderSetupNeededScreen(){
+  return '<div class="center-screen"><div class="auth-card" style="width:460px;">'
+    + '<div class="logo-wrap">' + logoMarkSvg(64) + '<div class="brand-h1">FAMS<span>+</span></div>'
+    + '<div class="auth-sub">Backend not connected yet.</div></div>'
+    + '<div class="error-box info" style="text-align:left;line-height:1.6;">'
+    + 'Open <code>index.html</code> in a text editor and set <code>DATA_API_URL</code> '
+    + '(and <code>APP_KEY</code>, matching <code>backend/Code.gs</code>) near the top of the '
+    + '<code>&lt;script&gt;</code> section to your deployed Apps Script Web App URL. See '
+    + '<code>SETUP.md</code> for the full walkthrough.</div></div></div>';
+}
+function renderLoadErrorScreen(e){
+  return '<div class="center-screen"><div class="auth-card" style="width:460px;">'
+    + '<div class="logo-wrap">' + logoMarkSvg(64) + '<div class="brand-h1">FAMS<span>+</span></div>'
+    + '<div class="auth-sub">Could not reach the backend.</div></div>'
+    + '<div class="error-box">' + escapeHtml(e && e.message ? e.message : String(e)) + '</div>'
+    + '<button class="btn btn-primary" id="retry-load-btn" style="width:100%;margin-top:12px;">Retry</button>'
+    + '<div class="auth-sub" style="margin-top:12px;">Check your internet connection, and that '
+    + 'DATA_API_URL / APP_KEY in index.html match your deployed Apps Script exactly.</div></div></div>';
+}
+
+function renderFirstRunScreen(){
+  return '<div class="center-screen"><div class="auth-card" style="width:460px;">'
+    + '<div class="logo-wrap">' + logoMarkSvg(64) + '<div class="brand-h1">FAMS<span>+</span></div>'
+    + '<div class="auth-sub">First-time setup — create your profile &amp; PIN.<br>'
+    + escapeHtml(DEPARTMENT_NAME) + '<br>' + escapeHtml(INSTITUTION_NAME) + '</div></div>'
+    + '<form id="setup-form">'
+    + '<div class="field"><label>Full Name</label><input class="input" id="su-name" required></div>'
+    + '<div class="field"><label>Email</label><input class="input" type="email" id="su-email" required></div>'
+    + '<div class="field"><label>Phone (optional)</label><input class="input" id="su-phone"></div>'
+    + '<div class="grid grid-2">'
+    + '<div class="field"><label>Set PIN (4–6 digits)</label><input class="input" id="su-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" required></div>'
+    + '<div class="field"><label>Confirm PIN</label><input class="input" id="su-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" required></div>'
+    + '</div>'
+    + '<div class="error-box" id="setup-error"></div>'
+    + '<button class="btn btn-primary" type="submit" style="width:100%;">Create Admin Account</button>'
+    + '</form></div></div>';
+}
+function wireFirstRunScreen(){
+  document.getElementById('setup-form').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const errEl = document.getElementById('setup-error');
+    errEl.textContent = '';
+    const name = document.getElementById('su-name').value.trim();
+    const email = document.getElementById('su-email').value.trim();
+    const phone = document.getElementById('su-phone').value.trim();
+    const pin = document.getElementById('su-pin').value.trim();
+    const pin2 = document.getElementById('su-pin2').value.trim();
+    if(!/^[0-9]{4,6}$/.test(pin)){ errEl.textContent = 'PIN must be 4–6 digits.'; return; }
+    if(pin !== pin2){ errEl.textContent = 'PINs do not match.'; return; }
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Creating…';
+    try{
+      await doFirstRunSetup(name, email, phone, pin);
+      toast('Welcome to FAMS+, ' + name + '!', 'ok');
+      render();
+    }catch(err){
+      errEl.textContent = err && err.message ? err.message : String(err);
+      btn.disabled = false; btn.textContent = 'Create Admin Account';
+    }
+  });
+}
+
+function renderLoginScreen(){
+  const locked = pinLocked();
+  return '<div class="center-screen"><div class="auth-card">'
+    + '<div class="logo-wrap">' + logoMarkSvg(64) + '<div class="brand-h1">FAMS<span>+</span></div>'
+    + '<div class="auth-sub">' + escapeHtml(DEPARTMENT_NAME) + '<br>' + escapeHtml(INSTITUTION_NAME) + '</div></div>'
+    + '<div class="pin-dots" id="pin-dots">' + [0,1,2,3,4,5].map(()=>'<div class="pin-dot"></div>').join('') + '</div>'
+    + '<div class="keypad" id="keypad">'
+    + [1,2,3,4,5,6,7,8,9].map(n=>'<div class="key" data-key="'+n+'">'+n+'</div>').join('')
+    + '<div class="key key-ghost" data-key="clear">Clear</div>'
+    + '<div class="key" data-key="0">0</div>'
+    + '<div class="key key-ghost" data-key="back">⌫</div>'
+    + '</div>'
+    + '<button class="btn btn-primary" id="pin-submit" style="width:100%;margin-top:10px;" disabled>Sign In</button>'
+    + '<div class="error-box' + (locked ? '' : ' info') + '" id="login-error">' + (locked ? ('Locked — try again in ' + Math.ceil(pinLockRemainingSec()/60) + ' min.') : 'Enter your PIN and press Sign In.') + '</div>'
+    + '</div></div>';
+}
+function wireLoginScreen(){
+  let buffer = '';
+  const dotsEl = document.getElementById('pin-dots');
+  const errEl = document.getElementById('login-error');
+  const submitBtn = document.getElementById('pin-submit');
+  function refresh(){
+    Array.from(dotsEl.children).forEach((d,i)=>d.classList.toggle('filled', i < buffer.length));
+    submitBtn.disabled = buffer.length < 4 || pinLocked();
+  }
+  document.getElementById('keypad').addEventListener('click', (e)=>{
+    const k = e.target.closest('.key');
+    if(!k || pinLocked()) return;
+    const key = k.dataset.key;
+    if(key === 'clear'){ buffer = ''; }
+    else if(key === 'back'){ buffer = buffer.slice(0,-1); }
+    else if(buffer.length < 6){ buffer += key; }
+    refresh();
+  });
+  async function submit(){
+    if(buffer.length < 4 || pinLocked()) return;
+    submitBtn.disabled = true;
+    errEl.className = 'error-box';
+    errEl.textContent = 'Checking…';
+    try{
+      await doLogin(buffer);
+      render();
+    }catch(err){
+      buffer = '';
+      refresh();
+      errEl.textContent = (err && err.message ? err.message : String(err));
+      submitBtn.disabled = true;
+    }
+  }
+  submitBtn.addEventListener('click', submit);
+  refresh();
+}
+
+/* ============================================================
+   APP SHELL — sidebar (built from MAIN_MENUS + MODULES), topbar
+   ============================================================ */
+function navItemHtml(icon, label, href, active, color){
+  const style = color ? ' style="background:' + color + '38;"' : '';
+  return '<div class="nav-item' + (active ? ' active' : '') + '" data-href="' + href + '"><span class="chip"' + style + '>' + icon + '</span><span>' + escapeHtml(label) + '</span></div>';
+}
+function sidebarNavHtml(){
+  let html = '';
+  MAIN_MENUS.forEach(group=>{
+    const color = AREA_COLORS[group.key];
+    if(SPECIAL_SCREENS[group.key] && group.key !== 'work-diary'){
+      html += navItemHtml(SPECIAL_SCREENS[group.key], group.label, '#/' + group.key, isScreenRoute(group.key), color);
+      return;
+    }
+    const mods = MODULE_KEYS.filter(k => MODULES[k].menu === group.key);
+    if(mods.length === 1 && mods[0] === group.key){
+      const m = MODULES[mods[0]];
+      html += navItemHtml(m.icon, group.label, '#/module/' + mods[0], isModuleRoute(mods[0]), color);
+      return;
+    }
+    if(mods.length === 0) return;
+    html += '<div class="nav-section">' + escapeHtml(group.label) + '</div>';
+    mods.forEach(k=>{
+      const m = MODULES[k];
+      html += navItemHtml(m.icon, m.label, '#/module/' + k, isModuleRoute(k), color);
+    });
+  });
+  return html;
+}
+function renderShellSkeleton(){
+  return '<div id="app">'
+    + '<div class="sidebar" id="sidebar">'
+    + '<div class="sidebar-brand">' + logoMarkSvg(34, 'sb') + '<div class="name">FAMS<span>+</span><div class="tag">' + escapeHtml(DEPARTMENT_NAME) + '</div></div></div>'
+    + '<div class="sidebar-nav" id="sidebar-nav">' + sidebarNavHtml() + '</div>'
+    + '<div class="sidebar-footer">' + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + '<br>' + escapeHtml(DEPARTMENT_NAME) + '</div>'
+    + '</div>'
+    + '<div class="main">'
+    + '<div class="topbar">'
+    + '<div style="display:flex;align-items:center;gap:12px;">'
+    + '<div class="menu-toggle" id="menu-toggle">☰</div>'
+    + '<div id="topbar-title" style="font-weight:700;font-size:16px;"></div>'
+    + '</div>'
+    + '<div style="display:flex;align-items:center;gap:14px;">'
+    + '<div class="mono" id="live-clock" style="font-size:12px;color:var(--text-dim);"></div>'
+    + '<button class="btn btn-ghost btn-sm' + (installAvailable ? '' : ' hidden') + '" id="install-btn">⬇ Install</button>'
+    + '<button class="btn btn-ghost btn-sm" id="logout-btn">Logout</button>'
+    + '</div>'
+    + '</div>'
+    + '<div class="content" id="content"></div>'
+    + '</div>'
+    + '</div>';
+}
+function wireShell(){
+  document.getElementById('sidebar-nav').addEventListener('click', (e)=>{
+    const item = e.target.closest('.nav-item');
+    if(!item) return;
+    document.getElementById('sidebar').classList.remove('open');
+    navigate(item.dataset.href);
+  });
+  document.getElementById('logout-btn').addEventListener('click', doLogout);
+  document.getElementById('menu-toggle').addEventListener('click', ()=>{
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+  const installBtn = document.getElementById('install-btn');
+  installBtn.addEventListener('click', async ()=>{
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBtn.classList.add('hidden');
+  });
+}
+
+/* ============================================================
+   GENERIC MODULE ENGINE — one list/search/table renderer and one
+   form-drawer renderer, driven entirely by a MODULES[key] config.
+   Every built-in module (and any you add later) gets a working
+   list + add/edit/notes/delete screen for free from this.
+   ============================================================ */
+function fieldByKey(mod, key){ return mod.fields.find(f=>f.key===key); }
+
+function moduleDisplayColumns(mod){
+  const cols = [];
+  const titleF = fieldByKey(mod, mod.titleField);
+  if(titleF) cols.push(titleF);
+  if(mod.dateField){
+    const df = fieldByKey(mod, mod.dateField);
+    if(df && cols.indexOf(df)===-1) cols.push(df);
+  }
+  mod.fields.forEach(f=>{
+    if(cols.length >= 4) return;
+    if(cols.indexOf(f) !== -1) return;
+    if(f.type === 'textarea') return;
+    cols.push(f);
+  });
+  return cols;
+}
+
+function statusBadgeClass(v){
+  const s = String(v).toLowerCase();
+  if(['completed','done','approved','resolved','active','held','on track','ok'].indexOf(s) !== -1) return 'badge-ok';
+  if(['cancelled','rejected','delayed'].indexOf(s) !== -1) return 'badge-danger';
+  if(['pending','open','applied','scheduled','planned','assigned','in progress'].indexOf(s) !== -1) return 'badge-warn';
+  return 'badge-neutral';
+}
+function fieldDisplayValue(mod, field, rec){
+  const v = rec[field.key];
+  if(field.type === 'reference') return escapeHtml(refLabel(field.ref, v));
+  if(field.type === 'date') return v ? escapeHtml(fmtDate(v)) : '<span style="color:var(--text-faint)">—</span>';
+  if(v === null || v === undefined || v === '') return '<span style="color:var(--text-faint)">—</span>';
+  if(field.key === 'status') return '<span class="badge ' + statusBadgeClass(v) + '">' + escapeHtml(v) + '</span>';
+  return escapeHtml(String(v));
+}
+
+function renderModuleList(moduleKey){
+  const mod = MODULES[moduleKey];
+  return '<div class="page-head"><div><h2>' + mod.icon + ' ' + escapeHtml(mod.label) + '</h2>'
+    + '<p>' + getActive(moduleKey).length + ' active record(s)</p></div>'
+    + '<button class="btn btn-primary" id="add-record-btn">+ Add ' + escapeHtml(mod.label) + '</button></div>'
+    + '<div class="search-bar"><input class="input" id="module-search" placeholder="Search…">'
+    + '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);">'
+    + '<input type="checkbox" id="show-deleted"> Show deleted</label></div>'
+    + '<div class="table-wrap" id="module-table-wrap"></div>';
+}
+
+function moduleTableHtml(moduleKey, cols, search, showDeleted){
+  const mod = MODULES[moduleKey];
+  let rows = showDeleted ? getCollection(moduleKey) : getActive(moduleKey);
+  if(search){
+    const q = search.toLowerCase();
+    rows = rows.filter(r => JSON.stringify(r).toLowerCase().indexOf(q) !== -1);
+  }
+  rows = rows.slice().sort((a,b)=>{
+    if(mod.dateField) return String(b[mod.dateField]||'').localeCompare(String(a[mod.dateField]||''));
+    return String(b.createdAt||'').localeCompare(String(a.createdAt||''));
+  });
+  if(rows.length === 0) return '<div class="empty">No records yet. Click "Add ' + escapeHtml(mod.label) + '" to create the first one.</div>';
+  let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>';
+  cols.forEach(c=>{ html += '<th style="text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);border-bottom:1px solid var(--border);">' + escapeHtml(c.label) + '</th>'; });
+  html += '<th style="border-bottom:1px solid var(--border);"></th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    html += '<tr data-id="' + r.id + '"' + (r.deleted ? ' style="opacity:.5;"' : '') + '>';
+    cols.forEach(c=>{ html += '<td style="padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + fieldDisplayValue(mod, c, r) + '</td>'; });
+    html += '<td style="padding:8px 12px;border-bottom:1px solid var(--border);"><div class="row-actions">';
+    if(!r.deleted){
+      html += '<button class="btn btn-ghost btn-sm" data-action="edit">Edit</button>';
+      html += '<button class="btn btn-ghost btn-sm" data-action="notes">Notes' + ((r.notes && r.notes.length) ? ' (' + r.notes.length + ')' : '') + '</button>';
+      if(mod.fields.some(f=>f.key==='email')) html += '<button class="btn btn-ghost btn-sm" data-action="email" title="Email">✉️</button>';
+      if(mod.fields.some(f=>f.key==='phone')) html += '<button class="btn btn-ghost btn-sm" data-action="whatsapp" title="WhatsApp">💬</button>';
+      html += '<button class="btn btn-ghost btn-sm" data-action="delete">Delete</button>';
+    }else{
+      html += '<button class="btn btn-ghost btn-sm" data-action="restore">Restore</button>';
+      html += '<button class="btn btn-danger btn-sm" data-action="purge">Purge</button>';
+    }
+    html += '</div></td></tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function wireModuleList(moduleKey){
+  const mod = MODULES[moduleKey];
+  const cols = moduleDisplayColumns(mod);
+  const wrap = document.getElementById('module-table-wrap');
+  const searchEl = document.getElementById('module-search');
+  const showDelEl = document.getElementById('show-deleted');
+  function refreshTable(){ wrap.innerHTML = moduleTableHtml(moduleKey, cols, searchEl.value, showDelEl.checked); }
+  refreshTable();
+  searchEl.addEventListener('input', refreshTable);
+  showDelEl.addEventListener('change', refreshTable);
+  document.getElementById('add-record-btn').addEventListener('click', ()=>openModuleForm(moduleKey, null));
+  wrap.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    const tr = e.target.closest('tr[data-id]');
+    const id = tr.dataset.id;
+    const action = btn.dataset.action;
+    const rec = getRecord(moduleKey, id);
+    if(!rec) return;
+    if(action === 'edit') openModuleForm(moduleKey, id);
+    else if(action === 'notes') openNotesDrawer(moduleKey, id);
+    else if(action === 'email') window.location.href = 'mailto:' + encodeURIComponent(rec.email || '');
+    else if(action === 'whatsapp') window.open(waLink(rec.phone), '_blank');
+    else if(action === 'delete'){
+      if(!confirm('Delete this record? You can restore it later from "Show deleted".')) return;
+      await softDeleteRecord(moduleKey, id); toast('Deleted', 'ok'); refreshTable();
+    }else if(action === 'restore'){
+      await restoreRecord(moduleKey, id); toast('Restored', 'ok'); refreshTable();
+    }else if(action === 'purge'){
+      if(!confirm('Permanently delete this record? This cannot be undone.')) return;
+      await purgeRecord(moduleKey, id); toast('Purged', 'ok'); refreshTable();
+    }
+  });
+}
+
+function fieldInputHtml(mod, field, value){
+  const id = 'f_' + field.key;
+  let v = value;
+  if(v === undefined || v === null) v = (field.default === '__today__' ? todayStr() : (field.default != null ? field.default : ''));
+  if(field.type === 'select'){
+    const opts = (field.options || []).map(o=>'<option value="' + escapeHtml(o) + '"' + (o === v ? ' selected' : '') + '>' + escapeHtml(o) + '</option>').join('');
+    return '<select class="input" id="' + id + '"><option value="">— Select —</option>' + opts + '</select>';
+  }
+  if(field.type === 'textarea') return '<textarea class="input" id="' + id + '">' + escapeHtml(v) + '</textarea>';
+  if(field.type === 'reference'){
+    const refMod = MODULES[field.ref];
+    const opts = getActive(field.ref).map(r=>'<option value="' + r.id + '"' + (r.id === v ? ' selected' : '') + '>' + escapeHtml(r[refMod.titleField] || '(untitled)') + '</option>').join('');
+    return '<select class="input" id="' + id + '"><option value="">— None —</option>' + opts + '</select>';
+  }
+  const typeMap = { text:'text', email:'email', phone:'tel', number:'number', date:'date', time:'time' };
+  return '<input class="input" id="' + id + '" type="' + (typeMap[field.type] || 'text') + '" value="' + escapeHtml(v) + '">';
+}
+
+function notesTabHtml(rec){
+  const notes = rec.notes || [];
+  let html = '<div class="notes-list">';
+  if(notes.length === 0) html += '<div class="empty" style="padding:20px;">No notes yet.</div>';
+  notes.slice().reverse().forEach(n=>{ html += '<div class="note-item"><div class="ts">' + escapeHtml(fmtDateTime(n.at)) + '</div>' + escapeHtml(n.text) + '</div>'; });
+  html += '</div>';
+  html += '<div class="field" style="margin-top:10px;"><label>Add note</label><textarea class="input" id="new-note-text"></textarea></div>';
+  html += '<button class="btn btn-primary btn-sm" id="add-note-btn" type="button">Add Note</button>';
+  return html;
+}
+
+function openModuleForm(moduleKey, id){
+  const mod = MODULES[moduleKey];
+  const rec = id ? getRecord(moduleKey, id) : null;
+  let html = '<h3 style="margin:0 0 4px;">' + (rec ? 'Edit ' : 'Add ') + escapeHtml(mod.label) + '</h3>';
+  if(rec) html += '<div class="drawer-tabs"><div class="drawer-tab active" data-tab="details">Details</div><div class="drawer-tab" data-tab="notes">Notes (' + ((rec.notes || []).length) + ')</div></div>';
+  html += '<div id="tab-details"><form id="record-form">';
+  mod.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : undefined) + '</div>'; });
+  html += '<div class="error-box" id="form-error"></div>';
+  html += '<div style="display:flex;gap:8px;margin-top:6px;"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" id="form-cancel">Cancel</button></div>';
+  html += '</form></div>';
+  if(rec) html += '<div id="tab-notes" class="hidden">' + notesTabHtml(rec) + '</div>';
+  openDrawer(html);
+  wireModuleForm(moduleKey, id);
+}
+function openNotesDrawer(moduleKey, id){
+  openModuleForm(moduleKey, id);
+  const tab = document.querySelector('.drawer-tab[data-tab="notes"]');
+  if(tab) tab.click();
+}
+function wireModuleForm(moduleKey, id){
+  const mod = MODULES[moduleKey];
+  const drawer = document.getElementById('drawer-body');
+  const tabs = drawer.querySelectorAll('.drawer-tab');
+  tabs.forEach(t=>{
+    t.addEventListener('click', ()=>{
+      tabs.forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const dTab = drawer.querySelector('#tab-details'); if(dTab) dTab.classList.toggle('hidden', t.dataset.tab !== 'details');
+      const nTab = drawer.querySelector('#tab-notes'); if(nTab) nTab.classList.toggle('hidden', t.dataset.tab !== 'notes');
+    });
+  });
+  const cancelBtn = document.getElementById('form-cancel');
+  if(cancelBtn) cancelBtn.addEventListener('click', closeDrawer);
+  const form = document.getElementById('record-form');
+  if(form){
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const errEl = document.getElementById('form-error');
+      errEl.textContent = '';
+      const data = {};
+      for(let i=0;i<mod.fields.length;i++){
+        const f = mod.fields[i];
+        const el = document.getElementById('f_' + f.key);
+        let v = el.value;
+        if(f.type === 'number') v = v === '' ? '' : Number(v);
+        if(f.required && (v === '' || v == null)){ errEl.textContent = f.label + ' is required.'; el.focus(); return; }
+        data[f.key] = v;
+      }
+      const btn = form.querySelector('button[type=submit]');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try{
+        if(id) await updateRecord(moduleKey, id, data);
+        else await createRecord(moduleKey, data);
+        toast('Saved', 'ok');
+        closeDrawer();
+        const r = parseRoute();
+        if(r.screen === 'module' && r.moduleKey === moduleKey){ renderRoute(); }
+        else if(r.screen === 'dashboard'){ renderRoute(); }
+      }catch(err){
+        errEl.textContent = err && err.message ? err.message : String(err);
+        btn.disabled = false; btn.textContent = 'Save';
+      }
+    });
+  }
+  const addNoteBtn = document.getElementById('add-note-btn');
+  if(addNoteBtn){
+    addNoteBtn.addEventListener('click', async ()=>{
+      const ta = document.getElementById('new-note-text');
+      const text = ta.value.trim();
+      if(!text) return;
+      addNoteBtn.disabled = true;
+      try{
+        await addNote(moduleKey, id, text);
+        openNotesDrawer(moduleKey, id);
+      }catch(err){ toast('Failed to add note', 'danger'); addNoteBtn.disabled = false; }
+    });
+  }
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+// [collectionKey, dateField, statusField, "done" values to skip, label] — mirrors backend/Code.gs DEADLINE_SOURCES
+const DEADLINE_SOURCES = [
+  ['leave-records', 'fromDate', 'status', ['Rejected'], 'Leave/OD'],
+  ['invigilation-duties', 'date', null, [], 'Invigilation Duty'],
+  ['evaluations', 'deadline', 'status', ['Completed'], 'Evaluation'],
+  ['mentee-meetings', 'date', null, [], 'Mentoring Meeting'],
+  ['lab-exams', 'date', null, [], 'Lab Exam'],
+  ['extra-classes', 'date', null, [], 'Extra Class'],
+  ['research-targets', 'targetDate', 'status', ['Completed'], 'Research Target'],
+  ['project-grants', 'endDate', 'status', ['Closed','Completed'], 'Project/Grant deadline'],
+  ['meetings', 'date', 'status', ['Completed'], 'Meeting'],
+  ['action-items', 'dueDate', 'status', ['Done'], 'Action Item'],
+  ['reminders', 'dueDate', 'status', ['Done'], 'Reminder'],
+  ['office-followups', 'followUpDate', 'status', ['Resolved'], 'Office Follow-up']
+];
+const DOW_NAMES3 = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function upcomingItems(days){
+  const today = todayStr();
+  const end = new Date(Date.now() + days*86400000).toISOString().slice(0,10);
+  const items = [];
+  DEADLINE_SOURCES.forEach(src=>{
+    const key = src[0], dateField = src[1], statusField = src[2], doneValues = src[3], label = src[4];
+    getActive(key).forEach(rec=>{
+      const d = rec[dateField];
+      if(!d || d < today || d > end) return;
+      if(statusField && doneValues.indexOf(rec[statusField]) !== -1) return;
+      const mod = MODULES[key];
+      items.push({ moduleKey:key, label:label, date:d, title: rec[mod.titleField] || '(untitled)' });
+    });
+  });
+  items.sort((a,b)=>a.date.localeCompare(b.date));
+  return items;
+}
+function todaysClasses(){
+  const dow = DOW_NAMES3[new Date().getDay()];
+  return getActive('timetable').filter(t=>t.day===dow && t.status!=='Cancelled')
+    .sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||'')));
+}
+function overdueItems(){
+  const today = todayStr();
+  const items = [];
+  DEADLINE_SOURCES.forEach(src=>{
+    const key = src[0], dateField = src[1], statusField = src[2], doneValues = src[3], label = src[4];
+    if(!dateField) return;
+    getActive(key).forEach(rec=>{
+      const d = rec[dateField];
+      if(!d || d >= today) return;
+      if(statusField && doneValues.indexOf(rec[statusField]) !== -1) return;
+      const mod = MODULES[key];
+      items.push({ moduleKey:key, label:label, date:d, title: rec[mod.titleField] || '(untitled)' });
+    });
+  });
+  items.sort((a,b)=>a.date.localeCompare(b.date));
+  return items;
+}
+function urgencyClass(dateStr){
+  const today = todayStr();
+  if(dateStr < today) return 'urgency-overdue';
+  if(dateStr === today) return 'urgency-today';
+  const soon = new Date(Date.now() + 3*86400000).toISOString().slice(0,10);
+  if(dateStr <= soon) return 'urgency-soon';
+  return 'urgency-later';
+}
+function greeting(){
+  const h = new Date().getHours();
+  if(h < 12) return 'Good morning';
+  if(h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+function startOfWeekStr(){
+  const d = new Date();
+  const day = d.getDay(); // 0=Sun
+  const diffToMon = (day === 0) ? -6 : (1 - day);
+  const mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diffToMon);
+  return mon.toISOString().slice(0,10);
+}
+function relativeTime(iso){
+  if(!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if(min < 1) return 'just now';
+  if(min < 60) return min + 'm ago';
+  const hr = Math.floor(min / 60);
+  if(hr < 24) return hr + 'h ago';
+  const day = Math.floor(hr / 24);
+  if(day < 7) return day + 'd ago';
+  return fmtDate(iso.slice(0,10));
+}
+function recentActivity(limit){
+  const items = [];
+  MODULE_KEYS.forEach(k=>{
+    const mod = MODULES[k];
+    getActive(k).forEach(r=>{
+      const at = r.updatedAt || r.createdAt;
+      if(!at) return;
+      items.push({ moduleKey:k, icon:mod.icon, label:mod.label, title: r[mod.titleField] || '(untitled)', at:at, isNew: r.createdAt === r.updatedAt, color: AREA_COLORS[mod.menu] || 'var(--info)' });
+    });
+  });
+  items.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  return items.slice(0, limit || 8);
+}
+function statCardHtml(icon, num, label, color, trend){
+  return '<div class="stat-card"><div class="stat-icon" style="background:' + color + '22;color:' + color + ';">' + icon + '</div>'
+    + '<div><div class="stat-num">' + num + '</div><div class="stat-label">' + escapeHtml(label) + '</div>'
+    + (trend ? '<div class="stat-trend ' + trend.cls + '">' + escapeHtml(trend.text) + '</div>' : '') + '</div></div>';
+}
+function progressRingHtml(percent, color, label, sub){
+  const p = Math.max(0, Math.min(100, Math.round(percent)));
+  const deg = p * 3.6;
+  const style = 'background:conic-gradient(' + color + ' ' + deg + 'deg, var(--border) ' + deg + 'deg 360deg);';
+  return '<div class="ring-wrap"><div class="ring" style="' + style + '">'
+    + '<div style="width:56px;height:56px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;"><span class="ring-num">' + p + '%</span></div></div>'
+    + '<div><div class="ring-label">' + escapeHtml(label) + '</div><div class="ring-sub">' + escapeHtml(sub) + '</div></div></div>';
+}
+function renderDashboard(){
+  const q = quoteOfTheDay();
+  const classes = todaysClasses();
+  const upcoming = upcomingItems(7);
+  const overdue = overdueItems();
+  const openActions = getActive('action-items').filter(a=>a.status!=='Done').length;
+  const totalActions = getActive('action-items').length;
+  const doneActions = totalActions - openActions;
+  const openReminders = getActive('reminders').filter(r=>r.status!=='Done').length;
+  const pendingLeave = getActive('leave-records').filter(l=>l.status==='Applied').length;
+
+  const weekStart = startOfWeekStr();
+  const classLogThisWeek = getActive('class-log').filter(c=>c.date >= weekStart && c.status==='Held').length;
+  const timetableSlots = getActive('timetable').filter(t=>t.status!=='Cancelled').length;
+  const weekPct = timetableSlots > 0 ? (classLogThisWeek / timetableSlots) * 100 : 0;
+  const actionPct = totalActions > 0 ? (doneActions / totalActions) * 100 : 0;
+
+  const facultyName = (STATE.meta && STATE.meta.facultyName) || '';
+  const now = new Date();
+
+  let html = '<div class="hero"><div class="hero-row">'
+    + '<div><div class="hero-greeting">' + greeting() + (facultyName ? ', ' + escapeHtml(facultyName) : '') + '</div>'
+    + '<div class="hero-sub">' + escapeHtml(DEPARTMENT_NAME) + ' · ' + escapeHtml(INSTITUTION_NAME) + '</div></div>'
+    + '<div class="hero-clock"><div class="time mono" id="hero-clock">' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }) + '</div>'
+    + '<div class="date">' + now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' }) + '</div></div>'
+    + '</div>'
+    + '<div class="quick-actions">'
+    + '<button class="qa-btn" data-qa="work-diary">📔 Log Work Diary</button>'
+    + '<button class="qa-btn" data-qa="timetable">📘 Add Class</button>'
+    + '<button class="qa-btn" data-qa="reminders">🔔 Add Reminder</button>'
+    + '<button class="qa-btn" data-qa="action-items">☑️ Add Action Item</button>'
+    + '</div></div>';
+
+  html += '<div class="quote-card"><div style="font-size:15px;font-style:italic;position:relative;">"' + escapeHtml(q.text) + '"</div><div class="attr">— ' + escapeHtml(q.by) + '</div></div>';
+
+  html += '<div class="grid grid-4" style="margin:16px 0;">'
+    + statCardHtml('📘', classes.length, "Today's Classes", AREA_COLORS.teaching)
+    + statCardHtml('☑️', openActions, 'Open Action Items', AREA_COLORS.meetings, totalActions ? { cls:'flat', text: doneActions + ' of ' + totalActions + ' done' } : null)
+    + statCardHtml('🔔', openReminders, 'Open Reminders', AREA_COLORS.reminders)
+    + statCardHtml('🗓️', pendingLeave, 'Pending Leave/OD', AREA_COLORS.incharge)
+    + '</div>';
+
+  if(overdue.length > 0){
+    html += '<div class="card" style="margin-bottom:16px;border-left:3px solid var(--danger);">'
+      + '<h3 style="color:var(--danger);">⚠️ ' + overdue.length + ' Overdue Item' + (overdue.length>1?'s':'') + '</h3>'
+      + overdue.slice(0,5).map(it=>'<div class="activity-item urgency-overdue" style="padding-left:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span> <span class="activity-time" style="color:var(--danger);">' + escapeHtml(fmtDate(it.date)) + '</span></div>').join('')
+      + '</div>';
+  }
+
+  html += '<div class="grid grid-2">';
+  html += '<div class="card"><h3>📅 Today\'s Schedule</h3>' + (classes.length
+    ? classes.map(c=>'<div style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + AREA_COLORS.teaching + ';font-size:13px;"><b>' + escapeHtml(c.startTime||'') + '–' + escapeHtml(c.endTime||'') + '</b>&nbsp; ' + escapeHtml(c.subject||'') + ' <span style="color:var(--text-dim);">(' + escapeHtml(c.section||'') + ', ' + escapeHtml(c.venue||'') + ')</span></div>').join('')
+    : '<div class="empty">No classes today. Enjoy the breathing room.</div>') + '</div>';
+  html += '<div class="card"><h3>⏰ Upcoming (next 7 days)</h3>' + (upcoming.length
+    ? upcoming.slice(0,10).map(it=>'<div class="' + urgencyClass(it.date) + '" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;gap:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span><span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></div>').join('')
+    : '<div class="empty">Nothing due in the next 7 days.</div>') + '</div>';
+  html += '</div>';
+
+  html += '<div class="grid grid-2" style="margin-top:16px;">';
+  html += '<div class="card"><h3>📈 Progress</h3><div style="display:flex;flex-direction:column;gap:16px;">'
+    + progressRingHtml(actionPct, AREA_COLORS.meetings, 'Action Items Closed', doneActions + ' of ' + totalActions + ' total')
+    + progressRingHtml(weekPct, AREA_COLORS.teaching, 'Classes Logged This Week', classLogThisWeek + ' of ' + timetableSlots + ' weekly slots')
+    + '</div></div>';
+  const activity = recentActivity(8);
+  html += '<div class="card"><h3>🕒 Recent Activity</h3><div class="activity-feed">' + (activity.length
+    ? activity.map(a=>'<div class="activity-item"><span class="activity-dot" style="background:' + a.color + ';"></span>'
+      + '<span style="flex:1;">' + a.icon + ' <a href="#/module/' + a.moduleKey + '">' + escapeHtml(a.label) + '</a>: ' + escapeHtml(a.title) + (a.isNew ? ' <span class="badge badge-ok" style="padding:1px 6px;">new</span>' : '') + '</span>'
+      + '<span class="activity-time">' + relativeTime(a.at) + '</span></div>').join('')
+    : '<div class="empty">No activity yet — start by adding a record in any module.</div>') + '</div></div>';
+  html += '</div>';
+
+  return html;
+}
+function wireDashboard(){
+  document.querySelectorAll('[data-qa]').forEach(btn=>{
+    btn.addEventListener('click', ()=>openModuleForm(btn.dataset.qa, null));
+  });
+}
+
+/* ============================================================
+   TIMETABLE — weekly grid view (special-cased instead of the
+   generic table, since a Mon–Sat x time grid reads far better
+   than a flat list for a recurring weekly schedule).
+   ============================================================ */
+function renderTimetableScreen(){
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const rows = getActive('timetable').slice().sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||'')));
+  const slots = Array.from(new Set(rows.map(r=>(r.startTime||'')+'–'+(r.endTime||'')))).sort();
+  let html = '<div class="page-head"><div><h2>📘 Timetable</h2><p>Weekly recurring class schedule</p></div>'
+    + '<button class="btn btn-primary" id="add-record-btn">+ Add Class</button></div>';
+  if(slots.length === 0){
+    html += '<div class="empty">No timetable entries yet. Click "Add Class" to create your first slot.</div>';
+  }else{
+    html += '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;"><thead><tr>'
+      + '<th style="padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:11px;color:var(--text-dim);">Time</th>'
+      + days.map(d=>'<th style="padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:11px;color:var(--text-dim);">' + d + '</th>').join('')
+      + '</tr></thead><tbody>';
+    slots.forEach(slot=>{
+      html += '<tr><td class="mono" style="padding:10px;border-bottom:1px solid var(--border);font-size:12px;white-space:nowrap;">' + escapeHtml(slot) + '</td>';
+      days.forEach(d=>{
+        const cell = rows.find(r=>(r.startTime||'')+'–'+(r.endTime||'') === slot && r.day === d);
+        if(cell){
+          html += '<td data-id="' + cell.id + '" data-action="edit-cell" style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;vertical-align:top;font-size:12px;'
+            + (cell.status==='Cancelled' ? 'opacity:.5;text-decoration:line-through;' : '') + '">'
+            + '<b>' + escapeHtml(cell.subject||'') + '</b><br><span style="color:var(--text-dim);">' + escapeHtml(cell.section||'') + (cell.venue?(' · '+escapeHtml(cell.venue)):'') + '</span></td>';
+        }else{
+          html += '<td style="padding:8px;border-bottom:1px solid var(--border);"></td>';
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+  }
+  html += '<div style="margin-top:16px;"><h3 style="font-size:13.5px;color:var(--text-dim);margin-bottom:8px;">All entries (list view)</h3>'
+    + '<div class="search-bar"><input class="input" id="module-search" placeholder="Search…">'
+    + '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);"><input type="checkbox" id="show-deleted"> Show deleted</label></div>'
+    + '<div class="table-wrap" id="module-table-wrap"></div></div>';
+  return html;
+}
+function wireTimetableScreen(){
+  document.getElementById('add-record-btn').addEventListener('click', ()=>openModuleForm('timetable', null));
+  document.querySelectorAll('[data-action="edit-cell"]').forEach(td=>{
+    td.addEventListener('click', ()=>openModuleForm('timetable', td.dataset.id));
+  });
+  const cols = moduleDisplayColumns(MODULES.timetable);
+  const wrap = document.getElementById('module-table-wrap');
+  const searchEl = document.getElementById('module-search');
+  const showDelEl = document.getElementById('show-deleted');
+  function refreshTable(){ wrap.innerHTML = moduleTableHtml('timetable', cols, searchEl.value, showDelEl.checked); }
+  refreshTable();
+  searchEl.addEventListener('input', refreshTable);
+  showDelEl.addEventListener('change', refreshTable);
+  wrap.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('[data-action]');
+    if(!btn) return;
+    const tr = e.target.closest('tr[data-id]');
+    const id = tr.dataset.id;
+    const action = btn.dataset.action;
+    const rec = getRecord('timetable', id);
+    if(!rec) return;
+    if(action === 'edit') openModuleForm('timetable', id);
+    else if(action === 'notes') openNotesDrawer('timetable', id);
+    else if(action === 'delete'){ if(!confirm('Delete this record?')) return; await softDeleteRecord('timetable', id); toast('Deleted','ok'); refreshTable(); }
+    else if(action === 'restore'){ await restoreRecord('timetable', id); toast('Restored','ok'); refreshTable(); }
+    else if(action === 'purge'){ if(!confirm('Permanently delete this record? This cannot be undone.')) return; await purgeRecord('timetable', id); toast('Purged','ok'); refreshTable(); }
+  });
+}
+
+/* ============================================================
+   ANALYTICS — Chart.js pie/bar charts across the whole dataset.
+   ============================================================ */
+let ANALYTICS_CHARTS = [];
+function destroyCharts(){ ANALYTICS_CHARTS.forEach(c=>{ try{ c.destroy(); }catch(e){} }); ANALYTICS_CHARTS = []; }
+function countBy(rows, field){
+  const map = {};
+  rows.forEach(r=>{ const v = r[field] || '(blank)'; map[v] = (map[v]||0) + 1; });
+  return map;
+}
+function renderAnalytics(){
+  if(typeof Chart === 'undefined'){
+    return '<div class="page-head"><div><h2>📈 Analytics</h2><p>A quick visual summary of your activity data</p></div></div>'
+      + '<div class="error-box" style="margin-top:0;">Chart library failed to load (no internet connection to the CDN right now). '
+      + 'Charts need an internet connection the first time they load on a device; everything else in FAMS+ still works offline.</div>';
+  }
+  return '<div class="page-head"><div><h2>📈 Analytics</h2><p>A quick visual summary of your activity data</p></div></div>'
+    + '<div class="grid grid-2">'
+    + '<div class="card"><h3>Weekly Teaching Load (classes/week)</h3><canvas id="chart-teaching" height="220"></canvas></div>'
+    + '<div class="card"><h3>Activity Mix (records per area)</h3><canvas id="chart-mix" height="220"></canvas></div>'
+    + '<div class="card"><h3>Leave/OD Status</h3><canvas id="chart-leave" height="220"></canvas></div>'
+    + '<div class="card"><h3>Action Items &amp; Reminders Status</h3><canvas id="chart-actions" height="220"></canvas></div>'
+    + '</div>';
+}
+function wireAnalytics(){
+  if(typeof Chart === 'undefined') return; // renderAnalytics() already showed the fallback message — nothing to wire
+  destroyCharts();
+  const palette = ['#0f1f3d','#c99a3c','#2a63c9','#1f8a52','#b9741c','#b3273b','#4b2e83','#8a92a6'];
+
+  const teachingBySection = countBy(getActive('timetable'), 'subject');
+  ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-teaching'), {
+    type:'bar',
+    data:{ labels:Object.keys(teachingBySection), datasets:[{ label:'Classes/week', data:Object.values(teachingBySection), backgroundColor:'#2a63c9' }] },
+    options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+  }));
+
+  const areaLabels = ['Teaching','Exams','Mentoring','Laboratory','Extra Classes','Research','Projects','In-Charge','Committees','Meetings','Reminders','Responsibilities'];
+  const areaMenus = ['teaching','exams','mentoring','laboratory','extra-classes','research','projects','incharge','committees','meetings','reminders','responsibilities'];
+  const areaCounts = areaMenus.map(m => MODULE_KEYS.filter(k=>MODULES[k].menu===m).reduce((sum,k)=>sum+getActive(k).length, 0));
+  ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-mix'), {
+    type:'pie',
+    data:{ labels:areaLabels, datasets:[{ data:areaCounts, backgroundColor:palette.concat(palette) }] },
+    options:{ plugins:{ legend:{ position:'right', labels:{ boxWidth:11, font:{ size:11 } } } } }
+  }));
+
+  const leaveByStatus = countBy(getActive('leave-records'), 'status');
+  ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-leave'), {
+    type:'doughnut',
+    data:{ labels:Object.keys(leaveByStatus), datasets:[{ data:Object.values(leaveByStatus), backgroundColor:palette }] },
+    options:{ plugins:{ legend:{ position:'right', labels:{ boxWidth:11, font:{ size:11 } } } } }
+  }));
+
+  const actionsOpen = getActive('action-items').filter(a=>a.status!=='Done').length;
+  const actionsDone = getActive('action-items').filter(a=>a.status==='Done').length;
+  const remOpen = getActive('reminders').filter(r=>r.status!=='Done').length;
+  const remDone = getActive('reminders').filter(r=>r.status==='Done').length;
+  ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-actions'), {
+    type:'bar',
+    data:{ labels:['Action Items','Reminders'], datasets:[
+      { label:'Open', data:[actionsOpen, remOpen], backgroundColor:'#b9741c' },
+      { label:'Done', data:[actionsDone, remDone], backgroundColor:'#1f8a52' }
+    ]},
+    options:{ plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+  }));
+}
+
+/* ============================================================
+   REPORTS — export any module (or everything) to CSV.
+   ============================================================ */
+function toCsvValue(v){
+  const s = v == null ? '' : String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function collectionToCsv(moduleKey){
+  const mod = MODULES[moduleKey];
+  const cols = mod.fields.map(f=>f.key);
+  const header = ['id'].concat(cols).concat(['createdAt','updatedAt','deleted']);
+  const lines = [header.join(',')];
+  getCollection(moduleKey).forEach(r=>{
+    const row = [r.id].concat(cols.map(c=>toCsvValue(r[c]))).concat([r.createdAt||'', r.updatedAt||'', r.deleted?'1':'0']);
+    lines.push(row.join(','));
+  });
+  return lines.join('\n');
+}
+function downloadText(filename, text, mime){
+  const blob = new Blob([text], { type: mime || 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function renderReports(){
+  let html = '<div class="page-head"><div><h2>📤 Reports</h2><p>Export any module\'s data as a CSV file</p></div></div>';
+  html += '<div class="card"><h3>Export a single module</h3><div class="grid grid-3" id="report-buttons">';
+  MODULE_KEYS.forEach(k=>{
+    html += '<button class="btn btn-ghost btn-sm" data-export="' + k + '" style="justify-content:flex-start;">' + MODULES[k].icon + ' ' + escapeHtml(MODULES[k].label) + '</button>';
+  });
+  html += '</div></div>';
+  html += '<div class="card" style="margin-top:16px;"><h3>Export everything</h3><p style="font-size:13px;color:var(--text-dim);">Downloads one JSON file containing every module\'s data — the same format used for the daily Drive backup.</p>'
+    + '<button class="btn btn-primary" id="export-all-json">Download Full Backup (JSON)</button></div>';
+  return html;
+}
+function wireReports(){
+  document.getElementById('report-buttons').addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-export]');
+    if(!btn) return;
+    const key = btn.dataset.export;
+    downloadText('fams-plus-' + key + '-' + todayStr() + '.csv', collectionToCsv(key), 'text/csv');
+    toast('Exported ' + MODULES[key].label, 'ok');
+  });
+  document.getElementById('export-all-json').addEventListener('click', ()=>{
+    const dump = { exportedAt: nowIso(), data: STATE.data, meta: { facultyName: STATE.meta.facultyName } };
+    downloadText('fams-plus-full-backup-' + todayStr() + '.json', JSON.stringify(dump, null, 2), 'application/json');
+    toast('Full backup downloaded', 'ok');
+  });
+}
+
+/* ============================================================
+   CALENDAR — a simple month view aggregating every module's date
+   field into one place.
+   ============================================================ */
+let CAL_CURSOR = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+function calendarEventsForMonth(year, month){
+  const events = {};
+  MODULE_KEYS.forEach(k=>{
+    const mod = MODULES[k];
+    if(!mod.dateField) return;
+    getActive(k).forEach(r=>{
+      const d = r[mod.dateField];
+      if(!d) return;
+      const dt = new Date(d + (d.length<=10 ? 'T00:00:00' : ''));
+      if(isNaN(dt)) return;
+      if(dt.getFullYear() !== year || dt.getMonth() !== month) return;
+      const day = dt.getDate();
+      (events[day] = events[day] || []).push({ moduleKey:k, label: mod.label, icon: mod.icon, title: r[mod.titleField] || '(untitled)' });
+    });
+  });
+  return events;
+}
+function renderCalendar(){
+  const year = CAL_CURSOR.getFullYear(), month = CAL_CURSOR.getMonth();
+  const monthName = CAL_CURSOR.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const events = calendarEventsForMonth(year, month);
+  const todayKey = todayStr();
+
+  let html = '<div class="page-head"><div><h2>🗓️ Calendar — ' + escapeHtml(monthName) + '</h2><p>Every module\'s dated items in one view</p></div>'
+    + '<div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm" id="cal-prev">‹ Prev</button><button class="btn btn-ghost btn-sm" id="cal-today">Today</button><button class="btn btn-ghost btn-sm" id="cal-next">Next ›</button></div></div>';
+  html += '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;table-layout:fixed;">';
+  html += '<thead><tr>' + ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<th style="padding:8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-dim);">'+d+'</th>').join('') + '</tr></thead><tbody><tr>';
+  for(let i=0;i<firstDow;i++) html += '<td style="border:1px solid var(--border);height:90px;background:#fafbfd;"></td>';
+  let col = firstDow;
+  for(let day=1; day<=daysInMonth; day++){
+    const dateKey = year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const dayEvents = events[day] || [];
+    html += '<td style="border:1px solid var(--border);height:90px;vertical-align:top;padding:4px;font-size:11px;' + (dateKey===todayKey?'background:#eef3fc;':'') + '">'
+      + '<div style="font-weight:700;margin-bottom:3px;">' + day + '</div>'
+      + dayEvents.slice(0,3).map(ev=>'<div style="background:#eef0f3;border-radius:4px;padding:1px 4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + escapeHtml(ev.label+': '+ev.title) + '">' + ev.icon + ' ' + escapeHtml(ev.title) + '</div>').join('')
+      + (dayEvents.length>3 ? '<div style="color:var(--text-faint);">+' + (dayEvents.length-3) + ' more</div>' : '')
+      + '</td>';
+    col++;
+    if(col === 7){ html += '</tr><tr>'; col = 0; }
+  }
+  if(col !== 0){ for(let i=col;i<7;i++) html += '<td style="border:1px solid var(--border);background:#fafbfd;"></td>'; html += '</tr>'; }
+  html += '</tbody></table></div>';
+  setTimeout(wireCalendar, 0);
+  return html;
+}
+function wireCalendar(){
+  const prev = document.getElementById('cal-prev'), next = document.getElementById('cal-next'), today = document.getElementById('cal-today');
+  if(!prev) return;
+  prev.addEventListener('click', ()=>{ CAL_CURSOR = new Date(CAL_CURSOR.getFullYear(), CAL_CURSOR.getMonth()-1, 1); renderRoute(); });
+  next.addEventListener('click', ()=>{ CAL_CURSOR = new Date(CAL_CURSOR.getFullYear(), CAL_CURSOR.getMonth()+1, 1); renderRoute(); });
+  today.addEventListener('click', ()=>{ CAL_CURSOR = new Date(new Date().getFullYear(), new Date().getMonth(), 1); renderRoute(); });
+}
+
+/* ============================================================
+   ADMIN & SETTINGS
+   ============================================================ */
+function renderAdmin(){
+  const meta = STATE.meta, cfg = STATE.config;
+  let html = '<div class="page-head"><div><h2>⚙️ Admin &amp; Settings</h2><p>Profile, academic term, backend connection, automation &amp; mail merge</p></div></div>';
+
+  html += '<div class="grid grid-2">';
+  html += '<div class="card"><h3>👤 Profile</h3>'
+    + '<div class="field"><label>Full Name</label><input class="input" id="adm-name" value="' + escapeHtml(meta.facultyName||'') + '"></div>'
+    + '<div class="field"><label>Email</label><input class="input" id="adm-email" value="' + escapeHtml(meta.email||'') + '"></div>'
+    + '<div class="field"><label>Phone</label><input class="input" id="adm-phone" value="' + escapeHtml(meta.phone||'') + '"></div>'
+    + '<button class="btn btn-primary btn-sm" id="adm-save-profile">Save Profile</button></div>';
+
+  html += '<div class="card"><h3>🔑 Change PIN</h3>'
+    + '<div class="field"><label>Current PIN</label><input class="input" id="adm-pin-old" type="password" inputmode="numeric" maxlength="6"></div>'
+    + '<div class="grid grid-2"><div class="field"><label>New PIN</label><input class="input" id="adm-pin-new" type="password" inputmode="numeric" maxlength="6"></div>'
+    + '<div class="field"><label>Confirm New PIN</label><input class="input" id="adm-pin-new2" type="password" inputmode="numeric" maxlength="6"></div></div>'
+    + '<div class="error-box" id="adm-pin-error"></div>'
+    + '<button class="btn btn-primary btn-sm" id="adm-save-pin">Update PIN</button></div>';
+
+  html += '<div class="card"><h3>🎓 Academic Term</h3>'
+    + '<div class="field"><label>Academic Year (e.g. 2026-27)</label><input class="input" id="adm-year" value="' + escapeHtml(cfg.academicYear||'') + '"></div>'
+    + '<div class="field"><label>Semester / Term</label><input class="input" id="adm-sem" value="' + escapeHtml(cfg.semester||'') + '"></div>'
+    + '<button class="btn btn-primary btn-sm" id="adm-save-term">Save Term</button></div>';
+
+  html += '<div class="card"><h3>📧 Email &amp; Automation</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">Send a test email to confirm the backend can send mail (and check whether it\'s using your verified office alias — see SETUP.md §6).</p>'
+    + '<div class="field"><label>Send test email to</label><input class="input" id="adm-test-email" value="' + escapeHtml(meta.email||'') + '"></div>'
+    + '<button class="btn btn-ghost btn-sm" id="adm-send-test">Send Test Email</button>'
+    + '<div class="error-box info" id="adm-test-result"></div>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">To turn on the daily digest, deadline reminders and daily backup, open the Apps Script editor for your backend and run <code>setUpAllTriggers</code> once (see SETUP.md §7).</p></div>';
+
+  html += '</div>';
+
+  html += '<div class="card" style="margin-top:16px;"><h3>✉️ Mail Merge</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">Send the same templated email to a list of people. Use <code>{{name}}</code>, <code>{{email}}</code> etc. as placeholders — they\'ll be substituted per recipient from the fields below.</p>'
+    + '<div class="field"><label>Recipients — one per line, format: <span class="mono">name, email</span></label><textarea class="input" id="mm-recipients" placeholder="Jane Doe, jane@example.com"></textarea></div>'
+    + '<div class="field"><label>Subject</label><input class="input" id="mm-subject" placeholder="Subject with {{name}} placeholders"></div>'
+    + '<div class="field"><label>Body</label><textarea class="input" id="mm-body" placeholder="Dear {{name}}, ..."></textarea></div>'
+    + '<button class="btn btn-primary btn-sm" id="mm-send">Send Mail Merge</button>'
+    + '<div id="mm-result" style="margin-top:10px;"></div></div>';
+
+  html += '<div class="card" style="margin-top:16px;"><h3>🔌 Backend Connection</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">Web App URL: <span class="mono">' + escapeHtml(DATA_API_URL) + '</span></p>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">To point this app at a different backend or change the shared key, edit <code>DATA_API_URL</code> / <code>APP_KEY</code> near the top of index.html\'s &lt;script&gt; section.</p></div>';
+
+  return html;
+}
+function wireAdmin(){
+  document.getElementById('adm-save-profile').addEventListener('click', async ()=>{
+    STATE.meta.facultyName = document.getElementById('adm-name').value.trim();
+    STATE.meta.email = document.getElementById('adm-email').value.trim();
+    STATE.meta.phone = document.getElementById('adm-phone').value.trim();
+    await saveMeta();
+    toast('Profile saved', 'ok');
+    renderRoute();
+  });
+  document.getElementById('adm-save-pin').addEventListener('click', async ()=>{
+    const errEl = document.getElementById('adm-pin-error');
+    errEl.textContent = '';
+    const oldPin = document.getElementById('adm-pin-old').value.trim();
+    const newPin = document.getElementById('adm-pin-new').value.trim();
+    const newPin2 = document.getElementById('adm-pin-new2').value.trim();
+    if(!/^[0-9]{4,6}$/.test(newPin)){ errEl.textContent = 'New PIN must be 4–6 digits.'; return; }
+    if(newPin !== newPin2){ errEl.textContent = 'New PINs do not match.'; return; }
+    try{ await doChangePin(oldPin, newPin); toast('PIN updated', 'ok'); document.getElementById('adm-pin-old').value=''; document.getElementById('adm-pin-new').value=''; document.getElementById('adm-pin-new2').value=''; }
+    catch(err){ errEl.textContent = err.message || String(err); }
+  });
+  document.getElementById('adm-save-term').addEventListener('click', async ()=>{
+    STATE.config.academicYear = document.getElementById('adm-year').value.trim();
+    STATE.config.semester = document.getElementById('adm-sem').value.trim();
+    await saveConfig();
+    toast('Academic term saved', 'ok');
+  });
+  document.getElementById('adm-send-test').addEventListener('click', async ()=>{
+    const resEl = document.getElementById('adm-test-result');
+    const to = document.getElementById('adm-test-email').value.trim();
+    if(!to){ resEl.textContent = 'Enter an email address first.'; return; }
+    resEl.textContent = 'Sending…';
+    const res = await apiTestEmail(to);
+    resEl.textContent = res.ok ? ('Sent as ' + (res.sentAs || '(unknown)') + '. Remaining daily quota: ' + res.remainingQuota) : ('Failed: ' + (res.error || 'unknown error'));
+  });
+  document.getElementById('mm-send').addEventListener('click', async ()=>{
+    const resEl = document.getElementById('mm-result');
+    const lines = document.getElementById('mm-recipients').value.split('\n').map(l=>l.trim()).filter(Boolean);
+    const recipients = lines.map(l=>{ const parts = l.split(','); return { name:(parts[0]||'').trim(), email:(parts[1]||'').trim() }; });
+    const subject = document.getElementById('mm-subject').value;
+    const body = document.getElementById('mm-body').value;
+    if(recipients.length === 0){ resEl.textContent = 'Add at least one recipient.'; return; }
+    resEl.textContent = 'Sending to ' + recipients.length + ' recipient(s)…';
+    const res = await apiMailMerge(recipients, subject, body);
+    if(!res.ok){ resEl.textContent = 'Failed: ' + (res.error || 'unknown error'); return; }
+    const okCount = res.results.filter(r=>r.ok).length;
+    resEl.innerHTML = okCount + ' / ' + res.results.length + ' sent successfully.' + res.results.filter(r=>!r.ok).map(r=>'<div style="color:var(--danger);font-size:12px;">' + escapeHtml(r.email||r.name) + ': ' + escapeHtml(r.error||'failed') + '</div>').join('');
+  });
+}
+
+/* ============================================================
+   PWA — installability + offline service worker
+   ============================================================ */
+let deferredInstallPrompt = null;
+let installAvailable = false;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  installAvailable = true;
+  const btn = document.getElementById('install-btn');
+  if(btn) btn.classList.remove('hidden');
+});
+window.addEventListener('appinstalled', ()=>{ deferredInstallPrompt = null; installAvailable = false; toast('FAMS+ installed', 'ok'); });
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(function(){ /* ok to fail on plain http/local preview */ }); });
+}
+
+/* ============================================================
+   GO
+   ============================================================ */
+boot();
+</script>
+</body>
+</html>
