@@ -18,6 +18,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --navy:#0f1f3d; --navy-2:#16264a; --navy-3:#1c2b4a;
@@ -61,35 +62,70 @@ a{color:var(--info);text-decoration:none;}
 button{font-family:inherit;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 .content{animation:fadeUp .28s ease both;}
+.grid>.stat-card,.grid>.card{animation:fadeUp .34s ease both;}
+.grid>.stat-card:nth-child(1),.grid>.card:nth-child(1){animation-delay:.01s;}
+.grid>.stat-card:nth-child(2),.grid>.card:nth-child(2){animation-delay:.07s;}
+.grid>.stat-card:nth-child(3),.grid>.card:nth-child(3){animation-delay:.13s;}
+.grid>.stat-card:nth-child(4),.grid>.card:nth-child(4){animation-delay:.19s;}
 
 /* ---------- layout shell ---------- */
 #app{display:flex;min-height:100vh;}
 .sidebar{width:254px;flex:0 0 254px;background:linear-gradient(190deg,var(--navy) 0%,#0a1730 100%);color:#e8ecf7;display:flex;flex-direction:column;
-  position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:40;transition:transform .2s;box-shadow:2px 0 18px rgba(0,0,0,.12);}
+  position:fixed;top:0;left:0;bottom:0;overflow:visible;z-index:40;transition:transform .2s;box-shadow:2px 0 18px rgba(0,0,0,.12);}
 .sidebar-brand{display:flex;align-items:center;gap:11px;padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);}
 .sidebar-brand svg{flex:0 0 auto;}
 .sidebar-brand .name{font-weight:800;font-size:18px;letter-spacing:.3px;line-height:1.15;}
 .sidebar-brand .name span{color:var(--gold-2);}
 .sidebar-brand .name .tag{font-weight:500;font-size:10.5px;letter-spacing:.02em;color:#8b96b8;margin-top:2px;}
 .sidebar-nav{flex:1;padding:10px 8px;overflow-y:auto;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#c7cfe6;
+.nav-item{display:flex;align-items:center;gap:10px;padding:7.5px 12px;border-radius:8px;color:#c7cfe6;
   cursor:pointer;font-size:13.5px;font-weight:500;margin-bottom:2px;transition:background .12s,color .12s,transform .12s;}
 .nav-item:hover{background:rgba(255,255,255,.07);color:#fff;transform:translateX(2px);}
 .nav-item.active{background:linear-gradient(90deg,rgba(201,154,60,.24),rgba(201,154,60,.06));color:#fff;box-shadow:inset 2px 0 0 var(--gold-2);}
 .nav-item .chip{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;
   font-size:13px;flex:0 0 auto;background:rgba(255,255,255,.08);}
-.nav-section{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#7d87a5;padding:14px 12px 4px;}
+.nav-section{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#7d87a5;padding:9px 12px 3px;}
+.nav-category{margin-bottom:2px;}
+.nav-cat-head{cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px 9px 12px;font-size:12px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#aab3cf;user-select:none;transition:color .12s;
+  border-radius:8px;}
+.nav-cat-head:hover{color:#fff;background:rgba(255,255,255,.05);}
+.nav-cat-icon{font-size:13px;}
+.nav-cat-chevron{margin-left:auto;font-size:10px;transition:transform .2s;color:#7d87a5;}
+.nav-category.expanded .nav-cat-chevron{transform:rotate(90deg);}
+.nav-cat-body{overflow:hidden;max-height:0;opacity:0;transition:max-height .25s ease,opacity .2s ease;}
+.nav-category.expanded .nav-cat-body{max-height:1400px;opacity:1;}
+#app.collapsed .nav-cat-label{display:none;}
+#app.collapsed .nav-cat-chevron{display:none;}
+#app.collapsed .nav-cat-head{justify-content:center;padding:10px 0;}
+#app.collapsed .nav-cat-body{max-height:none !important;opacity:1 !important;}
 .sidebar-footer{padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#9aa4c2;}
-.main{flex:1;margin-left:254px;min-height:100vh;display:flex;flex-direction:column;}
+.main{flex:1;margin-left:254px;min-height:100vh;display:flex;flex-direction:column;transition:margin-left .2s;}
 .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:12px 22px;display:flex;
   align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30;}
 .topbar .clock{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-dim);}
-.content{flex:1;padding:22px;max-width:1240px;width:100%;}
+.content{flex:1;padding:22px 28px 40px;width:100%;}
 .menu-toggle{display:none;}
+.collapse-toggle{position:absolute;top:20px;right:-12px;width:24px;height:24px;border-radius:50%;background:var(--navy);
+  border:1px solid rgba(255,255,255,.25);color:#e8ecf7;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:12px;z-index:45;transition:.15s;box-shadow:var(--shadow);}
+.collapse-toggle:hover{background:var(--gold);color:var(--navy);}
+#app.collapsed .sidebar{width:74px;flex:0 0 74px;}
+#app.collapsed .main{margin-left:74px;}
+#app.collapsed .sidebar-brand{justify-content:center;padding:20px 8px;}
+#app.collapsed .sidebar-brand .name{display:none;}
+#app.collapsed .nav-item{justify-content:center;padding:9px 0;}
+#app.collapsed .nav-item span:not(.chip){display:none;}
+#app.collapsed .nav-section{display:none;}
+#app.collapsed .sidebar-footer{display:none;}
+#app.collapsed .collapse-toggle{transform:rotate(180deg);}
+.fullscreen-toggle{cursor:pointer;}
 @media (max-width:900px){
   .sidebar{transform:translateX(-100%);}
   .sidebar.open{transform:translateX(0);}
   .main{margin-left:0;}
+  #app.collapsed .main{margin-left:0;}
+  .collapse-toggle{display:none;}
   .menu-toggle{display:flex;}
 }
 
@@ -202,15 +238,9 @@ tr:hover td{background:#fafbfd;}
 .brand-h1{font-weight:800;font-size:26px;margin:10px 0 4px;color:var(--navy);}
 .brand-h1 span{color:var(--gold);}
 .auth-sub{font-size:12.5px;color:var(--text-dim);line-height:1.5;}
-.pin-dots{display:flex;justify-content:center;gap:12px;margin:18px 0 6px;}
-.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:.15s;}
-.pin-dot.filled{background:var(--navy);border-color:var(--navy);}
-.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 4px;}
-.key{padding:14px 0;font-size:19px;font-weight:600;color:var(--text);background:#fbfcfe;
-  border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:.12s;user-select:none;}
-.key:hover{background:#f1f3f9;border-color:var(--navy);}
-.key:active{transform:scale(0.94);background:#e8ecf7;}
-.key-ghost{font-size:12.5px;font-weight:600;color:var(--text-dim);}
+.pin-input{text-align:center;font-size:30px;letter-spacing:16px;font-family:'IBM Plex Mono',monospace;
+  padding:16px 10px 16px 26px;font-weight:600;margin-top:22px;}
+.pin-input:disabled{background:#f1f3f9;color:var(--text-faint);}
 .error-box{color:var(--danger);font-size:13px;margin-top:12px;min-height:16px;}
 .error-box.info{color:var(--info);}
 
@@ -228,9 +258,15 @@ tr:hover td{background:#fafbfd;}
 .modal{background:var(--card);border-radius:14px;box-shadow:var(--shadow-lg);max-width:600px;width:100%;
   max-height:88vh;overflow-y:auto;padding:22px;}
 .modal h3{margin:0 0 14px;}
-.drawer-overlay{position:fixed;inset:0;background:rgba(15,25,60,.4);z-index:90;display:flex;justify-content:flex-end;}
-.drawer-overlay.hidden{display:none;}
-.drawer{background:var(--card);width:460px;max-width:94vw;height:100%;overflow-y:auto;padding:22px;box-shadow:var(--shadow-lg);}
+.drawer-overlay{position:fixed;inset:0;background:rgba(15,25,60,.42);z-index:90;display:flex;justify-content:flex-end;
+  opacity:0;pointer-events:none;transition:opacity .22s ease;}
+.drawer-overlay.visible{opacity:1;pointer-events:auto;}
+.drawer{background:var(--card);width:520px;max-width:94vw;height:100%;overflow-y:auto;padding:26px 30px 26px 26px;box-shadow:-8px 0 30px rgba(15,25,60,.22);
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.19,1,.22,1);position:relative;}
+.drawer-overlay.visible .drawer{transform:translateX(0);}
+.drawer-close{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;background:#f1f3f9;
+  border:none;color:var(--text-dim);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;}
+.drawer-close:hover{background:var(--danger-wash);color:var(--danger);transform:rotate(90deg);}
 .drawer-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px;}
 .drawer-tab{padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;}
 .drawer-tab.active{color:var(--navy);border-color:var(--navy);}
@@ -257,7 +293,7 @@ tr:hover td{background:#fafbfd;}
 <div id="root"></div>
 <div id="toast-wrap" class="toast-wrap"></div>
 <div id="modal-overlay" class="overlay hidden"><div id="modal-body" class="modal"></div></div>
-<div id="drawer-overlay" class="drawer-overlay hidden"><div id="drawer-body" class="drawer"></div></div>
+<div id="drawer-overlay" class="drawer-overlay"><div class="drawer"><button class="drawer-close" id="drawer-close-btn" title="Close">✕</button><div id="drawer-body"></div></div></div>
 
 <script>
 /* ============================================================
@@ -268,7 +304,7 @@ const DATA_API_URL = 'https://script.google.com/macros/s/AKfycbxCl_KOvuMoln05bxg
 const APP_KEY = 'change-this-to-your-own-random-string-2026';
 const APP_NAME = 'FAMS+';
 const INSTITUTION_NAME = 'CHRIST (Deemed to be University), Bengaluru';
-const DEPARTMENT_NAME = 'Dept. of Physics and Electronics';
+const DEPARTMENT_NAME = 'Department of Physics and Electronics';
 
 function backendConfigured(){ return typeof DATA_API_URL === 'string' && DATA_API_URL.startsWith('http'); }
 
@@ -346,10 +382,23 @@ function toast(msg, kind){
 }
 function closeModal(){ document.getElementById('modal-overlay').classList.add('hidden'); document.getElementById('modal-body').innerHTML=''; }
 function openModal(html){ document.getElementById('modal-body').innerHTML = html; document.getElementById('modal-overlay').classList.remove('hidden'); }
-function closeDrawer(){ document.getElementById('drawer-overlay').classList.add('hidden'); document.getElementById('drawer-body').innerHTML=''; }
-function openDrawer(html){ document.getElementById('drawer-body').innerHTML = html; document.getElementById('drawer-overlay').classList.remove('hidden'); }
+function closeDrawer(){
+  document.getElementById('drawer-overlay').classList.remove('visible');
+  setTimeout(()=>{ document.getElementById('drawer-body').innerHTML = ''; }, 220);
+}
+function openDrawer(html){
+  document.getElementById('drawer-body').innerHTML = html;
+  document.getElementById('drawer-overlay').classList.add('visible');
+}
 document.getElementById('modal-overlay').addEventListener('click', e=>{ if(e.target.id==='modal-overlay') closeModal(); });
 document.getElementById('drawer-overlay').addEventListener('click', e=>{ if(e.target.id==='drawer-overlay') closeDrawer(); });
+document.getElementById('drawer-close-btn').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){
+    if(document.getElementById('drawer-overlay').classList.contains('visible')) closeDrawer();
+    else if(!document.getElementById('modal-overlay').classList.contains('hidden')) closeModal();
+  }
+});
 
 window.addEventListener('online', ()=>document.getElementById('offline-banner').classList.add('hidden'));
 window.addEventListener('offline', ()=>document.getElementById('offline-banner').classList.remove('hidden'));
@@ -413,6 +462,7 @@ const MAIN_MENUS = [
   { key:'analytics', label:'Analytics' },
   { key:'reports', label:'Reports' },
   { key:'calendar', label:'Calendar' },
+  { key:'audit-log', label:'Activity Log' },
   { key:'admin', label:'Admin & Settings' }
 ];
 
@@ -629,6 +679,14 @@ const MODULES = {
     {key:'regNo', label:'Registration No.', type:'text'},
     {key:'email', label:'Email', type:'email'},
     {key:'phone', label:'Phone', type:'phone'}
+  ]},
+  'audit-log': { label:'Activity Log', menu:'audit-log', icon:'🕘', titleField:'action', dateField:'at', readOnly:true, fields:[
+    {key:'action', label:'Action', type:'text'},
+    {key:'at', label:'When', type:'datetime'},
+    {key:'moduleLabel', label:'Module', type:'text'},
+    {key:'recordTitle', label:'Record', type:'text'},
+    {key:'actor', label:'By', type:'text'},
+    {key:'details', label:'Details', type:'textarea'}
   ]}
 };
 const MODULE_KEYS = Object.keys(MODULES);
@@ -725,6 +783,34 @@ async function purgeRecord(moduleKey, id){
   const arr = getCollection(moduleKey).filter(r=>r.id!==id);
   await saveCollection(moduleKey, arr);
 }
+
+/* ============================================================
+   ACTIVITY LOG — a lightweight, append-only audit trail. Every
+   create/update/delete/restore/purge/email-sent action across every
+   module writes one entry here (bypassing createRecord so the log
+   never logs its own writes). Viewable read-only under Tools →
+   Activity Log, and included automatically in Reports since it's
+   just another entry in MODULE_KEYS.
+   ============================================================ */
+const AUDIT_LOG_MAX_ENTRIES = 2000;
+async function logAudit(moduleKey, action, recordId, recordTitle, details){
+  if(moduleKey === 'audit-log') return; // never log writes to the log itself
+  try{
+    const arr = getCollection('audit-log').slice();
+    arr.push({
+      id: uid(), createdAt: nowIso(), updatedAt: nowIso(), notes: [], deleted: false,
+      action: action,
+      at: nowIso(),
+      moduleLabel: (MODULES[moduleKey] && MODULES[moduleKey].label) || moduleKey,
+      recordTitle: recordTitle || '(untitled)',
+      actor: (STATE.meta && STATE.meta.facultyName) || '',
+      details: details || ''
+    });
+    const trimmed = arr.length > AUDIT_LOG_MAX_ENTRIES ? arr.slice(arr.length - AUDIT_LOG_MAX_ENTRIES) : arr;
+    await saveCollection('audit-log', trimmed);
+  }catch(e){ console.error('[FAMS+] activity log write failed:', e); }
+}
+
 async function addNote(moduleKey, id, text){
   const arr = getCollection(moduleKey).slice();
   const idx = arr.findIndex(r=>r.id===id);
@@ -817,8 +903,19 @@ const AREA_COLORS = {
   mentoring:'#0891b2', laboratory:'#0e9f6e', 'extra-classes':'#d97706', research:'#059669',
   projects:'#c99a3c', incharge:'#dc2626', committees:'#ea580c', meetings:'#4f46e5',
   reminders:'#db2777', responsibilities:'#0f766e', analytics:'#6fa3f5', reports:'#8a92a6',
-  calendar:'#4f46e5', admin:'#9aa4c2'
+  calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b'
 };
+
+/* Sidebar menus clubbed into broad categories (collapsible accordions) so
+   the ~18 menu groups read as ~6 sections instead of one long flat list. */
+const NAV_CATEGORIES = [
+  { key:'overview', label:'Overview', icon:'🏠', groups:['dashboard','work-diary','calendar'] },
+  { key:'academics', label:'Academics', icon:'📘', groups:['teaching','exams','laboratory','extra-classes'] },
+  { key:'students', label:'Students', icon:'🎓', groups:['mentoring','responsibilities'] },
+  { key:'research', label:'Research & Projects', icon:'🔬', groups:['research','projects'] },
+  { key:'admin-duties', label:'Administrative Duties', icon:'🏛️', groups:['incharge','committees','meetings','reminders'] },
+  { key:'tools', label:'Tools', icon:'🛠️', groups:['analytics','reports','audit-log','admin'] }
+];
 
 function parseRoute(){
   const h = (location.hash || '#/dashboard').replace(/^#\/?/, '');
@@ -947,8 +1044,8 @@ function renderFirstRunScreen(){
     + '<div class="field"><label>Email</label><input class="input" type="email" id="su-email" required></div>'
     + '<div class="field"><label>Phone (optional)</label><input class="input" id="su-phone"></div>'
     + '<div class="grid grid-2">'
-    + '<div class="field"><label>Set PIN (4–6 digits)</label><input class="input" id="su-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" required></div>'
-    + '<div class="field"><label>Confirm PIN</label><input class="input" id="su-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" required></div>'
+    + '<div class="field"><label>Set PIN (4 digits)</label><input class="input" id="su-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" required></div>'
+    + '<div class="field"><label>Confirm PIN</label><input class="input" id="su-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" required></div>'
     + '</div>'
     + '<div class="error-box" id="setup-error"></div>'
     + '<button class="btn btn-primary" type="submit" style="width:100%;">Create Admin Account</button>'
@@ -964,7 +1061,7 @@ function wireFirstRunScreen(){
     const phone = document.getElementById('su-phone').value.trim();
     const pin = document.getElementById('su-pin').value.trim();
     const pin2 = document.getElementById('su-pin2').value.trim();
-    if(!/^[0-9]{4,6}$/.test(pin)){ errEl.textContent = 'PIN must be 4–6 digits.'; return; }
+    if(!/^[0-9]{4}$/.test(pin)){ errEl.textContent = 'PIN must be exactly 4 digits.'; return; }
     if(pin !== pin2){ errEl.textContent = 'PINs do not match.'; return; }
     const btn = e.target.querySelector('button[type=submit]');
     btn.disabled = true; btn.textContent = 'Creating…';
@@ -982,54 +1079,41 @@ function wireFirstRunScreen(){
 function renderLoginScreen(){
   const locked = pinLocked();
   return '<div class="center-screen"><div class="auth-card">'
-    + '<div class="logo-wrap">' + logoMarkSvg(64) + '<div class="brand-h1">FAMS<span>+</span></div>'
-    + '<div class="auth-sub">' + escapeHtml(DEPARTMENT_NAME) + '<br>' + escapeHtml(INSTITUTION_NAME) + '</div></div>'
-    + '<div class="pin-dots" id="pin-dots">' + [0,1,2,3,4,5].map(()=>'<div class="pin-dot"></div>').join('') + '</div>'
-    + '<div class="keypad" id="keypad">'
-    + [1,2,3,4,5,6,7,8,9].map(n=>'<div class="key" data-key="'+n+'">'+n+'</div>').join('')
-    + '<div class="key key-ghost" data-key="clear">Clear</div>'
-    + '<div class="key" data-key="0">0</div>'
-    + '<div class="key key-ghost" data-key="back">⌫</div>'
-    + '</div>'
-    + '<button class="btn btn-primary" id="pin-submit" style="width:100%;margin-top:10px;" disabled>Sign In</button>'
-    + '<div class="error-box' + (locked ? '' : ' info') + '" id="login-error">' + (locked ? ('Locked — try again in ' + Math.ceil(pinLockRemainingSec()/60) + ' min.') : 'Enter your PIN and press Sign In.') + '</div>'
+    + '<div class="logo-wrap">' + logoMarkSvg(64) + '<div class="brand-h1">FAMS<span>+</span></div></div>'
+    + '<form id="login-form">'
+    + '<input class="input pin-input" id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" '
+    + 'autocomplete="off" placeholder="••••"' + (locked ? ' disabled' : '') + '>'
+    + '<button class="btn btn-primary" type="submit" id="pin-submit" style="width:100%;margin-top:14px;" disabled>Sign In</button>'
+    + '</form>'
+    + '<div class="error-box' + (locked ? '' : ' info') + '" id="login-error">' + (locked ? ('Locked — try again in ' + Math.ceil(pinLockRemainingSec()/60) + ' min.') : 'Enter your 4-digit PIN.') + '</div>'
     + '</div></div>';
 }
 function wireLoginScreen(){
-  let buffer = '';
-  const dotsEl = document.getElementById('pin-dots');
+  const input = document.getElementById('pin-input');
   const errEl = document.getElementById('login-error');
   const submitBtn = document.getElementById('pin-submit');
-  function refresh(){
-    Array.from(dotsEl.children).forEach((d,i)=>d.classList.toggle('filled', i < buffer.length));
-    submitBtn.disabled = buffer.length < 4 || pinLocked();
-  }
-  document.getElementById('keypad').addEventListener('click', (e)=>{
-    const k = e.target.closest('.key');
-    if(!k || pinLocked()) return;
-    const key = k.dataset.key;
-    if(key === 'clear'){ buffer = ''; }
-    else if(key === 'back'){ buffer = buffer.slice(0,-1); }
-    else if(buffer.length < 6){ buffer += key; }
-    refresh();
+  const form = document.getElementById('login-form');
+  if(!pinLocked()) input.focus();
+  input.addEventListener('input', ()=>{
+    input.value = input.value.replace(/\D/g, '').slice(0, 4);
+    submitBtn.disabled = input.value.length !== 4 || pinLocked();
   });
-  async function submit(){
-    if(buffer.length < 4 || pinLocked()) return;
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(input.value.length !== 4 || pinLocked()) return;
     submitBtn.disabled = true;
     errEl.className = 'error-box';
     errEl.textContent = 'Checking…';
     try{
-      await doLogin(buffer);
+      await doLogin(input.value);
       render();
     }catch(err){
-      buffer = '';
-      refresh();
-      errEl.textContent = (err && err.message ? err.message : String(err));
+      input.value = '';
       submitBtn.disabled = true;
+      errEl.textContent = (err && err.message ? err.message : String(err));
+      input.focus();
     }
-  }
-  submitBtn.addEventListener('click', submit);
-  refresh();
+  });
 }
 
 /* ============================================================
@@ -1039,32 +1123,65 @@ function navItemHtml(icon, label, href, active, color){
   const style = color ? ' style="background:' + color + '38;"' : '';
   return '<div class="nav-item' + (active ? ' active' : '') + '" data-href="' + href + '"><span class="chip"' + style + '>' + icon + '</span><span>' + escapeHtml(label) + '</span></div>';
 }
-function sidebarNavHtml(){
-  let html = '';
-  MAIN_MENUS.forEach(group=>{
-    const color = AREA_COLORS[group.key];
-    if(SPECIAL_SCREENS[group.key] && group.key !== 'work-diary'){
-      html += navItemHtml(SPECIAL_SCREENS[group.key], group.label, '#/' + group.key, isScreenRoute(group.key), color);
-      return;
-    }
-    const mods = MODULE_KEYS.filter(k => MODULES[k].menu === group.key);
-    if(mods.length === 1 && mods[0] === group.key){
-      const m = MODULES[mods[0]];
-      html += navItemHtml(m.icon, group.label, '#/module/' + mods[0], isModuleRoute(mods[0]), color);
-      return;
-    }
-    if(mods.length === 0) return;
-    html += '<div class="nav-section">' + escapeHtml(group.label) + '</div>';
-    mods.forEach(k=>{
-      const m = MODULES[k];
-      html += navItemHtml(m.icon, m.label, '#/module/' + k, isModuleRoute(k), color);
-    });
+const NAV_EXPANDED_KEY = 'fams_nav_expanded';
+function getExpandedCategories(){
+  try{ return JSON.parse(localStorage.getItem(NAV_EXPANDED_KEY) || '{}'); }catch(e){ return {}; }
+}
+function setExpandedCategories(map){ localStorage.setItem(NAV_EXPANDED_KEY, JSON.stringify(map)); }
+
+function navGroupHtml(group){
+  const color = AREA_COLORS[group.key];
+  if(SPECIAL_SCREENS[group.key] && group.key !== 'work-diary'){
+    return navItemHtml(SPECIAL_SCREENS[group.key], group.label, '#/' + group.key, isScreenRoute(group.key), color);
+  }
+  const mods = MODULE_KEYS.filter(k => MODULES[k].menu === group.key);
+  if(mods.length === 1 && mods[0] === group.key){
+    const m = MODULES[mods[0]];
+    return navItemHtml(m.icon, group.label, '#/module/' + mods[0], isModuleRoute(mods[0]), color);
+  }
+  if(mods.length === 0) return '';
+  let html = '<div class="nav-section">' + escapeHtml(group.label) + '</div>';
+  mods.forEach(k=>{
+    const m = MODULES[k];
+    html += navItemHtml(m.icon, m.label, '#/module/' + k, isModuleRoute(k), color);
   });
   return html;
 }
+function activeCategoryKey(){
+  const r = parseRoute();
+  const groupKey = r.screen === 'module' ? MODULES[r.moduleKey].menu : r.screen;
+  const cat = NAV_CATEGORIES.find(c => c.groups.indexOf(groupKey) !== -1);
+  return cat ? cat.key : NAV_CATEGORIES[0].key;
+}
+function sidebarNavHtml(){
+  const expandedMap = getExpandedCategories();
+  const activeCat = activeCategoryKey();
+  let html = '';
+  NAV_CATEGORIES.forEach(cat=>{
+    // Compact by default: only the category holding the current screen starts
+    // open, everything else starts collapsed — keeps the ~30-module menu to a
+    // handful of lines instead of one long scrolling list. A manual toggle
+    // (stored per-category) always overrides this default from then on.
+    const hasOverride = Object.prototype.hasOwnProperty.call(expandedMap, cat.key);
+    const expanded = hasOverride ? expandedMap[cat.key] : (cat.key === activeCat);
+    html += '<div class="nav-category' + (expanded ? ' expanded' : '') + '" data-cat="' + cat.key + '">';
+    html += '<div class="nav-cat-head" data-cat-toggle="' + cat.key + '"><span class="nav-cat-icon">' + cat.icon + '</span>'
+      + '<span class="nav-cat-label">' + escapeHtml(cat.label) + '</span><span class="nav-cat-chevron">▸</span></div>';
+    html += '<div class="nav-cat-body">';
+    cat.groups.forEach(groupKey=>{
+      const group = MAIN_MENUS.find(g=>g.key === groupKey);
+      if(group) html += navGroupHtml(group);
+    });
+    html += '</div></div>';
+  });
+  return html;
+}
+const SIDEBAR_COLLAPSE_KEY = 'fams_sidebar_collapsed';
 function renderShellSkeleton(){
-  return '<div id="app">'
+  const collapsed = localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === '1';
+  return '<div id="app"' + (collapsed ? ' class="collapsed"' : '') + '>'
     + '<div class="sidebar" id="sidebar">'
+    + '<div class="collapse-toggle" id="collapse-toggle" title="Collapse sidebar">‹</div>'
     + '<div class="sidebar-brand">' + logoMarkSvg(34, 'sb') + '<div class="name">FAMS<span>+</span><div class="tag">' + escapeHtml(DEPARTMENT_NAME) + '</div></div></div>'
     + '<div class="sidebar-nav" id="sidebar-nav">' + sidebarNavHtml() + '</div>'
     + '<div class="sidebar-footer">' + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + '<br>' + escapeHtml(DEPARTMENT_NAME) + '</div>'
@@ -1073,10 +1190,12 @@ function renderShellSkeleton(){
     + '<div class="topbar">'
     + '<div style="display:flex;align-items:center;gap:12px;">'
     + '<div class="menu-toggle" id="menu-toggle">☰</div>'
+    + '<div id="topbar-accent" style="width:8px;height:8px;border-radius:50%;"></div>'
     + '<div id="topbar-title" style="font-weight:700;font-size:16px;"></div>'
     + '</div>'
-    + '<div style="display:flex;align-items:center;gap:14px;">'
+    + '<div style="display:flex;align-items:center;gap:10px;">'
     + '<div class="mono" id="live-clock" style="font-size:12px;color:var(--text-dim);"></div>'
+    + '<button class="btn btn-ghost btn-sm fullscreen-toggle" id="fullscreen-toggle" title="Toggle fullscreen">⛶</button>'
     + '<button class="btn btn-ghost btn-sm' + (installAvailable ? '' : ' hidden') + '" id="install-btn">⬇ Install</button>'
     + '<button class="btn btn-ghost btn-sm" id="logout-btn">Logout</button>'
     + '</div>'
@@ -1087,6 +1206,17 @@ function renderShellSkeleton(){
 }
 function wireShell(){
   document.getElementById('sidebar-nav').addEventListener('click', (e)=>{
+    const catHead = e.target.closest('[data-cat-toggle]');
+    if(catHead){
+      const key = catHead.dataset.catToggle;
+      const catEl = catHead.closest('.nav-category');
+      const expandedMap = getExpandedCategories();
+      const nowExpanded = !catEl.classList.contains('expanded');
+      catEl.classList.toggle('expanded', nowExpanded);
+      expandedMap[key] = nowExpanded;
+      setExpandedCategories(expandedMap);
+      return;
+    }
     const item = e.target.closest('.nav-item');
     if(!item) return;
     document.getElementById('sidebar').classList.remove('open');
@@ -1096,6 +1226,24 @@ function wireShell(){
   document.getElementById('menu-toggle').addEventListener('click', ()=>{
     document.getElementById('sidebar').classList.toggle('open');
   });
+  document.getElementById('collapse-toggle').addEventListener('click', ()=>{
+    const app = document.getElementById('app');
+    const nowCollapsed = app.classList.toggle('collapsed');
+    localStorage.setItem(SIDEBAR_COLLAPSE_KEY, nowCollapsed ? '1' : '0');
+  });
+  const fsBtn = document.getElementById('fullscreen-toggle');
+  fsBtn.addEventListener('click', ()=>{
+    if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+    else document.exitFullscreen().catch(()=>{});
+  });
+  document.addEventListener('fullscreenchange', ()=>{
+    const btn = document.getElementById('fullscreen-toggle');
+    if(btn) btn.textContent = document.fullscreenElement ? '⛶' : '⛶';
+  });
+  const accent = document.getElementById('topbar-accent');
+  const r = parseRoute();
+  const areaKey = r.screen === 'module' ? MODULES[r.moduleKey].menu : r.screen;
+  if(accent) accent.style.background = AREA_COLORS[areaKey] || 'var(--gold)';
   const installBtn = document.getElementById('install-btn');
   installBtn.addEventListener('click', async ()=>{
     if(!deferredInstallPrompt) return;
@@ -1142,24 +1290,39 @@ function fieldDisplayValue(mod, field, rec){
   const v = rec[field.key];
   if(field.type === 'reference') return escapeHtml(refLabel(field.ref, v));
   if(field.type === 'date') return v ? escapeHtml(fmtDate(v)) : '<span style="color:var(--text-faint)">—</span>';
+  if(field.type === 'datetime') return v ? escapeHtml(fmtDateTime(v)) : '<span style="color:var(--text-faint)">—</span>';
   if(v === null || v === undefined || v === '') return '<span style="color:var(--text-faint)">—</span>';
   if(field.key === 'status') return '<span class="badge ' + statusBadgeClass(v) + '">' + escapeHtml(v) + '</span>';
   return escapeHtml(String(v));
 }
 
+let LIST_SELECTION = new Set();
+
 function renderModuleList(moduleKey){
   const mod = MODULES[moduleKey];
+  LIST_SELECTION = new Set();
+  if(mod.readOnly){
+    return '<div class="page-head"><div><h2>' + mod.icon + ' ' + escapeHtml(mod.label) + '</h2>'
+      + '<p>' + getActive(moduleKey).length + ' entr' + (getActive(moduleKey).length===1?'y':'ies') + ' recorded</p></div></div>'
+      + '<div class="search-bar"><input class="input" id="module-search" placeholder="Search…"></div>'
+      + '<div class="table-wrap" id="module-table-wrap"></div>';
+  }
   return '<div class="page-head"><div><h2>' + mod.icon + ' ' + escapeHtml(mod.label) + '</h2>'
     + '<p>' + getActive(moduleKey).length + ' active record(s)</p></div>'
-    + '<button class="btn btn-primary" id="add-record-btn">+ Add ' + escapeHtml(mod.label) + '</button></div>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+    + '<button class="btn btn-ghost" id="bulk-import-btn">⬆ Bulk Import</button>'
+    + '<button class="btn btn-primary" id="add-record-btn">+ Add ' + escapeHtml(mod.label) + '</button>'
+    + '</div></div>'
     + '<div class="search-bar"><input class="input" id="module-search" placeholder="Search…">'
     + '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);">'
     + '<input type="checkbox" id="show-deleted"> Show deleted</label></div>'
+    + '<div id="bulk-toolbar"></div>'
     + '<div class="table-wrap" id="module-table-wrap"></div>';
 }
 
 function moduleTableHtml(moduleKey, cols, search, showDeleted){
   const mod = MODULES[moduleKey];
+  const selectable = !mod.readOnly;
   let rows = showDeleted ? getCollection(moduleKey) : getActive(moduleKey);
   if(search){
     const q = search.toLowerCase();
@@ -1169,25 +1332,35 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
     if(mod.dateField) return String(b[mod.dateField]||'').localeCompare(String(a[mod.dateField]||''));
     return String(b.createdAt||'').localeCompare(String(a.createdAt||''));
   });
-  if(rows.length === 0) return '<div class="empty">No records yet. Click "Add ' + escapeHtml(mod.label) + '" to create the first one.</div>';
+  if(rows.length === 0) return '<div class="empty">' + (mod.readOnly ? 'No activity recorded yet.' : ('No records yet. Click "Add ' + escapeHtml(mod.label) + '" to create the first one.')) + '</div>';
   let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>';
+  if(selectable){
+    const visibleIds = rows.map(r=>r.id);
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id=>LIST_SELECTION.has(id));
+    html += '<th style="width:34px;padding:10px 6px;border-bottom:1px solid var(--border);"><input type="checkbox" id="select-all-rows"' + (allSelected ? ' checked' : '') + '></th>';
+  }
   cols.forEach(c=>{ html += '<th style="text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);border-bottom:1px solid var(--border);">' + escapeHtml(c.label) + '</th>'; });
-  html += '<th style="border-bottom:1px solid var(--border);"></th></tr></thead><tbody>';
+  if(selectable) html += '<th style="border-bottom:1px solid var(--border);"></th>';
+  html += '</tr></thead><tbody>';
   rows.forEach(r=>{
     html += '<tr data-id="' + r.id + '"' + (r.deleted ? ' style="opacity:.5;"' : '') + '>';
+    if(selectable) html += '<td style="padding:10px 6px;border-bottom:1px solid var(--border);"><input type="checkbox" class="row-select" data-id="' + r.id + '"' + (LIST_SELECTION.has(r.id) ? ' checked' : '') + '></td>';
     cols.forEach(c=>{ html += '<td style="padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + fieldDisplayValue(mod, c, r) + '</td>'; });
-    html += '<td style="padding:8px 12px;border-bottom:1px solid var(--border);"><div class="row-actions">';
-    if(!r.deleted){
-      html += '<button class="btn btn-ghost btn-sm" data-action="edit">Edit</button>';
-      html += '<button class="btn btn-ghost btn-sm" data-action="notes">Notes' + ((r.notes && r.notes.length) ? ' (' + r.notes.length + ')' : '') + '</button>';
-      if(mod.fields.some(f=>f.key==='email')) html += '<button class="btn btn-ghost btn-sm" data-action="email" title="Email">✉️</button>';
-      if(mod.fields.some(f=>f.key==='phone')) html += '<button class="btn btn-ghost btn-sm" data-action="whatsapp" title="WhatsApp">💬</button>';
-      html += '<button class="btn btn-ghost btn-sm" data-action="delete">Delete</button>';
-    }else{
-      html += '<button class="btn btn-ghost btn-sm" data-action="restore">Restore</button>';
-      html += '<button class="btn btn-danger btn-sm" data-action="purge">Purge</button>';
+    if(selectable){
+      html += '<td style="padding:8px 12px;border-bottom:1px solid var(--border);"><div class="row-actions">';
+      if(!r.deleted){
+        html += '<button class="btn btn-ghost btn-sm" data-action="edit">Edit</button>';
+        html += '<button class="btn btn-ghost btn-sm" data-action="notes">Notes' + ((r.notes && r.notes.length) ? ' (' + r.notes.length + ')' : '') + '</button>';
+        if(mod.fields.some(f=>f.key==='email')) html += '<button class="btn btn-ghost btn-sm" data-action="email" title="Email">✉️</button>';
+        if(mod.fields.some(f=>f.key==='phone')) html += '<button class="btn btn-ghost btn-sm" data-action="whatsapp" title="WhatsApp">💬</button>';
+        html += '<button class="btn btn-ghost btn-sm" data-action="delete">Delete</button>';
+      }else{
+        html += '<button class="btn btn-ghost btn-sm" data-action="restore">Restore</button>';
+        html += '<button class="btn btn-danger btn-sm" data-action="purge">Purge</button>';
+      }
+      html += '</div></td>';
     }
-    html += '</div></td></tr>';
+    html += '</tr>';
   });
   html += '</tbody></table>';
   return html;
@@ -1199,12 +1372,68 @@ function wireModuleList(moduleKey){
   const wrap = document.getElementById('module-table-wrap');
   const searchEl = document.getElementById('module-search');
   const showDelEl = document.getElementById('show-deleted');
-  function refreshTable(){ wrap.innerHTML = moduleTableHtml(moduleKey, cols, searchEl.value, showDelEl.checked); }
+  const bulkToolbarEl = document.getElementById('bulk-toolbar');
+
+  function renderBulkToolbar(){
+    if(!bulkToolbarEl) return;
+    const n = LIST_SELECTION.size;
+    if(n === 0){ bulkToolbarEl.innerHTML = ''; return; }
+    const hasEmail = mod.fields.some(f=>f.key==='email');
+    bulkToolbarEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;background:#eef2fb;border:1px solid var(--border);border-radius:8px;padding:9px 14px;margin-bottom:10px;flex-wrap:wrap;">'
+      + '<strong style="font-size:13px;">' + n + ' selected</strong>'
+      + (hasEmail ? '<button class="btn btn-ghost btn-sm" id="bulk-email-btn">✉️ Email Selected</button>' : '')
+      + '<button class="btn btn-ghost btn-sm" id="bulk-delete-btn" style="color:var(--danger);">🗑 Delete Selected</button>'
+      + '<button class="btn btn-ghost btn-sm" id="bulk-clear-btn" style="margin-left:auto;">Clear</button>'
+      + '</div>';
+    const clearBtn = document.getElementById('bulk-clear-btn');
+    if(clearBtn) clearBtn.addEventListener('click', ()=>{ LIST_SELECTION.clear(); refreshTable(); });
+    const emailBtn = document.getElementById('bulk-email-btn');
+    if(emailBtn) emailBtn.addEventListener('click', ()=>{
+      const records = Array.from(LIST_SELECTION).map(id=>getRecord(moduleKey, id)).filter(Boolean);
+      openEmailComposeDrawer(moduleKey, records, ()=>{ LIST_SELECTION.clear(); refreshTable(); });
+    });
+    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+    if(bulkDeleteBtn) bulkDeleteBtn.addEventListener('click', async ()=>{
+      if(!confirm('Delete ' + n + ' selected record(s)? You can restore them later from "Show deleted".')) return;
+      const ids = Array.from(LIST_SELECTION);
+      for(const id of ids){
+        const rec = getRecord(moduleKey, id);
+        await softDeleteRecord(moduleKey, id);
+        logAudit(moduleKey, 'Deleted', id, rec ? (rec[mod.titleField] || '') : '');
+      }
+      toast(ids.length + ' record(s) deleted', 'ok');
+      LIST_SELECTION.clear();
+      refreshTable();
+    });
+  }
+
+  function refreshTable(){
+    wrap.innerHTML = moduleTableHtml(moduleKey, cols, searchEl.value, showDelEl ? showDelEl.checked : false);
+    renderBulkToolbar();
+  }
   refreshTable();
   searchEl.addEventListener('input', refreshTable);
-  showDelEl.addEventListener('change', refreshTable);
-  document.getElementById('add-record-btn').addEventListener('click', ()=>openModuleForm(moduleKey, null));
+  if(showDelEl) showDelEl.addEventListener('change', refreshTable);
+  const addBtn = document.getElementById('add-record-btn');
+  if(addBtn) addBtn.addEventListener('click', ()=>openModuleForm(moduleKey, null));
+  const bulkImportBtn = document.getElementById('bulk-import-btn');
+  if(bulkImportBtn) bulkImportBtn.addEventListener('click', ()=>openBulkImportDrawer(moduleKey, refreshTable));
   wrap.addEventListener('click', async (e)=>{
+    const selectAllBox = e.target.closest('#select-all-rows');
+    if(selectAllBox){
+      const rowBoxes = wrap.querySelectorAll('.row-select');
+      if(selectAllBox.checked) rowBoxes.forEach(cb=>LIST_SELECTION.add(cb.dataset.id));
+      else LIST_SELECTION.clear();
+      refreshTable();
+      return;
+    }
+    const rowBox = e.target.closest('.row-select');
+    if(rowBox){
+      if(rowBox.checked) LIST_SELECTION.add(rowBox.dataset.id);
+      else LIST_SELECTION.delete(rowBox.dataset.id);
+      renderBulkToolbar();
+      return;
+    }
     const btn = e.target.closest('[data-action]');
     if(!btn) return;
     const tr = e.target.closest('tr[data-id]');
@@ -1214,16 +1443,16 @@ function wireModuleList(moduleKey){
     if(!rec) return;
     if(action === 'edit') openModuleForm(moduleKey, id);
     else if(action === 'notes') openNotesDrawer(moduleKey, id);
-    else if(action === 'email') window.location.href = 'mailto:' + encodeURIComponent(rec.email || '');
+    else if(action === 'email') openEmailComposeDrawer(moduleKey, [rec], refreshTable);
     else if(action === 'whatsapp') window.open(waLink(rec.phone), '_blank');
     else if(action === 'delete'){
       if(!confirm('Delete this record? You can restore it later from "Show deleted".')) return;
-      await softDeleteRecord(moduleKey, id); toast('Deleted', 'ok'); refreshTable();
+      await softDeleteRecord(moduleKey, id); logAudit(moduleKey, 'Deleted', id, rec[mod.titleField] || ''); toast('Deleted', 'ok'); refreshTable();
     }else if(action === 'restore'){
-      await restoreRecord(moduleKey, id); toast('Restored', 'ok'); refreshTable();
+      await restoreRecord(moduleKey, id); logAudit(moduleKey, 'Restored', id, rec[mod.titleField] || ''); toast('Restored', 'ok'); refreshTable();
     }else if(action === 'purge'){
       if(!confirm('Permanently delete this record? This cannot be undone.')) return;
-      await purgeRecord(moduleKey, id); toast('Purged', 'ok'); refreshTable();
+      await purgeRecord(moduleKey, id); logAudit(moduleKey, 'Purged', id, rec[mod.titleField] || ''); toast('Purged', 'ok'); refreshTable();
     }
   });
 }
@@ -1260,7 +1489,7 @@ function notesTabHtml(rec){
 function openModuleForm(moduleKey, id){
   const mod = MODULES[moduleKey];
   const rec = id ? getRecord(moduleKey, id) : null;
-  let html = '<h3 style="margin:0 0 4px;">' + (rec ? 'Edit ' : 'Add ') + escapeHtml(mod.label) + '</h3>';
+  let html = '<h3 style="margin:0 0 4px;padding-right:26px;">' + (rec ? 'Edit ' : 'Add ') + escapeHtml(mod.label) + '</h3>';
   if(rec) html += '<div class="drawer-tabs"><div class="drawer-tab active" data-tab="details">Details</div><div class="drawer-tab" data-tab="notes">Notes (' + ((rec.notes || []).length) + ')</div></div>';
   html += '<div id="tab-details"><form id="record-form">';
   mod.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : undefined) + '</div>'; });
@@ -1308,8 +1537,9 @@ function wireModuleForm(moduleKey, id){
       const btn = form.querySelector('button[type=submit]');
       btn.disabled = true; btn.textContent = 'Saving…';
       try{
-        if(id) await updateRecord(moduleKey, id, data);
-        else await createRecord(moduleKey, data);
+        let savedRec;
+        if(id){ savedRec = await updateRecord(moduleKey, id, data); logAudit(moduleKey, 'Updated', id, savedRec[mod.titleField] || ''); }
+        else{ savedRec = await createRecord(moduleKey, data); logAudit(moduleKey, 'Created', savedRec.id, savedRec[mod.titleField] || ''); }
         toast('Saved', 'ok');
         closeDrawer();
         const r = parseRoute();
@@ -1334,6 +1564,214 @@ function wireModuleForm(moduleKey, id){
       }catch(err){ toast('Failed to add note', 'danger'); addNoteBtn.disabled = false; }
     });
   }
+}
+
+/* ============================================================
+   EMAIL COMPOSE — sends real mail (not a mailto: link) through the
+   app's own backend, so it goes out from the official email address
+   configured for this deployment (see backend/Code.gs OFFICE_EMAIL /
+   sendAs_). Works for a single record's "✉️ Email" row action or a
+   multi-record "Email Selected" bulk action — both funnel through
+   the same drawer and the existing mailMerge backend endpoint, so
+   {{name}} (and any other record field) can be used as a merge tag.
+   ============================================================ */
+function emailComposeHtml(recipients, missingCount, contextLabel){
+  const toLine = recipients.length
+    ? recipients.map(r => escapeHtml((r.name || '(no name)') + ' <' + r.email + '>')).join(', ')
+    : '<span style="color:var(--text-faint);">No valid recipients</span>';
+  return '<h3 style="margin:0 0 4px;padding-right:26px;">✉️ Email' + (contextLabel ? ' — ' + escapeHtml(contextLabel) : '') + '</h3>'
+    + '<div style="font-size:12.5px;color:var(--text-dim);margin-bottom:4px;line-height:1.5;">To: ' + toLine + '</div>'
+    + (missingCount ? '<div style="font-size:12px;color:var(--warn,#b45309);margin-bottom:10px;">' + missingCount + ' selected record(s) have no email address and will be skipped.</div>' : '<div style="margin-bottom:10px;"></div>')
+    + '<form id="email-compose-form">'
+    + '<div class="field"><label>Subject</label><input class="input" id="ec-subject" required></div>'
+    + '<div class="field"><label>Message <span style="font-weight:400;color:var(--text-dim);">— {{name}} is replaced with each recipient\'s name</span></label><textarea class="input" id="ec-body" style="min-height:170px;" required></textarea></div>'
+    + '<div class="error-box" id="ec-error"></div>'
+    + '<div style="display:flex;gap:8px;">'
+    + '<button type="submit" class="btn btn-primary" id="ec-send"' + (recipients.length === 0 ? ' disabled' : '') + '>Send' + (recipients.length > 1 ? ' to ' + recipients.length : '') + '</button>'
+    + '<button type="button" class="btn btn-ghost" id="ec-cancel">Cancel</button>'
+    + '</div></form>';
+}
+function openEmailComposeDrawer(moduleKey, records, onDone){
+  const mod = MODULES[moduleKey];
+  const withEmail = records.filter(r => r.email);
+  const recipients = withEmail.map(r => Object.assign({}, r, { name: r[mod.titleField] || r.name || '' }));
+  const missingCount = records.length - withEmail.length;
+  openDrawer(emailComposeHtml(recipients, missingCount, mod.label));
+  const cancelBtn = document.getElementById('ec-cancel');
+  if(cancelBtn) cancelBtn.addEventListener('click', closeDrawer);
+  const form = document.getElementById('email-compose-form');
+  if(!form) return;
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const sendBtn = document.getElementById('ec-send');
+    const errEl = document.getElementById('ec-error');
+    const subject = document.getElementById('ec-subject').value.trim();
+    const body = document.getElementById('ec-body').value;
+    if(!subject || !body || recipients.length === 0) return;
+    sendBtn.disabled = true; sendBtn.textContent = 'Sending…'; errEl.textContent = '';
+    try{
+      const res = await apiMailMerge(recipients, subject, body);
+      if(!res || !res.ok) throw new Error((res && res.error) || 'Send failed');
+      const results = res.results || [];
+      const failed = results.filter(r=>!r.ok);
+      withEmail.forEach(r=>{ logAudit(moduleKey, 'Emailed', r.id, r[mod.titleField] || r.name || '', subject); });
+      if(failed.length === 0) toast('Email sent to ' + results.length + ' recipient(s)', 'ok');
+      else if(failed.length === results.length) toast('Email failed to send', 'err');
+      else toast('Sent to ' + (results.length - failed.length) + ' of ' + results.length + ' recipient(s)', 'ok');
+      closeDrawer();
+      if(onDone) onDone();
+    }catch(err){
+      errEl.textContent = err && err.message ? err.message : String(err);
+      sendBtn.disabled = false; sendBtn.textContent = 'Send' + (recipients.length > 1 ? ' to ' + recipients.length : '');
+    }
+  });
+}
+
+/* ============================================================
+   BULK IMPORT (Excel / CSV) — for any module, driven by the same
+   MODULES[key].fields config as the manual add/edit form. Uses
+   SheetJS (loaded via CDN in <head>) to read .xlsx/.xls/.csv in
+   the browser — nothing is uploaded anywhere, the file never
+   leaves the device until the parsed records are saved to your
+   own backend the normal way.
+   ============================================================ */
+function bulkImportAvailable(){ return typeof XLSX !== 'undefined'; }
+
+function downloadModuleTemplate(moduleKey){
+  const mod = MODULES[moduleKey];
+  const headers = mod.fields.map(f=>f.label);
+  const sampleRow = {};
+  mod.fields.forEach(f=>{
+    sampleRow[f.label] = f.type === 'select' ? (f.options && f.options[0] || '') : (f.type === 'date' ? todayStr() : '');
+  });
+  const ws = XLSX.utils.json_to_sheet([sampleRow], { header: headers });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, mod.label.slice(0, 28) || 'Sheet1');
+  XLSX.writeFile(wb, 'fams-plus-' + moduleKey + '-template.xlsx');
+}
+
+/** Best-effort match of a spreadsheet column header to a module field, by
+ *  exact label, then by field key, both case/space-insensitive. */
+function matchFieldForHeader(mod, header){
+  const norm = String(header || '').trim().toLowerCase();
+  return mod.fields.find(f => f.label.trim().toLowerCase() === norm)
+    || mod.fields.find(f => f.key.trim().toLowerCase() === norm)
+    || null;
+}
+/** Loosely coerces a spreadsheet cell into the shape a field expects —
+ *  SheetJS already turns real Excel dates into JS Date objects, so dates
+ *  need converting back to the plain YYYY-MM-DD strings the app stores. */
+function coerceImportValue(field, raw){
+  if(raw == null) return '';
+  if(field.type === 'date'){
+    if(raw instanceof Date) return raw.toISOString().slice(0, 10);
+    const s = String(raw).trim();
+    const parsed = new Date(s);
+    if(s && !isNaN(parsed) && /\d/.test(s)) return parsed.toISOString().slice(0, 10);
+    return s;
+  }
+  if(field.type === 'number'){
+    const n = Number(raw);
+    return isNaN(n) ? '' : n;
+  }
+  return String(raw).trim();
+}
+
+function parseWorkbookForModule(moduleKey, arrayBuffer){
+  const mod = MODULES[moduleKey];
+  const wb = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  const records = [];
+  const skipped = [];
+  rows.forEach((row, idx)=>{
+    const headers = Object.keys(row);
+    const allBlank = headers.every(h => String(row[h]).trim() === '');
+    if(allBlank) return;
+    const data = {};
+    headers.forEach(h=>{
+      const field = matchFieldForHeader(mod, h);
+      if(field) data[field.key] = coerceImportValue(field, row[h]);
+    });
+    const missingRequired = mod.fields.filter(f => f.required && (data[f.key] === undefined || data[f.key] === ''));
+    if(missingRequired.length){
+      skipped.push({ row: idx + 2, reason: 'missing ' + missingRequired.map(f=>f.label).join(', ') });
+      return;
+    }
+    mod.fields.forEach(f=>{ if(data[f.key] === undefined) data[f.key] = f.default === '__today__' ? todayStr() : (f.default != null ? f.default : ''); });
+    records.push(data);
+  });
+  return { records, skipped, totalRows: rows.length };
+}
+
+function openBulkImportDrawer(moduleKey, onDone){
+  const mod = MODULES[moduleKey];
+  if(!bulkImportAvailable()){
+    openDrawer('<h3 style="padding-right:26px;">⬆ Bulk Import — ' + escapeHtml(mod.label) + '</h3>'
+      + '<div class="error-box">The spreadsheet library failed to load (needs an internet connection to the CDN). '
+      + 'Try again once you\'re back online — everything else in FAMS+ still works.</div>');
+    return;
+  }
+  const fieldList = mod.fields.map(f => f.label + (f.required ? ' (required)' : '')).join(', ');
+  const html = '<h3 style="padding-right:26px;">⬆ Bulk Import — ' + escapeHtml(mod.label) + '</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);line-height:1.6;">Import many records at once from an Excel '
+    + '(.xlsx) or CSV file. The first row must be column headers matching a field name below — column order doesn\'t '
+    + 'matter, and extra columns are ignored.</p>'
+    + '<div class="card" style="background:#f8f9fc;margin-bottom:14px;"><b style="font-size:12.5px;">Expected columns:</b>'
+    + '<div style="font-size:12px;color:var(--text-dim);margin-top:4px;">' + escapeHtml(fieldList) + '</div></div>'
+    + '<button class="btn btn-ghost btn-sm" id="bulk-template-btn" type="button">⬇ Download blank template (.xlsx)</button>'
+    + '<div class="field" style="margin-top:16px;"><label>Choose file</label>'
+    + '<input class="input" id="bulk-file-input" type="file" accept=".xlsx,.xls,.csv"></div>'
+    + '<div id="bulk-preview-area"></div>';
+  openDrawer(html);
+
+  document.getElementById('bulk-template-btn').addEventListener('click', ()=>downloadModuleTemplate(moduleKey));
+
+  document.getElementById('bulk-file-input').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    const previewArea = document.getElementById('bulk-preview-area');
+    if(!file) return;
+    previewArea.innerHTML = '<p style="font-size:12.5px;color:var(--text-dim);">Reading file…</p>';
+    try{
+      const buf = await file.arrayBuffer();
+      const { records, skipped, totalRows } = parseWorkbookForModule(moduleKey, buf);
+      if(records.length === 0){
+        previewArea.innerHTML = '<div class="error-box">No importable rows found (' + totalRows + ' row(s) read, '
+          + skipped.length + ' skipped). Check that your column headers match the expected names above.</div>';
+        return;
+      }
+      const previewCols = moduleDisplayColumns(mod).slice(0, 4);
+      let html2 = '<p style="font-size:12.5px;color:var(--text-dim);margin-top:14px;"><b>' + records.length + '</b> record(s) ready to import'
+        + (skipped.length ? ', <b>' + skipped.length + '</b> row(s) skipped (missing a required field)' : '') + '. Preview:</p>';
+      html2 += '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;"><thead><tr>'
+        + previewCols.map(c=>'<th style="text-align:left;padding:7px 10px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">' + escapeHtml(c.label) + '</th>').join('')
+        + '</tr></thead><tbody>'
+        + records.slice(0, 6).map(r=>'<tr>' + previewCols.map(c=>'<td style="padding:7px 10px;border-bottom:1px solid var(--border);font-size:12.5px;">' + escapeHtml(String(r[c.key] || '')) + '</td>').join('') + '</tr>').join('')
+        + (records.length > 6 ? '<tr><td colspan="' + previewCols.length + '" style="padding:7px 10px;font-size:12px;color:var(--text-faint);">…and ' + (records.length - 6) + ' more</td></tr>' : '')
+        + '</tbody></table></div>';
+      html2 += '<button class="btn btn-primary" id="bulk-confirm-btn" type="button" style="width:100%;margin-top:14px;">Import ' + records.length + ' Record' + (records.length === 1 ? '' : 's') + '</button>';
+      previewArea.innerHTML = html2;
+      document.getElementById('bulk-confirm-btn').addEventListener('click', async (ev)=>{
+        const btn = ev.target;
+        btn.disabled = true; btn.textContent = 'Importing…';
+        try{
+          const arr = getCollection(moduleKey).slice();
+          records.forEach(data=>{
+            arr.push(Object.assign({ id: uid(), createdAt: nowIso(), updatedAt: nowIso(), notes: [], deleted:false }, data));
+          });
+          await saveCollection(moduleKey, arr);
+          toast(records.length + ' record(s) imported', 'ok');
+          closeDrawer();
+          if(onDone) onDone();
+        }catch(err){
+          toast('Import failed: ' + (err && err.message ? err.message : String(err)), 'danger');
+          btn.disabled = false; btn.textContent = 'Import ' + records.length + ' Records';
+        }
+      });
+    }catch(err){
+      previewArea.innerHTML = '<div class="error-box">Could not read that file: ' + escapeHtml(err && err.message ? err.message : String(err)) + '</div>';
+    }
+  });
 }
 
 /* ============================================================
@@ -1431,6 +1869,7 @@ function relativeTime(iso){
 function recentActivity(limit){
   const items = [];
   MODULE_KEYS.forEach(k=>{
+    if(k === 'audit-log') return; // the log itself isn't a "user activity" to feature here
     const mod = MODULES[k];
     getActive(k).forEach(r=>{
       const at = r.updatedAt || r.createdAt;
@@ -1441,9 +1880,26 @@ function recentActivity(limit){
   items.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
   return items.slice(0, limit || 8);
 }
+/** Animates a number counting up from 0 to `target` — small touch that makes
+ *  the Dashboard feel alive on every visit rather than just static text.
+ *  Respects prefers-reduced-motion by jumping straight to the final value. */
+function animateCount(el, target, duration, suffix){
+  suffix = suffix || '';
+  if(!el) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent = target + suffix; return; }
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(target * eased) + suffix;
+    if(p < 1) requestAnimationFrame(tick);
+    else el.textContent = target + suffix;
+  }
+  requestAnimationFrame(tick);
+}
 function statCardHtml(icon, num, label, color, trend){
   return '<div class="stat-card"><div class="stat-icon" style="background:' + color + '22;color:' + color + ';">' + icon + '</div>'
-    + '<div><div class="stat-num">' + num + '</div><div class="stat-label">' + escapeHtml(label) + '</div>'
+    + '<div><div class="stat-num" data-count="' + num + '">0</div><div class="stat-label">' + escapeHtml(label) + '</div>'
     + (trend ? '<div class="stat-trend ' + trend.cls + '">' + escapeHtml(trend.text) + '</div>' : '') + '</div></div>';
 }
 function progressRingHtml(percent, color, label, sub){
@@ -1451,7 +1907,7 @@ function progressRingHtml(percent, color, label, sub){
   const deg = p * 3.6;
   const style = 'background:conic-gradient(' + color + ' ' + deg + 'deg, var(--border) ' + deg + 'deg 360deg);';
   return '<div class="ring-wrap"><div class="ring" style="' + style + '">'
-    + '<div style="width:56px;height:56px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;"><span class="ring-num">' + p + '%</span></div></div>'
+    + '<div style="width:56px;height:56px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;"><span class="ring-num" data-count="' + p + '">0%</span></div></div>'
     + '<div><div class="ring-label">' + escapeHtml(label) + '</div><div class="ring-sub">' + escapeHtml(sub) + '</div></div></div>';
 }
 function renderDashboard(){
@@ -1531,6 +1987,8 @@ function wireDashboard(){
   document.querySelectorAll('[data-qa]').forEach(btn=>{
     btn.addEventListener('click', ()=>openModuleForm(btn.dataset.qa, null));
   });
+  document.querySelectorAll('.stat-num[data-count]').forEach(el=>animateCount(el, Number(el.dataset.count), 750));
+  document.querySelectorAll('.ring-num[data-count]').forEach(el=>animateCount(el, Number(el.dataset.count), 750, '%'));
 }
 
 /* ============================================================
@@ -1543,7 +2001,8 @@ function renderTimetableScreen(){
   const rows = getActive('timetable').slice().sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||'')));
   const slots = Array.from(new Set(rows.map(r=>(r.startTime||'')+'–'+(r.endTime||'')))).sort();
   let html = '<div class="page-head"><div><h2>📘 Timetable</h2><p>Weekly recurring class schedule</p></div>'
-    + '<button class="btn btn-primary" id="add-record-btn">+ Add Class</button></div>';
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-ghost" id="bulk-import-btn">⬆ Bulk Import</button>'
+    + '<button class="btn btn-primary" id="add-record-btn">+ Add Class</button></div></div>';
   if(slots.length === 0){
     html += '<div class="empty">No timetable entries yet. Click "Add Class" to create your first slot.</div>';
   }else{
@@ -1575,6 +2034,7 @@ function renderTimetableScreen(){
 }
 function wireTimetableScreen(){
   document.getElementById('add-record-btn').addEventListener('click', ()=>openModuleForm('timetable', null));
+  document.getElementById('bulk-import-btn').addEventListener('click', ()=>openBulkImportDrawer('timetable', ()=>renderRoute()));
   document.querySelectorAll('[data-action="edit-cell"]').forEach(td=>{
     td.addEventListener('click', ()=>openModuleForm('timetable', td.dataset.id));
   });
@@ -1694,24 +2154,124 @@ function downloadText(filename, text, mime){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 2000);
 }
-function renderReports(){
-  let html = '<div class="page-head"><div><h2>📤 Reports</h2><p>Export any module\'s data as a CSV file</p></div></div>';
-  html += '<div class="card"><h3>Export a single module</h3><div class="grid grid-3" id="report-buttons">';
-  MODULE_KEYS.forEach(k=>{
-    html += '<button class="btn btn-ghost btn-sm" data-export="' + k + '" style="justify-content:flex-start;">' + MODULES[k].icon + ' ' + escapeHtml(MODULES[k].label) + '</button>';
+
+/* ---------- Word (.doc) + printable-PDF export ----------
+   No document-generation library is bundled (this stays a single static
+   file with no build step) — instead this uses the well-established
+   "HTML tagged as a Word file" trick: Word opens an .doc file that is
+   actually MS-Office-flavoured HTML perfectly happily, tables and all.
+   PDF export reuses the same HTML through the browser's own print/
+   "Save as PDF" dialog rather than a separate PDF-generation library. */
+function fieldPlainValue(mod, field, rec){
+  const v = rec[field.key];
+  if(field.type === 'reference') return refLabel(field.ref, v);
+  if(field.type === 'date') return v ? fmtDate(v) : '';
+  return v == null ? '' : String(v);
+}
+function moduleReportHtml(moduleKey, sectionBreak){
+  const mod = MODULES[moduleKey];
+  const rows = getCollection(moduleKey);
+  let html = '<div' + (sectionBreak ? ' class="section-break"' : '') + '>'
+    + '<h1>' + mod.icon + ' ' + escapeHtml(mod.label) + '</h1>'
+    + '<div class="meta">Generated ' + escapeHtml(fmtDateTime(nowIso())) + ' &middot; '
+    + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + ' &middot; ' + escapeHtml(DEPARTMENT_NAME) + '</div>';
+  if(rows.length === 0){
+    html += '<p style="color:#888;">No records.</p></div>';
+    return html;
+  }
+  html += '<table><thead><tr>' + mod.fields.map(c=>'<th>' + escapeHtml(c.label) + '</th>').join('') + '<th>Status</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    html += '<tr>' + mod.fields.map(c=>'<td>' + escapeHtml(fieldPlainValue(mod, c, r)) + '</td>').join('') + '<td>' + (r.deleted ? 'Deleted' : 'Active') + '</td></tr>';
   });
-  html += '</div></div>';
-  html += '<div class="card" style="margin-top:16px;"><h3>Export everything</h3><p style="font-size:13px;color:var(--text-dim);">Downloads one JSON file containing every module\'s data — the same format used for the daily Drive backup.</p>'
-    + '<button class="btn btn-primary" id="export-all-json">Download Full Backup (JSON)</button></div>';
+  html += '</tbody></table></div>';
+  return html;
+}
+function fullReportBodyHtml(){
+  let html = '<h1 style="font-size:22pt;">FAMS+ — Full Activity Report</h1>'
+    + '<div class="meta">' + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + ' &middot; ' + escapeHtml(DEPARTMENT_NAME)
+    + ' &middot; ' + escapeHtml(INSTITUTION_NAME) + '<br>Generated ' + escapeHtml(fmtDateTime(nowIso())) + '</div>';
+  MODULE_KEYS.forEach((k, i)=>{ html += moduleReportHtml(k, i > 0); });
+  return html;
+}
+function reportDocStyles(){
+  return 'body{font-family:Calibri,Arial,sans-serif;color:#1c2333;padding:20px;} '
+    + 'h1{color:#0f1f3d;font-size:18pt;margin-bottom:2px;} '
+    + '.meta{color:#666;font-size:9.5pt;margin-bottom:16px;} '
+    + 'table{border-collapse:collapse;width:100%;margin-bottom:24px;} '
+    + 'th,td{border:1px solid #ccc;padding:5px 8px;font-size:10pt;text-align:left;} th{background:#0f1f3d;color:#fff;} '
+    + '.section-break{page-break-before:always;mso-page-break-before:always;margin-top:20px;}';
+}
+function wordDocumentHtml(title, bodyHtml){
+  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
+    + '<head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title>'
+    + '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->'
+    + '<style>' + reportDocStyles() + '</style></head><body>' + bodyHtml + '</body></html>';
+}
+function downloadWordDoc(filename, bodyHtml, title){
+  const html = wordDocumentHtml(title, bodyHtml);
+  const blob = new Blob(['﻿', html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function printHtmlDocument(title, bodyHtml){
+  const win = window.open('', '_blank');
+  if(!win){ toast('Please allow pop-ups for this site to export a PDF', 'danger'); return; }
+  win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title>'
+    + '<style>' + reportDocStyles() + '</style></head><body>' + bodyHtml + '</body></html>');
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ win.print(); }, 350);
+}
+
+function renderReports(){
+  let html = '<div class="page-head"><div><h2>📤 Reports</h2><p>Export any module in CSV, Word, or PDF — everywhere your data goes, it goes with you</p></div></div>';
+  html += '<div class="card"><h3>Export a single module</h3><div class="table-wrap"><table style="width:100%;border-collapse:collapse;">'
+    + '<thead><tr><th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Module</th>'
+    + '<th style="border-bottom:1px solid var(--border);width:290px;"></th></tr></thead><tbody id="report-rows">';
+  MODULE_KEYS.forEach(k=>{
+    const mod = MODULES[k];
+    html += '<tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + mod.icon + ' ' + escapeHtml(mod.label) + '</td>'
+      + '<td style="padding:6px 12px;border-bottom:1px solid var(--border);"><div class="row-actions">'
+      + '<button class="btn btn-ghost btn-sm" data-export="csv" data-mod="' + k + '">CSV</button>'
+      + '<button class="btn btn-ghost btn-sm" data-export="word" data-mod="' + k + '">Word</button>'
+      + '<button class="btn btn-ghost btn-sm" data-export="pdf" data-mod="' + k + '">PDF</button>'
+      + '</div></td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  html += '<div class="card" style="margin-top:16px;"><h3>Export everything</h3>'
+    + '<p style="font-size:13px;color:var(--text-dim);">One document covering every module at once — the same data behind the daily Drive backup.</p>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+    + '<button class="btn btn-ghost" id="export-all-word">📄 Full Report (Word)</button>'
+    + '<button class="btn btn-ghost" id="export-all-pdf">🖨️ Full Report (PDF)</button>'
+    + '<button class="btn btn-primary" id="export-all-json">⬇ Full Backup (JSON)</button>'
+    + '</div></div>';
   return html;
 }
 function wireReports(){
-  document.getElementById('report-buttons').addEventListener('click', (e)=>{
+  document.getElementById('report-rows').addEventListener('click', (e)=>{
     const btn = e.target.closest('[data-export]');
     if(!btn) return;
-    const key = btn.dataset.export;
-    downloadText('fams-plus-' + key + '-' + todayStr() + '.csv', collectionToCsv(key), 'text/csv');
-    toast('Exported ' + MODULES[key].label, 'ok');
+    const key = btn.dataset.mod;
+    const mod = MODULES[key];
+    const format = btn.dataset.export;
+    if(format === 'csv'){
+      downloadText('fams-plus-' + key + '-' + todayStr() + '.csv', collectionToCsv(key), 'text/csv');
+    }else if(format === 'word'){
+      downloadWordDoc('fams-plus-' + key + '-' + todayStr() + '.doc', moduleReportHtml(key, false), mod.label + ' — FAMS+ Export');
+    }else if(format === 'pdf'){
+      printHtmlDocument(mod.label + ' — FAMS+ Export', moduleReportHtml(key, false));
+    }
+    toast('Exported ' + mod.label + ' (' + format.toUpperCase() + ')', 'ok');
+  });
+  document.getElementById('export-all-word').addEventListener('click', ()=>{
+    downloadWordDoc('fams-plus-full-report-' + todayStr() + '.doc', fullReportBodyHtml(), 'FAMS+ Full Activity Report');
+    toast('Full report (Word) exported', 'ok');
+  });
+  document.getElementById('export-all-pdf').addEventListener('click', ()=>{
+    printHtmlDocument('FAMS+ Full Activity Report', fullReportBodyHtml());
   });
   document.getElementById('export-all-json').addEventListener('click', ()=>{
     const dump = { exportedAt: nowIso(), data: STATE.data, meta: { facultyName: STATE.meta.facultyName } };
@@ -1728,6 +2288,7 @@ let CAL_CURSOR = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 function calendarEventsForMonth(year, month){
   const events = {};
   MODULE_KEYS.forEach(k=>{
+    if(k === 'audit-log') return; // internal audit trail, not a calendar-worthy event
     const mod = MODULES[k];
     if(!mod.dateField) return;
     getActive(k).forEach(r=>{
@@ -1795,9 +2356,9 @@ function renderAdmin(){
     + '<button class="btn btn-primary btn-sm" id="adm-save-profile">Save Profile</button></div>';
 
   html += '<div class="card"><h3>🔑 Change PIN</h3>'
-    + '<div class="field"><label>Current PIN</label><input class="input" id="adm-pin-old" type="password" inputmode="numeric" maxlength="6"></div>'
-    + '<div class="grid grid-2"><div class="field"><label>New PIN</label><input class="input" id="adm-pin-new" type="password" inputmode="numeric" maxlength="6"></div>'
-    + '<div class="field"><label>Confirm New PIN</label><input class="input" id="adm-pin-new2" type="password" inputmode="numeric" maxlength="6"></div></div>'
+    + '<div class="field"><label>Current PIN</label><input class="input" id="adm-pin-old" type="password" inputmode="numeric" maxlength="4"></div>'
+    + '<div class="grid grid-2"><div class="field"><label>New PIN</label><input class="input" id="adm-pin-new" type="password" inputmode="numeric" maxlength="4"></div>'
+    + '<div class="field"><label>Confirm New PIN</label><input class="input" id="adm-pin-new2" type="password" inputmode="numeric" maxlength="4"></div></div>'
     + '<div class="error-box" id="adm-pin-error"></div>'
     + '<button class="btn btn-primary btn-sm" id="adm-save-pin">Update PIN</button></div>';
 
@@ -1844,7 +2405,7 @@ function wireAdmin(){
     const oldPin = document.getElementById('adm-pin-old').value.trim();
     const newPin = document.getElementById('adm-pin-new').value.trim();
     const newPin2 = document.getElementById('adm-pin-new2').value.trim();
-    if(!/^[0-9]{4,6}$/.test(newPin)){ errEl.textContent = 'New PIN must be 4–6 digits.'; return; }
+    if(!/^[0-9]{4}$/.test(newPin)){ errEl.textContent = 'New PIN must be exactly 4 digits.'; return; }
     if(newPin !== newPin2){ errEl.textContent = 'New PINs do not match.'; return; }
     try{ await doChangePin(oldPin, newPin); toast('PIN updated', 'ok'); document.getElementById('adm-pin-old').value=''; document.getElementById('adm-pin-new').value=''; document.getElementById('adm-pin-new2').value=''; }
     catch(err){ errEl.textContent = err.message || String(err); }
