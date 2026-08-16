@@ -92,6 +92,12 @@ button{font-family:inherit;}
    right — every tab gets an equal share of the available width. */
 .topnav-cats{display:flex;align-items:stretch;gap:2px;flex-wrap:wrap;flex:1;}
 .topnav-cat{position:relative;flex:1 1 0;min-width:118px;}
+/* Administrator sits apart from the main menu order, anchored to the right
+   end of the row instead of sharing the equal-width flex distribution the
+   other tabs use. */
+.topnav-cat-admin{flex:0 0 auto;min-width:0;margin-left:auto;}
+.topnav-cat-admin .topnav-cat-btn{padding:12px 16px;}
+.topnav-cat-admin .topnav-dropdown{left:auto;right:0;}
 .topnav-cat-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 14px;width:100%;background:none;border:none;cursor:pointer;
   font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--text-dim);
   white-space:nowrap;border-bottom:2.5px solid transparent;transition:color .12s,border-color .12s,background .12s;}
@@ -202,9 +208,9 @@ tr:hover td{background:#fafbfd;}
 .hero-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;position:relative;z-index:1;}
 .hero-greeting{font-size:17px;font-weight:800;letter-spacing:.2px;}
 .hero-sub{font-size:11.5px;color:#b8c1e0;margin-top:2px;}
-.hero-quote{font-size:11.5px;color:#d9deef;margin-top:5px;font-style:italic;opacity:.9;max-width:560px;
+.hero-quote{font-size:11.5px;color:var(--gold-2,#e0c384);margin-top:5px;font-style:italic;opacity:.95;max-width:560px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.hero-quote .attr{font-style:normal;opacity:.75;}
+.hero-quote .attr{font-style:normal;opacity:.8;color:#c3cbe8;}
 .hero-clock{text-align:right;}
 .hero-clock .time{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700;}
 .hero-clock .date{font-size:11px;color:#b8c1e0;margin-top:1px;}
@@ -226,6 +232,11 @@ tr:hover td{background:#fafbfd;}
 .activity-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-top:4px;}
 .activity-time{color:var(--text-faint);font-size:11px;white-space:nowrap;}
 
+/* Dashboard rows (overdue/today's schedule/upcoming) link straight through
+   to the module the item actually lives in ("click it, go to the real
+   thing") instead of being inert text. */
+.dash-link{display:block;color:inherit;text-decoration:none;cursor:pointer;transition:background .12s;}
+.dash-link:hover{background:#f4f6fb;}
 .urgency-overdue{border-left:3px solid var(--danger);}
 .urgency-today{border-left:3px solid var(--warn);}
 .urgency-soon{border-left:3px solid var(--gold);}
@@ -244,6 +255,9 @@ tr:hover td{background:#fafbfd;}
 .brand-h1{font-weight:800;font-size:26px;margin:10px 0 4px;color:var(--navy);}
 .brand-h1 span{color:var(--gold);}
 .auth-sub{font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+.auth-quote{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:12.5px;
+  font-style:italic;color:var(--text-dim);line-height:1.5;}
+.auth-quote .attr{display:block;font-style:normal;font-weight:600;color:var(--gold);margin-top:4px;font-size:11.5px;}
 .pin-input{text-align:center;font-size:30px;letter-spacing:16px;font-family:'IBM Plex Mono',monospace;
   padding:16px 10px 16px 26px;font-weight:600;margin-top:22px;}
 .pin-input:disabled{background:#f1f3f9;color:var(--text-faint);}
@@ -664,7 +678,7 @@ const MODULES = {
     {key:'paperTitle', label:'Paper Title', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Assigned','In Progress','Completed'], default:'Assigned'}
   ]},
-  'research-contacts': { label:'Researcher / faculty network', menu:'research', icon:'🌐', titleField:'name', dateField:'lastContactDate', fields:[
+  'research-contacts': { label:'Researcher Network', menu:'research', icon:'🌐', titleField:'name', dateField:'lastContactDate', fields:[
     {key:'name', label:'Name', type:'text', required:true},
     {key:'institution', label:'Institution', type:'text'},
     {key:'designation', label:'Designation', type:'text'},
@@ -815,7 +829,10 @@ function parseCustomFieldsSpec(text){
   return fields;
 }
 function registerCustomModule(def){
-  if(MODULES[def.key]) return; // already registered this session
+  // Deliberately NOT an "already registered, skip" early-return — editing an
+  // existing custom menu's name/icon/category/fields must actually take
+  // effect immediately (registerAllCustomModules() is re-run right after
+  // every save), not just on the next full page load.
   const dateFieldMatch = def.fields.find(f=>f.type === 'date' || f.type === 'datetime');
   MODULES[def.key] = {
     label: def.label, menu: def.key, icon: def.icon || '🗂️',
@@ -825,16 +842,24 @@ function registerCustomModule(def){
     custom: true
   };
   MODULE_KEYS = Object.keys(MODULES);
-  if(!MAIN_MENUS.find(m=>m.key === def.key)) MAIN_MENUS.push({ key: def.key, label: def.label });
-  if(!AREA_COLORS[def.key]) AREA_COLORS[def.key] = def.color || '#6d4aa8';
+  const menuEntry = MAIN_MENUS.find(m=>m.key === def.key);
+  if(menuEntry) menuEntry.label = def.label; else MAIN_MENUS.push({ key: def.key, label: def.label });
+  if(def.color) AREA_COLORS[def.key] = def.color;
+  else if(!AREA_COLORS[def.key]) AREA_COLORS[def.key] = '#6d4aa8';
+  // Drop this module's nav entry from every category first, then add it to
+  // its (possibly newly-chosen) one — so editing which tab a custom menu
+  // lives under actually moves it instead of leaving a stale copy behind.
+  NAV_CATEGORIES.forEach(c=>{
+    const idx = c.groups.indexOf(def.key);
+    if(idx !== -1) c.groups.splice(idx, 1);
+  });
   const cat = NAV_CATEGORIES.find(c=>c.key === def.category) || NAV_CATEGORIES.find(c=>c.key === 'tools');
-  if(cat && cat.groups.indexOf(def.key) === -1) cat.groups.push(def.key);
+  if(cat) cat.groups.push(def.key);
 }
 function registerAllCustomModules(){
   getActive('custom-modules').forEach(rec=>{
     try{
       const key = customModuleKeyFor(rec);
-      if(MODULES[key]) return;
       const fields = parseCustomFieldsSpec(rec.fieldsSpec);
       if(!fields.length) fields.push({ key:'details', label:'Details', type:'textarea' });
       registerCustomModule({ key: key, label: rec.label || 'Custom Menu', icon: rec.icon || '🗂️', category: rec.category || 'tools', fields: fields });
@@ -889,7 +914,7 @@ function getActive(key){ return getCollection(key).filter(r=>!r.deleted); }
 function getRecord(key, id){ return getCollection(key).find(r=>r.id===id) || null; }
 
 function defaultConfig(){
-  return { academicYear:'', semester:'', termStartDate:'', termEndDate:'', digestHour:7, backupHour:23, migratedLegacyMembers:false, academicTermHistory:[] };
+  return { academicYear:'', semester:'', termStartDate:'', termEndDate:'', digestHour:7, backupHour:23, migratedLegacyMembers:false, migratedMentoringIntoIncharges:false, academicTermHistory:[] };
 }
 
 /** Once Academic Year / Semester is set (Admin & Settings → Academic Term),
@@ -956,6 +981,59 @@ async function migrateLegacySubtableModules(){
   }
 }
 
+/** One-time data migration: Mentees, Mentoring Meetings, and Responsibilities
+ *  no longer have their own nav entries — In-Charges (roleName + a "members"
+ *  subtable) already covers exactly the same shape ("a role, with a roster
+ *  of people attached to it"), so a separate Mentees/Responsibilities module
+ *  was redundant. Every active Responsibilities record becomes its own
+ *  In-Charges record (its contacts become that record's members); every
+ *  active Mentee becomes a member row on one combined "Student Mentoring"
+ *  In-Charges record. Guarded by STATE.config.migratedMentoringIntoIncharges
+ *  so it only ever does real work once per install. Mentoring Meetings has
+ *  no equivalent shape to fold into (it's a dated log, not a roster) — its
+ *  data is simply left in place, unreachable from the nav but still present
+ *  in a full JSON backup, rather than being force-migrated somewhere it
+ *  doesn't belong. */
+async function migrateMentoringAndResponsibilitiesIntoIncharges(){
+  let oldValues;
+  try{ oldValues = await apiGetAll(['responsibilities','mentees']); }
+  catch(e){ return; } // offline/backend hiccup — retried on the next load since the flag isn't set yet
+  let responsibilities = [], mentees = [];
+  try{ responsibilities = oldValues['responsibilities'] ? JSON.parse(oldValues['responsibilities']) : []; }catch(e){ responsibilities = []; }
+  try{ mentees = oldValues['mentees'] ? JSON.parse(oldValues['mentees']) : []; }catch(e){ mentees = []; }
+  const activeResp = responsibilities.filter(r=>!r.deleted);
+  const activeMentees = mentees.filter(m=>!m.deleted);
+  if(activeResp.length === 0 && activeMentees.length === 0) return;
+
+  const inchargeArr = (STATE.data['incharge-roles'] || []).slice();
+  const stamp = nowIso();
+  const makeRecord = (roleName, members)=>({
+    id: uid(), roleName: roleName, durationType:'Ongoing', startDate:'', endDate:'', status:'Active',
+    members: members, notes: [], deleted:false, createdAt: stamp, updatedAt: stamp
+  });
+
+  activeResp.forEach(rec=>{
+    const roleName = [rec.title || 'Responsibility', rec.classSection].filter(Boolean).join(' — ');
+    const members = (Array.isArray(rec.contacts) ? rec.contacts : []).map(c=>({
+      studentName: c.name || '', regNo: c.regNo || '', batch: c.batch || '', classSection: rec.classSection || '',
+      email: c.email || '', phone: c.phone || '', progressStatus: ''
+    }));
+    inchargeArr.push(makeRecord(roleName, members));
+  });
+
+  if(activeMentees.length > 0){
+    const members = activeMentees.map(m=>({
+      studentName: m.name || '', regNo: m.regNo || '', batch: m.semester || '', classSection: m.program || '',
+      email: m.email || '', phone: m.phone || '', progressStatus: ''
+    }));
+    inchargeArr.push(makeRecord('Student Mentoring', members));
+  }
+
+  await saveCollection('incharge-roles', inchargeArr);
+  if(activeResp.length) await apiSetRaw('responsibilities', JSON.stringify([]));
+  if(activeMentees.length) await apiSetRaw('mentees', JSON.stringify([]));
+}
+
 async function loadAllData(){
   const keys = MODULE_KEYS.concat(['app-meta','app-config']);
   let values = await apiGetAll(keys);
@@ -982,6 +1060,11 @@ async function loadAllData(){
   if(STATE.meta && !STATE.config.migratedLegacyMembers){
     await migrateLegacySubtableModules();
     STATE.config.migratedLegacyMembers = true;
+    await saveConfig();
+  }
+  if(STATE.meta && !STATE.config.migratedMentoringIntoIncharges){
+    await migrateMentoringAndResponsibilitiesIntoIncharges();
+    STATE.config.migratedMentoringIntoIncharges = true;
     await saveConfig();
   }
   STATE.loaded = true;
@@ -1156,27 +1239,66 @@ const AREA_COLORS = {
 
 /* Sidebar menus clubbed into broad categories (collapsible accordions) so
    the ~18 menu groups read as ~6 sections instead of one long flat list.
-   Dashboard is deliberately NOT one of these groups — it's promoted to its
-   own standalone top-level button (see topNavCatsHtml()) since it's the
-   most-visited screen and doesn't belong behind a dropdown click. Work
-   Diary and Calendar (previously grouped with Dashboard under an "Overview"
-   category) are folded into Academics instead, since a two-item leftover
-   category wasn't worth a whole extra tab. */
+   Dashboard, Work Diary, and Calendar are deliberately NOT in any of these
+   dropdown categories — they're promoted to their own standalone top-level
+   buttons (see topNavCatsHtml()) since they're used every day and don't
+   belong behind a dropdown click. Leave & Holidays is likewise pulled out
+   into its own top-level dropdown rather than sitting inside Academics.
+   Meetings, Action Items, Reminders, and Office Follow-ups are also pulled
+   out of Roles & Responsibilities into their own standalone buttons. */
 const NAV_CATEGORIES = [
-  { key:'academics', label:'Academics', icon:'📘', groups:['work-diary','calendar','teaching','leave-holidays','exams','laboratory','extra-classes'] },
+  { key:'leave-holidays', label:'Leave & Holidays', icon:'🗓️', groups:['leave-holidays'] },
+  { key:'academics', label:'Academics', icon:'📘', groups:['teaching','exams','laboratory','extra-classes'] },
   { key:'research', label:'Research', icon:'🔬', groups:['research','projects'] },
   // Students + Administrative Duties combined into one "Responsibilities" category.
-  { key:'admin-duties', label:'Roles & Responsibilities', icon:'📋', groups:['mentoring','responsibilities','incharge','committees','meetings','action-items','reminders','office-followups'] },
+  // Mentoring (Mentees, Mentoring Meetings) and Responsibilities (Class
+  // Teacher) are deliberately absent — In-Charges already covers "a role
+  // with a roster of people attached" (see migrateMentoringAndResponsibilitiesIntoIncharges()),
+  // so adding a role there is now the single place for what these used to be.
+  { key:'admin-duties', label:'Roles & Responsibilities', icon:'📋', groups:['incharge','committees'] },
   { key:'tools', label:'Administrator', icon:'⚙️', groups:['analytics','audit-log','custom-modules','mail-merge','admin'] }
 ];
 
 /* Screens promoted to their own always-visible top-level nav button rather
-   than living behind a dropdown click — Dashboard (most-visited) and
-   Reports (a frequently-needed export/print destination). */
+   than living behind a dropdown click — Dashboard, Work Diary, Calendar,
+   Meetings, Action Items, Reminders, and Office Follow-ups (all used every
+   day) and Reports (a frequently-needed export/print destination).
+   `kind:'module'` links straight to that module's own screen
+   (#/module/<key>); `kind:'screen'` links to a special, non-module screen
+   (#/<key>). */
 const STANDALONE_NAV_SCREENS = [
-  { key:'dashboard', label:'Dashboard', icon:'🏠' },
-  { key:'reports', label:'Reports', icon:'📤' }
+  { key:'dashboard', label:'Dashboard', icon:'🏠', kind:'screen' },
+  { key:'work-diary', label:'Work Diary', icon:'📔', kind:'module' },
+  { key:'calendar', label:'Calendar', icon:'🗓️', kind:'screen' },
+  { key:'meetings', label:'Meetings', icon:'📅', kind:'module' },
+  { key:'action-items', label:'Action Items', icon:'☑️', kind:'module' },
+  { key:'reminders', label:'Reminders', icon:'🔔', kind:'module' },
+  { key:'office-followups', label:'Office Follow-ups', icon:'📮', kind:'module' },
+  { key:'reports', label:'Reports', icon:'📤', kind:'screen' }
 ];
+
+/* Left-to-right order of the main nav row: Dashboard, Work Diary, Calendar
+   (daily-use standalone buttons), then the dropdown categories, then
+   Meetings, Action Items, Reminders, Office Follow-ups (more daily-use
+   standalone buttons), then Reports. Administrator ("tools") is deliberately
+   excluded here — it's rendered separately, anchored to the far right of the
+   row (see topNavCatsHtml()), since it's an admin-control button rather than
+   an everyday-use menu item. */
+const NAV_MAIN_ORDER = [
+  { type:'standalone', key:'dashboard' },
+  { type:'standalone', key:'work-diary' },
+  { type:'standalone', key:'calendar' },
+  { type:'category', key:'leave-holidays' },
+  { type:'category', key:'academics' },
+  { type:'category', key:'research' },
+  { type:'category', key:'admin-duties' },
+  { type:'standalone', key:'meetings' },
+  { type:'standalone', key:'action-items' },
+  { type:'standalone', key:'reminders' },
+  { type:'standalone', key:'office-followups' },
+  { type:'standalone', key:'reports' }
+];
+const NAV_ADMIN_CATEGORY_KEY = 'tools';
 
 function parseRoute(){
   const h = (location.hash || '#/dashboard').replace(/^#\/?/, '');
@@ -1321,6 +1443,8 @@ function renderFirstRunScreen(){
 function wireFirstRunScreen(){
   document.getElementById('setup-form').addEventListener('submit', async (e)=>{
     e.preventDefault();
+    const btn = e.target.querySelector('button[type=submit]');
+    if(btn.disabled) return;
     const errEl = document.getElementById('setup-error');
     errEl.textContent = '';
     const name = document.getElementById('su-name').value.trim();
@@ -1330,7 +1454,6 @@ function wireFirstRunScreen(){
     const pin2 = document.getElementById('su-pin2').value.trim();
     if(!/^[0-9]{4}$/.test(pin)){ errEl.textContent = 'PIN must be exactly 4 digits.'; return; }
     if(pin !== pin2){ errEl.textContent = 'PINs do not match.'; return; }
-    const btn = e.target.querySelector('button[type=submit]');
     btn.disabled = true; btn.textContent = 'Creating…';
     try{
       await doFirstRunSetup(name, email, phone, pin);
@@ -1346,8 +1469,11 @@ function wireFirstRunScreen(){
 
 function renderLoginScreen(){
   const locked = pinLocked();
+  const q = quoteOfTheDay();
   return '<div class="center-screen"><div class="auth-card">'
-    + '<div class="logo-wrap">' + logoMarkSvg(64) + '<div class="brand-h1">FAMS<span>+</span></div></div>'
+    + '<div class="logo-wrap">' + logoMarkSvg(64) + '<div class="brand-h1">FAMS<span>+</span></div>'
+    + '<div class="auth-sub">' + escapeHtml(DEPARTMENT_NAME) + '<br>' + escapeHtml(INSTITUTION_NAME) + '</div>'
+    + '<div class="auth-quote">"' + escapeHtml(q.text) + '"<span class="attr">— ' + escapeHtml(q.by) + '</span></div></div>'
     + '<form id="login-form">'
     + '<input class="input pin-input" id="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" '
     + 'autocomplete="off" placeholder="••••"' + (locked ? ' disabled' : '') + '>'
@@ -1368,7 +1494,7 @@ function wireLoginScreen(){
   });
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
-    if(input.value.length !== 4 || pinLocked()) return;
+    if(submitBtn.disabled || input.value.length !== 4 || pinLocked()) return;
     submitBtn.disabled = true;
     errEl.className = 'error-box';
     errEl.textContent = 'Checking…';
@@ -1416,7 +1542,8 @@ function navGroupHtml(group){
 }
 function activeCategoryKey(){
   const r = parseRoute();
-  if(STANDALONE_NAV_SCREENS.some(s=>s.key === r.screen)) return null; // these have their own top-level button, not a dropdown category.
+  const screenKey = r.screen === 'module' ? r.moduleKey : r.screen;
+  if(STANDALONE_NAV_SCREENS.some(s=>s.key === screenKey)) return null; // these have their own top-level button, not a dropdown category.
   const groupKey = r.screen === 'module' ? MODULES[r.moduleKey].menu : r.screen;
   const cat = NAV_CATEGORIES.find(c => c.groups.indexOf(groupKey) !== -1);
   return cat ? cat.key : NAV_CATEGORIES[0].key;
@@ -1429,14 +1556,16 @@ function currentScreenLabel(){
 }
 function topNavCatsHtml(){
   const activeCat = activeCategoryKey();
-  const currentScreen = parseRoute().screen;
-  let html = '';
-  STANDALONE_NAV_SCREENS.forEach(s=>{
-    html += '<div class="topnav-cat' + (currentScreen === s.key ? ' active' : '') + '">'
+  const r = parseRoute();
+  const currentScreenKey = r.screen === 'module' ? r.moduleKey : r.screen;
+
+  function standaloneBtnHtml(s, extraCls){
+    const isActive = s.kind === 'module' ? isModuleRoute(s.key) : (currentScreenKey === s.key);
+    return '<div class="topnav-cat' + (extraCls ? ' ' + extraCls : '') + (isActive ? ' active' : '') + '">'
       + '<button type="button" class="topnav-cat-btn" data-standalone-link="' + s.key + '"><span>' + s.icon + '</span><span>' + escapeHtml(s.label) + '</span></button></div>';
-  });
-  NAV_CATEGORIES.forEach(cat=>{
-    html += '<div class="topnav-cat' + (cat.key === activeCat ? ' active' : '') + '" data-cat="' + cat.key + '">';
+  }
+  function categoryBtnHtml(cat, extraCls){
+    let html = '<div class="topnav-cat' + (extraCls ? ' ' + extraCls : '') + (cat.key === activeCat ? ' active' : '') + '" data-cat="' + cat.key + '">';
     html += '<button type="button" class="topnav-cat-btn" data-cat-toggle="' + cat.key + '"><span>' + cat.icon + '</span><span>' + escapeHtml(cat.label) + '</span><span class="topnav-cat-chevron">▾</span></button>';
     html += '<div class="topnav-dropdown">';
     cat.groups.forEach(groupKey=>{
@@ -1444,7 +1573,21 @@ function topNavCatsHtml(){
       if(group) html += navGroupHtml(group);
     });
     html += '</div></div>';
+    return html;
+  }
+
+  let html = '';
+  NAV_MAIN_ORDER.forEach(entry=>{
+    if(entry.type === 'standalone'){
+      const s = STANDALONE_NAV_SCREENS.find(x=>x.key === entry.key);
+      if(s) html += standaloneBtnHtml(s);
+    }else{
+      const cat = NAV_CATEGORIES.find(x=>x.key === entry.key);
+      if(cat) html += categoryBtnHtml(cat);
+    }
   });
+  const adminCat = NAV_CATEGORIES.find(c=>c.key === NAV_ADMIN_CATEGORY_KEY);
+  if(adminCat) html += categoryBtnHtml(adminCat, 'topnav-cat-admin');
   return html;
 }
 function renderShellSkeleton(){
@@ -1479,7 +1622,13 @@ function wireShell(){
   const catsEl = document.getElementById('topnav-cats');
   catsEl.addEventListener('click', (e)=>{
     const standaloneLink = e.target.closest('[data-standalone-link]');
-    if(standaloneLink){ closeAllNavDropdowns(); navigate('#/' + standaloneLink.dataset.standaloneLink); return; }
+    if(standaloneLink){
+      closeAllNavDropdowns();
+      const key = standaloneLink.dataset.standaloneLink;
+      const entry = STANDALONE_NAV_SCREENS.find(s=>s.key === key);
+      navigate(entry && entry.kind === 'module' ? '#/module/' + key : '#/' + key);
+      return;
+    }
     const catToggle = e.target.closest('[data-cat-toggle]');
     if(catToggle){
       const catEl = catToggle.closest('.topnav-cat');
@@ -1681,16 +1830,20 @@ function wireModuleList(moduleKey){
     });
     const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
     if(bulkDeleteBtn) bulkDeleteBtn.addEventListener('click', async ()=>{
+      if(bulkDeleteBtn.disabled) return;
       if(!confirm('Delete ' + n + ' selected record(s)? You can restore them later from "Show deleted".')) return;
-      const ids = Array.from(LIST_SELECTION);
-      for(const id of ids){
-        const rec = getRecord(moduleKey, id);
-        await softDeleteRecord(moduleKey, id);
-        logAudit(moduleKey, 'Deleted', id, rec ? (rec[mod.titleField] || '') : '');
-      }
-      toast(ids.length + ' record(s) deleted', 'ok');
-      LIST_SELECTION.clear();
-      refreshTable();
+      bulkDeleteBtn.disabled = true;
+      try{
+        const ids = Array.from(LIST_SELECTION);
+        for(const id of ids){
+          const rec = getRecord(moduleKey, id);
+          await softDeleteRecord(moduleKey, id);
+          logAudit(moduleKey, 'Deleted', id, rec ? (rec[mod.titleField] || '') : '');
+        }
+        toast(ids.length + ' record(s) deleted', 'ok');
+        LIST_SELECTION.clear();
+        refreshTable();
+      }finally{ bulkDeleteBtn.disabled = false; }
     });
   }
 
@@ -1920,6 +2073,11 @@ function wireModuleForm(moduleKey, id){
   if(form){
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
+      // Guard against a fast double-click / double-Enter firing this handler
+      // twice before the button visually disables — without this, a second
+      // near-simultaneous submit would create two records instead of one.
+      const btn = form.querySelector('button[type=submit]');
+      if(btn.disabled) return;
       const errEl = document.getElementById('form-error');
       errEl.textContent = '';
       const data = {};
@@ -1932,7 +2090,6 @@ function wireModuleForm(moduleKey, id){
         if(f.required && (v === '' || v == null)){ errEl.textContent = f.label + ' is required.'; el.focus(); return; }
         data[f.key] = v;
       }
-      const btn = form.querySelector('button[type=submit]');
       btn.disabled = true; btn.textContent = 'Saving…';
       try{
         let savedRec;
@@ -1960,6 +2117,7 @@ function wireModuleForm(moduleKey, id){
   const addNoteBtn = document.getElementById('add-note-btn');
   if(addNoteBtn){
     addNoteBtn.addEventListener('click', async ()=>{
+      if(addNoteBtn.disabled) return;
       const ta = document.getElementById('new-note-text');
       const text = ta.value.trim();
       if(!text) return;
@@ -2010,6 +2168,7 @@ function openEmailComposeDrawer(moduleKey, records, onDone){
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const sendBtn = document.getElementById('ec-send');
+    if(sendBtn.disabled) return;
     const errEl = document.getElementById('ec-error');
     const subject = document.getElementById('ec-subject').value.trim();
     const body = document.getElementById('ec-body').value;
@@ -2164,6 +2323,7 @@ function openBulkImportDrawer(moduleKey, onDone){
       previewArea.innerHTML = html2;
       document.getElementById('bulk-confirm-btn').addEventListener('click', async (ev)=>{
         const btn = ev.target;
+        if(btn.disabled) return;
         btn.disabled = true; btn.textContent = 'Importing…';
         try{
           const arr = getCollection(moduleKey).slice();
@@ -2461,7 +2621,7 @@ function renderDashboard(){
   if(overdue.length > 0){
     html += '<div class="card" style="margin-bottom:16px;border-left:3px solid var(--danger);">'
       + '<h3 style="color:var(--danger);">⚠️ ' + overdue.length + ' Overdue Item' + (overdue.length>1?'s':'') + '</h3>'
-      + overdue.slice(0,5).map(it=>'<div class="activity-item urgency-overdue" style="padding-left:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span> <span class="activity-time" style="color:var(--danger);">' + escapeHtml(fmtDate(it.date)) + '</span></div>').join('')
+      + overdue.slice(0,5).map(it=>'<a href="#/module/' + it.moduleKey + '" class="activity-item urgency-overdue dash-link" style="padding-left:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span> <span class="activity-time" style="color:var(--danger);">' + escapeHtml(fmtDate(it.date)) + '</span></a>').join('')
       + '</div>';
   }
 
@@ -2473,10 +2633,10 @@ function renderDashboard(){
     html += '<div class="activity-item urgency-today" style="padding-left:8px;background:#fff7ec;border-radius:6px;margin-bottom:8px;">🗓️ <b>You are on approved ' + escapeHtml(dayStatus.leave.type || 'Leave') + ' today.</b> Classes below may need rescheduling. <i>(auto-detected from Leave / OD)</i></div>';
   }
   html += (classes.length
-    ? classes.map(c=>'<div style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + (dayStatus.holiday || dayStatus.leave ? 'var(--warn,#d97706)' : AREA_COLORS.teaching) + ';font-size:13px;' + (dayStatus.holiday ? 'opacity:.55;text-decoration:line-through;' : '') + '"><b>' + escapeHtml(c.startTime||'') + '–' + escapeHtml(c.endTime||'') + '</b>&nbsp; ' + escapeHtml(c.subject||'') + ' <span style="color:var(--text-dim);">(' + escapeHtml(c.section||'') + ', ' + escapeHtml(c.venue||'') + ')</span></div>').join('')
+    ? classes.map(c=>'<a href="#/module/timetable" class="dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + (dayStatus.holiday || dayStatus.leave ? 'var(--warn,#d97706)' : AREA_COLORS.teaching) + ';font-size:13px;' + (dayStatus.holiday ? 'opacity:.55;text-decoration:line-through;' : '') + '"><b>' + escapeHtml(c.startTime||'') + '–' + escapeHtml(c.endTime||'') + '</b>&nbsp; ' + escapeHtml(c.subject||'') + ' <span style="color:var(--text-dim);">(' + escapeHtml(c.section||'') + ', ' + escapeHtml(c.venue||'') + ')</span></a>').join('')
     : '<div class="empty">No classes today. Enjoy the breathing room.</div>') + '</div>';
   html += '<div class="card"><h3>⏰ Upcoming (next 7 days)</h3>' + (upcoming.length
-    ? upcoming.slice(0,10).map(it=>'<div class="' + urgencyClass(it.date) + '" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;gap:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span><span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></div>').join('')
+    ? upcoming.slice(0,10).map(it=>'<a href="#/module/' + it.moduleKey + '" class="' + urgencyClass(it.date) + ' dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;gap:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span><span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></a>').join('')
     : '<div class="empty">Nothing due in the next 7 days.</div>') + '</div>';
   html += '</div>';
 
@@ -3316,6 +3476,16 @@ function renderAdmin(){
     + '<p style="font-size:12.5px;color:var(--text-dim);">Need a whole new menu that isn\'t built in — a departmental register, a grants tracker, anything? Add it yourself, no coding required: give it a name, an icon, which tab it should live under, and a list of fields (one per line). It appears in the navigation immediately and behaves exactly like every other menu — search, add, edit, bulk import, bulk email, bulk delete, notes, activity log and every report format all work on it automatically. Each custom menu keeps its own separate storage, so adding one never touches any other menu\'s data or code.</p>'
     + '<button class="btn btn-primary btn-sm" id="adm-open-custom-modules">🧩 Manage Custom Menus</button></div>';
 
+  const manageableModules = MODULE_KEYS.filter(k=>!MODULES[k].readOnly);
+  html += '<div class="card" style="margin-top:16px;"><h3>🗑️ Data Management</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">Every menu already supports deleting (and later restoring) records right from its own list — the 🗑 action on each row, or select multiple rows and use "Delete Selected". Jump straight to any menu\'s records from here:</p>'
+    + '<div class="field"><label>Menu</label><select class="input" id="adm-jump-module">' + manageableModules.map(k=>'<option value="' + k + '">' + escapeHtml(MODULES[k].icon + ' ' + MODULES[k].label) + '</option>').join('') + '</select></div>'
+    + '<button class="btn btn-ghost btn-sm" id="adm-jump-btn">Open Menu</button>'
+    + '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">'
+    + '<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:8px;">The Activity Log is read-only everywhere else (it\'s a history trail, not a menu of records), so it needs its own clear action:</p>'
+    + '<button class="btn btn-ghost btn-sm" id="adm-clear-audit-log" style="color:var(--danger);">🗑️ Clear Activity Log (' + getActive('audit-log').length + ' entries)</button>'
+    + '</div></div>';
+
   html += '<div class="card" style="margin-top:16px;"><h3>🔌 Backend Connection</h3>'
     + '<p style="font-size:12.5px;color:var(--text-dim);">Web App URL: <span class="mono">' + escapeHtml(DATA_API_URL) + '</span></p>'
     + '<p style="font-size:12.5px;color:var(--text-dim);">To point this app at a different backend or change the shared key, edit <code>DATA_API_URL</code> / <code>APP_KEY</code> near the top of index.html\'s &lt;script&gt; section.</p></div>';
@@ -3325,15 +3495,39 @@ function renderAdmin(){
 function wireAdmin(){
   const openCustomBtn = document.getElementById('adm-open-custom-modules');
   if(openCustomBtn) openCustomBtn.addEventListener('click', ()=>navigate('#/module/custom-modules'));
-  document.getElementById('adm-save-profile').addEventListener('click', async ()=>{
-    STATE.meta.facultyName = document.getElementById('adm-name').value.trim();
-    STATE.meta.email = document.getElementById('adm-email').value.trim();
-    STATE.meta.phone = document.getElementById('adm-phone').value.trim();
-    await saveMeta();
-    toast('Profile saved', 'ok');
-    renderRoute();
+  const jumpBtn = document.getElementById('adm-jump-btn');
+  if(jumpBtn) jumpBtn.addEventListener('click', ()=>{
+    const key = document.getElementById('adm-jump-module').value;
+    if(key) navigate('#/module/' + key);
   });
-  document.getElementById('adm-save-pin').addEventListener('click', async ()=>{
+  const clearAuditBtn = document.getElementById('adm-clear-audit-log');
+  if(clearAuditBtn) clearAuditBtn.addEventListener('click', async (e)=>{
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
+    if(!confirm('Permanently clear the entire Activity Log? This cannot be undone.')) return;
+    btn.disabled = true;
+    try{
+      await saveCollection('audit-log', []);
+      toast('Activity Log cleared', 'ok');
+      renderRoute();
+    }finally{ btn.disabled = false; }
+  });
+  document.getElementById('adm-save-profile').addEventListener('click', async (e)=>{
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
+    btn.disabled = true;
+    try{
+      STATE.meta.facultyName = document.getElementById('adm-name').value.trim();
+      STATE.meta.email = document.getElementById('adm-email').value.trim();
+      STATE.meta.phone = document.getElementById('adm-phone').value.trim();
+      await saveMeta();
+      toast('Profile saved', 'ok');
+      renderRoute();
+    }finally{ btn.disabled = false; }
+  });
+  document.getElementById('adm-save-pin').addEventListener('click', async (e)=>{
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
     const errEl = document.getElementById('adm-pin-error');
     errEl.textContent = '';
     const oldPin = document.getElementById('adm-pin-old').value.trim();
@@ -3341,57 +3535,74 @@ function wireAdmin(){
     const newPin2 = document.getElementById('adm-pin-new2').value.trim();
     if(!/^[0-9]{4}$/.test(newPin)){ errEl.textContent = 'New PIN must be exactly 4 digits.'; return; }
     if(newPin !== newPin2){ errEl.textContent = 'New PINs do not match.'; return; }
+    btn.disabled = true;
     try{ await doChangePin(oldPin, newPin); toast('PIN updated', 'ok'); document.getElementById('adm-pin-old').value=''; document.getElementById('adm-pin-new').value=''; document.getElementById('adm-pin-new2').value=''; }
     catch(err){ errEl.textContent = err.message || String(err); }
+    finally{ btn.disabled = false; }
   });
-  document.getElementById('adm-save-term').addEventListener('click', async ()=>{
+  document.getElementById('adm-save-term').addEventListener('click', async (e)=>{
     // In-place edit — corrects the current term's details (e.g. a typo in
     // the year, or filling in the end date later) WITHOUT archiving it to
     // history, since nothing about which term is "current" is changing.
-    STATE.config.academicYear = document.getElementById('adm-year').value.trim();
-    STATE.config.semester = document.getElementById('adm-sem').value.trim();
-    STATE.config.termStartDate = document.getElementById('adm-term-start').value;
-    STATE.config.termEndDate = document.getElementById('adm-term-end').value;
-    await saveConfig();
-    refreshTopnavTag();
-    toast('Academic term saved', 'ok');
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
+    btn.disabled = true;
+    try{
+      STATE.config.academicYear = document.getElementById('adm-year').value.trim();
+      STATE.config.semester = document.getElementById('adm-sem').value.trim();
+      STATE.config.termStartDate = document.getElementById('adm-term-start').value;
+      STATE.config.termEndDate = document.getElementById('adm-term-end').value;
+      await saveConfig();
+      refreshTopnavTag();
+      toast('Academic term saved', 'ok');
+    }finally{ btn.disabled = false; }
   });
-  document.getElementById('adm-new-term').addEventListener('click', async ()=>{
+  document.getElementById('adm-new-term').addEventListener('click', async (e)=>{
     // Starting a new term: the OLD current term (year/semester/dates) is
     // pushed into academicTermHistory first — preserved, but no longer
     // "current" anywhere in the app — then the form's values become the
     // new current term. This is how "previous semester must be preserved"
     // is satisfied: nothing is overwritten in place, it's archived.
-    const resEl = document.getElementById('adm-term-result');
-    const newYear = document.getElementById('adm-year').value.trim();
-    const newSem = document.getElementById('adm-sem').value.trim();
-    const newStart = document.getElementById('adm-term-start').value;
-    const newEnd = document.getElementById('adm-term-end').value;
-    const cfg = STATE.config;
-    const hadPreviousTerm = cfg.academicYear || cfg.semester;
-    if(hadPreviousTerm){
-      const history = (cfg.academicTermHistory || []).slice();
-      history.push({ academicYear: cfg.academicYear || '', semester: cfg.semester || '', startDate: cfg.termStartDate || '', endDate: cfg.termEndDate || '' });
-      cfg.academicTermHistory = history;
-    }
-    cfg.academicYear = newYear;
-    cfg.semester = newSem;
-    cfg.termStartDate = newStart;
-    cfg.termEndDate = newEnd;
-    await saveConfig();
-    refreshTopnavTag();
-    resEl.style.display = 'block';
-    resEl.textContent = hadPreviousTerm ? 'New term started — the previous term is preserved below.' : 'Term saved.';
-    toast('New term started', 'ok');
-    renderRoute();
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
+    btn.disabled = true;
+    try{
+      const resEl = document.getElementById('adm-term-result');
+      const newYear = document.getElementById('adm-year').value.trim();
+      const newSem = document.getElementById('adm-sem').value.trim();
+      const newStart = document.getElementById('adm-term-start').value;
+      const newEnd = document.getElementById('adm-term-end').value;
+      const cfg = STATE.config;
+      const hadPreviousTerm = cfg.academicYear || cfg.semester;
+      if(hadPreviousTerm){
+        const history = (cfg.academicTermHistory || []).slice();
+        history.push({ academicYear: cfg.academicYear || '', semester: cfg.semester || '', startDate: cfg.termStartDate || '', endDate: cfg.termEndDate || '' });
+        cfg.academicTermHistory = history;
+      }
+      cfg.academicYear = newYear;
+      cfg.semester = newSem;
+      cfg.termStartDate = newStart;
+      cfg.termEndDate = newEnd;
+      await saveConfig();
+      refreshTopnavTag();
+      resEl.style.display = 'block';
+      resEl.textContent = hadPreviousTerm ? 'New term started — the previous term is preserved below.' : 'Term saved.';
+      toast('New term started', 'ok');
+      renderRoute();
+    }finally{ btn.disabled = false; }
   });
-  document.getElementById('adm-send-test').addEventListener('click', async ()=>{
+  document.getElementById('adm-send-test').addEventListener('click', async (e)=>{
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
     const resEl = document.getElementById('adm-test-result');
     const to = document.getElementById('adm-test-email').value.trim();
     if(!to){ resEl.textContent = 'Enter an email address first.'; return; }
+    btn.disabled = true;
     resEl.textContent = 'Sending…';
-    const res = await apiTestEmail(to);
-    resEl.textContent = res.ok ? ('Sent as ' + (res.sentAs || '(unknown)') + '. Remaining daily quota: ' + res.remainingQuota) : ('Failed: ' + (res.error || 'unknown error'));
+    try{
+      const res = await apiTestEmail(to);
+      resEl.textContent = res.ok ? ('Sent as ' + (res.sentAs || '(unknown)') + '. Remaining daily quota: ' + res.remainingQuota) : ('Failed: ' + (res.error || 'unknown error'));
+    }finally{ btn.disabled = false; }
   });
 }
 
@@ -3413,15 +3624,20 @@ function renderMailMergeScreen(){
     + '<div id="mm-result" style="margin-top:10px;"></div></div>';
 }
 function wireMailMergeScreen(){
-  document.getElementById('mm-send').addEventListener('click', async ()=>{
+  document.getElementById('mm-send').addEventListener('click', async (e)=>{
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
     const resEl = document.getElementById('mm-result');
     const lines = document.getElementById('mm-recipients').value.split('\n').map(l=>l.trim()).filter(Boolean);
     const recipients = lines.map(l=>{ const parts = l.split(','); return { name:(parts[0]||'').trim(), email:(parts[1]||'').trim() }; });
     const subject = document.getElementById('mm-subject').value;
     const body = document.getElementById('mm-body').value;
     if(recipients.length === 0){ resEl.textContent = 'Add at least one recipient.'; return; }
+    btn.disabled = true;
     resEl.textContent = 'Sending to ' + recipients.length + ' recipient(s)…';
-    const res = await apiMailMerge(recipients, subject, body);
+    let res;
+    try{ res = await apiMailMerge(recipients, subject, body); }
+    finally{ btn.disabled = false; }
     if(!res.ok){ resEl.textContent = 'Failed: ' + (res.error || 'unknown error'); return; }
     const okCount = res.results.filter(r=>r.ok).length;
     resEl.innerHTML = okCount + ' / ' + res.results.length + ' sent successfully.' + res.results.filter(r=>!r.ok).map(r=>'<div style="color:var(--danger);font-size:12px;">' + escapeHtml(r.email||r.name) + ': ' + escapeHtml(r.error||'failed') + '</div>').join('');
