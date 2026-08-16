@@ -24,7 +24,7 @@
   --navy:#0f1f3d; --navy-2:#16264a; --navy-3:#1c2b4a;
   --gold:#c99a3c; --gold-2:#e0b558;
   --bg:#f0f3fa; --card:#ffffff; --border:#e3e7f0; --border-strong:#cbd1db;
-  --text:#1c2333; --text-dim:#5c6478; --text-faint:#8a92a6;
+  --text:#0f1424; --text-dim:#404a68; --text-faint:#68718c;
   --ok:#1f8a52; --ok-wash:#e4f4ec;
   --warn:#b9741c; --warn-wash:#fbf0dd;
   --danger:#b3273b; --danger-wash:#fbeae9;
@@ -642,6 +642,7 @@ const MODULES = {
     {key:'section', label:'Section', type:'text'},
     {key:'topic', label:'Topic Covered', type:'textarea', required:true},
     {key:'status', label:'Status', type:'select', options:['Held','Cancelled','Rescheduled'], default:'Held'},
+    {key:'durationHours', label:'Duration (hours) — optional, only needed if this class isn\'t already on the Timetable', type:'number'},
     {key:'students', label:'Students (optional attendance)', type:'subtable', rowLabel:'Student', rowLabelPlural:'students', subfields:[
       {key:'name', label:'Name'},
       {key:'regNo', label:'Reg. No.'},
@@ -653,7 +654,8 @@ const MODULES = {
     {key:'date', label:'Date', type:'date', required:true},
     {key:'session', label:'Session', type:'select', options:['Forenoon','Afternoon','Evening'], default:'Forenoon'},
     {key:'venue', label:'Venue', type:'text'},
-    {key:'role', label:'Role', type:'select', options:['Invigilator','Chief Superintendent','Squad Member'], default:'Invigilator'}
+    {key:'role', label:'Role', type:'select', options:['Invigilator','Chief Superintendent','Squad Member'], default:'Invigilator'},
+    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
   ]},
   'question-bank': { label:'Question bank', menu:'exams', icon:'❓', titleField:'question', dateField:null, fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
@@ -715,7 +717,8 @@ const MODULES = {
     {key:'labCourse', label:'Lab Course', type:'text', required:true},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'batch', label:'Batch', type:'text'},
-    {key:'externalExaminer', label:'External Examiner', type:'text'}
+    {key:'externalExaminer', label:'External Examiner', type:'text'},
+    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
   ]},
   'extra-classes': { label:'Extra / additional classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
     {key:'type', label:'Type', type:'select', options:['Extra Class','Compensatory Class','Makeup Class'], default:'Extra Class'},
@@ -723,7 +726,8 @@ const MODULES = {
     {key:'subjectCode', label:'Subject Code', type:'text', required:true},
     {key:'reason', label:'Reason', type:'text'},
     {key:'date', label:'Date', type:'date', required:true},
-    {key:'time', label:'Time', type:'text'}
+    {key:'time', label:'Time', type:'text'},
+    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
   ]},
   'research-targets': { label:'Plans', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
     {key:'description', label:'Target Description', type:'textarea', required:true},
@@ -749,7 +753,8 @@ const MODULES = {
   'research-events': { label:'Research events', menu:'research', icon:'🎤', titleField:'eventName', dateField:'date', fields:[
     {key:'eventName', label:'Event Name', type:'text', required:true},
     {key:'role', label:'Role', type:'select', options:['Organized','Participated','Chaired Session','Keynote'], default:'Participated'},
-    {key:'date', label:'Date', type:'date'}
+    {key:'date', label:'Date', type:'date'},
+    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
   ]},
   'peer-reviews': { label:'Peer review / editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
     {key:'venue', label:'Journal / Conference', type:'text', required:true},
@@ -811,7 +816,8 @@ const MODULES = {
     {key:'date', label:'Date', type:'date', required:true},
     {key:'attendees', label:'Attendees', type:'textarea'},
     {key:'minutes', label:'Minutes', type:'textarea'},
-    {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'}
+    {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'},
+    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
   ]},
   'action-items': { label:'Action items', menu:'action-items', icon:'☑️', titleField:'action', dateField:'dueDate', fields:[
     {key:'meetingId', label:'Meeting', type:'reference', ref:'meetings'},
@@ -2036,7 +2042,12 @@ function fieldInputHtml(mod, field, value, rec){
   }
   if(field.type === 'subtable') return subtableFieldHtml(field, Array.isArray(v) ? v : []);
   const typeMap = { text:'text', email:'email', phone:'tel', tel:'tel', number:'number', date:'date', time:'time', datetime:'datetime-local' };
-  return '<input class="input" id="' + id + '" type="' + (typeMap[field.type] || 'text') + '" value="' + escapeHtml(v) + '">';
+  // step="any" on number inputs: without it, HTML5's default step (1) makes
+  // the browser silently block form submission for any decimal value (e.g.
+  // 1.5 hours) — the input shows no visible error, the Save click just does
+  // nothing. Every hours/marks/amount field in the app is decimal-capable.
+  const extraAttrs = field.type === 'number' ? ' step="any"' : '';
+  return '<input class="input" id="' + id + '" type="' + (typeMap[field.type] || 'text') + '"' + extraAttrs + ' value="' + escapeHtml(v) + '">';
 }
 
 /* ============================================================
@@ -2468,6 +2479,17 @@ const DEADLINE_SOURCES = [
   ['office-followups', 'followUpDate', 'status', ['Resolved'], 'Office Follow-up']
 ];
 const DOW_NAMES3 = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+/** Decimal hours between two "HH:MM" strings (Timetable's Start/End Time
+ *  fields) — e.g. '09:00' → '10:30' = 1.5. Returns 0 for anything unparsable
+ *  rather than throwing, since this feeds a sum that must never crash the
+ *  Dashboard/Analytics screens over one malformed record. */
+function timeRangeHours(start, end){
+  const parse = (s)=>{ const m = /^(\d{1,2}):(\d{2})/.exec(String(s||'')); return m ? (Number(m[1])*60 + Number(m[2])) : null; };
+  const a = parse(start), b = parse(end);
+  if(a === null || b === null) return 0;
+  const mins = b - a;
+  return mins > 0 ? Math.round((mins/60)*100)/100 : 0;
+}
 
 function upcomingItems(days){
   const today = todayStr();
@@ -2594,17 +2616,104 @@ function weekdayClassCounts(){
   const days = ['Mon','Tue','Wed','Thu','Fri','Sat'];
   return { days: days, counts: days.map(d=>getActive('timetable').filter(t=>t.day===d && t.status!=='Cancelled').length) };
 }
-/** Work Diary hours grouped by category for the current month; falls back
- *  to all-time totals (flagged via `fallback`) so the Dashboard chart isn't
- *  just blank before this month has any entries logged yet. */
-function workDiaryHoursByCategory(){
+/** Sources of actual logged hours besides the Work Diary — anywhere else in
+ *  the app that has (or can derive) a real duration for something you did.
+ *  Each entry's `label` becomes its own bucket in the Time Spent chart. */
+const TIME_SPENT_EXTRA_SOURCES = [
+  { key:'meetings', label:'Meetings' },
+  { key:'invigilation-duties', label:'Invigilation Duty' },
+  { key:'extra-classes', label:'Extra Classes' },
+  { key:'lab-exams', label:'Lab Exams' },
+  { key:'research-events', label:'Research Events' }
+];
+/** Total hours spent, aggregated for the current month (falling back to
+ *  all-time totals — flagged via `fallback` — before this month has
+ *  anything logged) from EVERY place in the app that records real time, not
+ *  just the Work Diary:
+ *   - Work Diary's own hoursSpent, grouped by its own category.
+ *   - Classes actually held (Class Log rows marked "Held"): duration is
+ *     computed automatically from the matching Timetable slot's Start/End
+ *     Time (same subject + subject code + weekday); a Class Log row's own
+ *     optional Duration field is used instead when no Timetable slot
+ *     matches (e.g. an ad-hoc class never added to the Timetable).
+ *   - The optional "Duration (hours)" field on Meetings, Invigilation Duty,
+ *     Extra/Additional Classes, Lab Exams and Research Events — opt-in per
+ *     record (left blank = 0 = not counted), so nothing here is guessed. */
+function timeSpentBreakdown(){
   const monthPrefix = todayStr().slice(0,7);
-  let entries = getActive('work-diary').filter(w=>String(w.date||'').startsWith(monthPrefix));
-  let fallback = false;
-  if(entries.length === 0){ entries = getActive('work-diary'); fallback = true; }
+  const inMonth = (d)=>String(d||'').startsWith(monthPrefix);
+  const anyThisMonth = getActive('work-diary').some(w=>inMonth(w.date))
+    || getActive('class-log').some(c=>c.status==='Held' && inMonth(c.date))
+    || TIME_SPENT_EXTRA_SOURCES.some(src=>{
+      const dateField = MODULES[src.key].dateField;
+      return getActive(src.key).some(r=>inMonth(dateField ? r[dateField] : null) && (parseFloat(r.durationHours) || 0) > 0);
+    });
+  const fallback = !anyThisMonth;
   const byCat = {};
-  entries.forEach(w=>{ const c = w.category || '(Uncategorized)'; byCat[c] = (byCat[c] || 0) + (parseFloat(w.hoursSpent) || 0); });
+  const add = (cat, hrs)=>{ if(!hrs) return; byCat[cat] = (byCat[cat] || 0) + hrs; };
+
+  getActive('work-diary').forEach(w=>{
+    if(!fallback && !inMonth(w.date)) return;
+    add(w.category || '(Uncategorized)', parseFloat(w.hoursSpent) || 0);
+  });
+
+  const timetableByKey = {};
+  getActive('timetable').forEach(t=>{
+    const key = (t.subject||'') + '|' + (t.subjectCode||'') + '|' + (t.day||'');
+    if(!timetableByKey[key]) timetableByKey[key] = t;
+  });
+  getActive('class-log').filter(c=>c.status==='Held').forEach(c=>{
+    if(!fallback && !inMonth(c.date)) return;
+    let hrs = parseFloat(c.durationHours) || 0;
+    if(!hrs && c.date){
+      const dow = DOW_NAMES3[new Date(c.date + 'T00:00:00').getDay()];
+      const t = timetableByKey[(c.subject||'') + '|' + (c.subjectCode||'') + '|' + dow];
+      if(t) hrs = timeRangeHours(t.startTime, t.endTime);
+    }
+    add('Teaching (Classes Held)', hrs);
+  });
+
+  TIME_SPENT_EXTRA_SOURCES.forEach(src=>{
+    const dateField = MODULES[src.key].dateField;
+    getActive(src.key).forEach(r=>{
+      const d = dateField ? r[dateField] : null;
+      if(!fallback && !inMonth(d)) return;
+      add(src.label, parseFloat(r.durationHours) || 0);
+    });
+  });
+
   return { byCat: byCat, fallback: fallback };
+}
+/** Same combined sources as timeSpentBreakdown(), but summed to a single
+ *  number over an explicit [start,end] date range (inclusive, 'YYYY-MM-DD')
+ *  with no fallback — used for "Hours Logged This Week" on the Dashboard,
+ *  so that stat reflects real work from everywhere too, not just Work Diary. */
+function totalHoursInRange(start, end){
+  const inRange = (d)=>d && d >= start && d <= end;
+  let total = 0;
+  getActive('work-diary').forEach(w=>{ if(inRange(w.date)) total += parseFloat(w.hoursSpent) || 0; });
+  const timetableByKey = {};
+  getActive('timetable').forEach(t=>{
+    const key = (t.subject||'') + '|' + (t.subjectCode||'') + '|' + (t.day||'');
+    if(!timetableByKey[key]) timetableByKey[key] = t;
+  });
+  getActive('class-log').filter(c=>c.status==='Held').forEach(c=>{
+    if(!inRange(c.date)) return;
+    let hrs = parseFloat(c.durationHours) || 0;
+    if(!hrs){
+      const dow = DOW_NAMES3[new Date(c.date + 'T00:00:00').getDay()];
+      const t = timetableByKey[(c.subject||'') + '|' + (c.subjectCode||'') + '|' + dow];
+      if(t) hrs = timeRangeHours(t.startTime, t.endTime);
+    }
+    total += hrs;
+  });
+  TIME_SPENT_EXTRA_SOURCES.forEach(src=>{
+    const dateField = MODULES[src.key].dateField;
+    getActive(src.key).forEach(r=>{
+      if(inRange(dateField ? r[dateField] : null)) total += parseFloat(r.durationHours) || 0;
+    });
+  });
+  return total;
 }
 function relativeTime(iso){
   if(!iso) return '';
@@ -2686,10 +2795,9 @@ function renderDashboard(){
   // how the week as a whole is shaping up.
   const meetingsThisWeek = getActive('meetings').filter(m=>m.date && m.date>=weekStart && m.date<=weekEnd).length;
   const dueThisWeek = itemsDueBetween(weekStart, weekEnd).length;
-  const hoursThisWeek = getActive('work-diary').filter(w=>w.date && w.date>=weekStart && w.date<=weekEnd)
-    .reduce((sum,w)=>sum + (parseFloat(w.hoursSpent) || 0), 0);
+  const hoursThisWeek = totalHoursInRange(weekStart, weekEnd);
   const areaChips = deadlinesByArea();
-  const workDiaryHours = workDiaryHoursByCategory();
+  const workDiaryHours = timeSpentBreakdown();
   const chartsAvailable = typeof Chart !== 'undefined';
 
   const facultyName = (STATE.meta && STATE.meta.facultyName) || '';
@@ -2721,7 +2829,7 @@ function renderDashboard(){
     + statCardHtml('🔔', openReminders, 'Open Reminders', AREA_COLORS.reminders, null, true)
     + statCardHtml('🗓️', pendingLeave, 'Pending Leave/OD', AREA_COLORS.incharge, null, true)
     + statCardHtml('📅', meetingsThisWeek, 'Meetings This Week', AREA_COLORS.meetings, null, true)
-    + statCardHtml('📔', Math.round(hoursThisWeek * 10) / 10, 'Hours Logged This Week', AREA_COLORS['work-diary'], null, true)
+    + statCardHtml('📔', Math.round(hoursThisWeek * 10) / 10, 'Hours Spent This Week', AREA_COLORS['work-diary'], null, true)
     + '</div>';
 
   if(overdue.length > 0){
@@ -2769,10 +2877,10 @@ function renderDashboard(){
   html += '<div class="card"><h3>📘 This Week\'s Teaching Load</h3>' + (chartsAvailable
     ? '<canvas id="dash-chart-week" height="140"></canvas>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>') + '</div>';
-  html += '<div class="card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + '</h3>' + (chartsAvailable
+  html += '<div class="card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + ' <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(Work Diary + classes held + logged durations)</span></h3>' + (chartsAvailable
     ? '<canvas id="dash-chart-time" height="140"></canvas>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>')
-    + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:14px 0 0;">No Work Diary entries logged yet.</div>' : '') + '</div>';
+    + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:14px 0 0;">Nothing logged yet — add Work Diary entries, mark classes Held in Class Log, or fill in an optional Duration on Meetings/Invigilation Duty/Extra Classes/Lab Exams/Research Events.</div>' : '') + '</div>';
   html += '</div>';
 
   return html;
@@ -2804,7 +2912,7 @@ function wireDashboard(){
 
   const timeCanvas = document.getElementById('dash-chart-time');
   if(timeCanvas){
-    const workDiaryHours = workDiaryHoursByCategory();
+    const workDiaryHours = timeSpentBreakdown();
     const labels = Object.keys(workDiaryHours.byCat);
     if(labels.length){
       DASHBOARD_CHARTS.push(new Chart(timeCanvas, {
@@ -3031,11 +3139,32 @@ function wireAnalytics(){
     options:{ plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
   }));
 
+  // All-time version of the same combined breakdown the Dashboard shows for
+  // "this month" — Work Diary + classes held + logged durations elsewhere —
+  // so Analytics gives the full-history picture rather than just Work Diary.
   const hoursByCategory = {};
-  getActive('work-diary').forEach(r=>{
-    const cat = r.category || '(blank)';
-    const hrs = parseFloat(r.hoursSpent) || 0;
-    hoursByCategory[cat] = (hoursByCategory[cat] || 0) + hrs;
+  getActive('work-diary').forEach(r=>{ const cat = r.category || '(blank)'; hoursByCategory[cat] = (hoursByCategory[cat] || 0) + (parseFloat(r.hoursSpent) || 0); });
+  (function(){
+    const timetableByKey = {};
+    getActive('timetable').forEach(t=>{
+      const key = (t.subject||'') + '|' + (t.subjectCode||'') + '|' + (t.day||'');
+      if(!timetableByKey[key]) timetableByKey[key] = t;
+    });
+    getActive('class-log').filter(c=>c.status==='Held').forEach(c=>{
+      let hrs = parseFloat(c.durationHours) || 0;
+      if(!hrs && c.date){
+        const dow = DOW_NAMES3[new Date(c.date + 'T00:00:00').getDay()];
+        const t = timetableByKey[(c.subject||'') + '|' + (c.subjectCode||'') + '|' + dow];
+        if(t) hrs = timeRangeHours(t.startTime, t.endTime);
+      }
+      if(hrs) hoursByCategory['Teaching (Classes Held)'] = (hoursByCategory['Teaching (Classes Held)'] || 0) + hrs;
+    });
+  })();
+  TIME_SPENT_EXTRA_SOURCES.forEach(src=>{
+    getActive(src.key).forEach(r=>{
+      const hrs = parseFloat(r.durationHours) || 0;
+      if(hrs) hoursByCategory[src.label] = (hoursByCategory[src.label] || 0) + hrs;
+    });
   });
   ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-time'), {
     type:'bar',
