@@ -171,6 +171,18 @@ tr:hover td{background:#fafbfd;}
 .stat-trend.down{color:var(--danger);}
 .stat-trend.flat{color:var(--text-faint);}
 
+.stat-card.compact{padding:12px 14px;gap:10px;}
+.stat-card.compact .stat-icon{width:36px;height:36px;font-size:16px;border-radius:10px;}
+.stat-card.compact .stat-num{font-size:19px;}
+
+.area-chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+.area-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;background:var(--card);
+  border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text);}
+.area-chip .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.area-chip .n{font-weight:800;}
+
+.section-label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-faint);margin:22px 0 10px;}
+
 .empty{padding:40px 20px;text-align:center;color:var(--text-faint);}
 .empty svg{opacity:.4;margin-bottom:10px;}
 
@@ -431,29 +443,29 @@ function logoMarkSvg(size, tag){
    ============================================================ */
 const MAIN_MENUS = [
   { key:'dashboard', label:'Dashboard' },
-  { key:'work-diary', label:'Work Diary' },
+  { key:'work-diary', label:'Work diary' },
   { key:'teaching', label:'Teaching' },
   { key:'exams', label:'Exams' },
-  { key:'mentoring', label:'Student Mentoring' },
+  { key:'mentoring', label:'Student mentoring' },
   { key:'laboratory', label:'Laboratory' },
-  { key:'extra-classes', label:'Extra / Additional Classes' },
+  { key:'extra-classes', label:'Extra / additional classes' },
   { key:'research', label:'Research' },
-  { key:'projects', label:'Projects & Grants' },
-  { key:'incharge', label:'In-Charge Roles' },
-  { key:'committees', label:'Committees & Events' },
+  { key:'projects', label:'Projects & grants' },
+  { key:'incharge', label:'In-charge roles' },
+  { key:'committees', label:'Committees & events' },
   { key:'meetings', label:'Meetings' },
-  { key:'reminders', label:'Reminders & Office Follow-ups' },
-  { key:'responsibilities', label:'Class Teacher / Responsibilities' },
+  { key:'reminders', label:'Reminders & office follow-ups' },
+  { key:'responsibilities', label:'Class teacher / responsibilities' },
   { key:'analytics', label:'Analytics' },
   { key:'reports', label:'Reports' },
   { key:'calendar', label:'Calendar' },
-  { key:'audit-log', label:'Activity Log' },
-  { key:'custom-modules', label:'Custom Menus' },
-  { key:'admin', label:'Admin & Settings' }
+  { key:'audit-log', label:'Activity log' },
+  { key:'custom-modules', label:'Custom menus' },
+  { key:'admin', label:'Admin & settings' }
 ];
 
 const MODULES = {
-  'work-diary': { label:'Work Diary', menu:'work-diary', icon:'📔', titleField:'summary', dateField:'date', fields:[
+  'work-diary': { label:'Work diary', menu:'work-diary', icon:'📔', titleField:'summary', dateField:'date', fields:[
     {key:'date', label:'Date', type:'date', required:true, default:'__today__'},
     {key:'category', label:'Category', type:'select', options:['Teaching','Research','Mentoring','Admin/In-Charge','Committee/Meeting','Other'], default:'Teaching'},
     {key:'summary', label:'What did you work on', type:'textarea', required:true},
@@ -480,21 +492,21 @@ const MODULES = {
     {key:'name', label:'Holiday Name', type:'text', required:true},
     {key:'type', label:'Type', type:'select', options:['University Holiday','National Holiday','Local Holiday'], default:'University Holiday'}
   ]},
-  'class-log': { label:'Class Log', menu:'teaching', icon:'📝', titleField:'topic', dateField:'date', fields:[
+  'class-log': { label:'Class log', menu:'teaching', icon:'📝', titleField:'topic', dateField:'date', fields:[
     {key:'date', label:'Date', type:'date', required:true},
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'section', label:'Section', type:'text'},
     {key:'topic', label:'Topic Covered', type:'textarea', required:true},
     {key:'status', label:'Status', type:'select', options:['Held','Cancelled','Rescheduled'], default:'Held'}
   ]},
-  'invigilation-duties': { label:'Invigilation Duty', menu:'exams', icon:'🖊️', titleField:'examName', dateField:'date', fields:[
+  'invigilation-duties': { label:'Invigilation duty', menu:'exams', icon:'🖊️', titleField:'examName', dateField:'date', fields:[
     {key:'examName', label:'Exam Name', type:'text', required:true},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'session', label:'Session', type:'select', options:['Forenoon','Afternoon','Evening'], default:'Forenoon'},
     {key:'venue', label:'Venue', type:'text'},
     {key:'role', label:'Role', type:'select', options:['Invigilator','Chief Superintendent','Squad Member'], default:'Invigilator'}
   ]},
-  'question-bank': { label:'Question Bank', menu:'exams', icon:'❓', titleField:'question', dateField:null, fields:[
+  'question-bank': { label:'Question bank', menu:'exams', icon:'❓', titleField:'question', dateField:null, fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'unit', label:'Unit/Module', type:'text'},
     {key:'question', label:'Question', type:'textarea', required:true},
@@ -518,34 +530,34 @@ const MODULES = {
     {key:'phone', label:'Phone', type:'phone'},
     {key:'parentContact', label:'Parent Contact', type:'phone'}
   ]},
-  'mentee-meetings': { label:'Mentoring Meetings', menu:'mentoring', icon:'💬', titleField:'discussion', dateField:'date', fields:[
+  'mentee-meetings': { label:'Mentoring meetings', menu:'mentoring', icon:'💬', titleField:'discussion', dateField:'date', fields:[
     {key:'menteeId', label:'Mentee', type:'reference', ref:'mentees', required:true},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'discussion', label:'Discussion', type:'textarea'},
     {key:'advice', label:'Advice Given', type:'textarea'},
     {key:'nextFollowUp', label:'Next Follow-up Date', type:'date'}
   ]},
-  'lab-timetable': { label:'Lab Timetable', menu:'laboratory', icon:'🧪', titleField:'labCourse', dateField:null, fields:[
+  'lab-timetable': { label:'Lab timetable', menu:'laboratory', icon:'🧪', titleField:'labCourse', dateField:null, fields:[
     {key:'day', label:'Day', type:'select', options:['Mon','Tue','Wed','Thu','Fri','Sat'], required:true},
     {key:'time', label:'Time', type:'text'},
     {key:'labCourse', label:'Lab Course', type:'text', required:true},
     {key:'batch', label:'Batch', type:'text'},
     {key:'venue', label:'Venue', type:'text'}
   ]},
-  'lab-exams': { label:'Lab Exams', menu:'laboratory', icon:'🔬', titleField:'labCourse', dateField:'date', fields:[
+  'lab-exams': { label:'Lab exams', menu:'laboratory', icon:'🔬', titleField:'labCourse', dateField:'date', fields:[
     {key:'labCourse', label:'Lab Course', type:'text', required:true},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'batch', label:'Batch', type:'text'},
     {key:'externalExaminer', label:'External Examiner', type:'text'}
   ]},
-  'extra-classes': { label:'Extra / Additional Classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
+  'extra-classes': { label:'Extra / additional classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
     {key:'type', label:'Type', type:'select', options:['Extra Class','Compensatory Class','Makeup Class'], default:'Extra Class'},
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'reason', label:'Reason', type:'text'},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'time', label:'Time', type:'text'}
   ]},
-  'research-targets': { label:'Targets & Progress', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
+  'research-targets': { label:'Targets & progress', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
     {key:'description', label:'Target Description', type:'textarea', required:true},
     {key:'progressPercent', label:'Progress %', type:'number'},
     {key:'targetDate', label:'Target Date', type:'date'},
@@ -566,18 +578,18 @@ const MODULES = {
     {key:'nature', label:'Nature of Collaboration', type:'textarea'},
     {key:'status', label:'Status', type:'select', options:['Proposed','Active','Completed'], default:'Proposed'}
   ]},
-  'research-events': { label:'Research Events', menu:'research', icon:'🎤', titleField:'eventName', dateField:'date', fields:[
+  'research-events': { label:'Research events', menu:'research', icon:'🎤', titleField:'eventName', dateField:'date', fields:[
     {key:'eventName', label:'Event Name', type:'text', required:true},
     {key:'role', label:'Role', type:'select', options:['Organized','Participated','Chaired Session','Keynote'], default:'Participated'},
     {key:'date', label:'Date', type:'date'}
   ]},
-  'peer-reviews': { label:'Peer Review / Editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
+  'peer-reviews': { label:'Peer review / editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
     {key:'venue', label:'Journal / Conference', type:'text', required:true},
     {key:'role', label:'Role', type:'select', options:['Reviewer','Editorial Board','Guest Editor'], default:'Reviewer'},
     {key:'paperTitle', label:'Paper Title', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Assigned','In Progress','Completed'], default:'Assigned'}
   ]},
-  'research-contacts': { label:'Researcher / Faculty Network', menu:'research', icon:'🌐', titleField:'name', dateField:'lastContactDate', fields:[
+  'research-contacts': { label:'Researcher / faculty network', menu:'research', icon:'🌐', titleField:'name', dateField:'lastContactDate', fields:[
     {key:'name', label:'Name', type:'text', required:true},
     {key:'institution', label:'Institution', type:'text'},
     {key:'designation', label:'Designation', type:'text'},
@@ -587,7 +599,7 @@ const MODULES = {
     {key:'contactType', label:'Contact Type', type:'select', options:['Talk/Seminar','Collaboration','Project','General'], default:'General'},
     {key:'lastContactDate', label:'Last Contact Date', type:'date'}
   ]},
-  'project-grants': { label:'Projects & Grants', menu:'projects', icon:'💰', titleField:'title', dateField:'endDate', fields:[
+  'project-grants': { label:'Projects & grants', menu:'projects', icon:'💰', titleField:'title', dateField:'endDate', fields:[
     {key:'title', label:'Title', type:'text', required:true},
     {key:'fundingAgency', label:'Funding Agency', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Planned','Applied','Ongoing','Completed','Closed'], default:'Planned'},
@@ -596,7 +608,7 @@ const MODULES = {
     {key:'endDate', label:'End Date', type:'date'},
     {key:'collaborators', label:'Collaborators', type:'text'}
   ]},
-  'incharge-roles': { label:'My Roles', menu:'incharge', icon:'🛡️', titleField:'roleName', dateField:'endDate', fields:[
+  'incharge-roles': { label:'In-charges', menu:'incharge', icon:'🛡️', titleField:'roleName', dateField:'endDate', fields:[
     {key:'roleName', label:'Role Name', type:'text', required:true},
     {key:'durationType', label:'Duration', type:'select', options:['Semester','Annual','Ongoing'], default:'Semester'},
     {key:'startDate', label:'Start Date', type:'date'},
@@ -618,7 +630,7 @@ const MODULES = {
     {key:'academicYear', label:'Academic Year', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Active','Completed'], default:'Active'}
   ]},
-  'committee-members': { label:'Committee Members', menu:'committees', icon:'👤', titleField:'name', dateField:null, fields:[
+  'committee-members': { label:'Committee members', menu:'committees', icon:'👤', titleField:'name', dateField:null, fields:[
     {key:'committeeId', label:'Committee', type:'reference', ref:'committees'},
     {key:'name', label:'Name', type:'text', required:true},
     {key:'role', label:'Role', type:'text'},
@@ -634,7 +646,7 @@ const MODULES = {
     {key:'minutes', label:'Minutes', type:'textarea'},
     {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'}
   ]},
-  'action-items': { label:'Action Items', menu:'meetings', icon:'☑️', titleField:'action', dateField:'dueDate', fields:[
+  'action-items': { label:'Action items', menu:'meetings', icon:'☑️', titleField:'action', dateField:'dueDate', fields:[
     {key:'meetingId', label:'Meeting', type:'reference', ref:'meetings'},
     {key:'action', label:'Action', type:'text', required:true},
     {key:'owner', label:'Owner', type:'text'},
@@ -649,7 +661,7 @@ const MODULES = {
     {key:'priority', label:'Priority', type:'select', options:['Low','Medium','High'], default:'Medium'},
     {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
   ]},
-  'office-followups': { label:'Office Follow-ups', menu:'reminders', icon:'📮', titleField:'subject', dateField:'followUpDate', fields:[
+  'office-followups': { label:'Office follow-ups', menu:'reminders', icon:'📮', titleField:'subject', dateField:'followUpDate', fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'office', label:'Office', type:'text'},
     {key:'submittedDate', label:'Submitted Date', type:'date'},
@@ -668,7 +680,7 @@ const MODULES = {
     {key:'email', label:'Email', type:'email'},
     {key:'phone', label:'Phone', type:'phone'}
   ]},
-  'audit-log': { label:'Activity Log', menu:'audit-log', icon:'🕘', titleField:'action', dateField:'at', readOnly:true, fields:[
+  'audit-log': { label:'Activity log', menu:'audit-log', icon:'🕘', titleField:'action', dateField:'at', readOnly:true, fields:[
     {key:'action', label:'Action', type:'text'},
     {key:'at', label:'When', type:'datetime'},
     {key:'moduleLabel', label:'Module', type:'text'},
@@ -676,10 +688,10 @@ const MODULES = {
     {key:'actor', label:'By', type:'text'},
     {key:'details', label:'Details', type:'textarea'}
   ]},
-  'custom-modules': { label:'Custom Menus', menu:'custom-modules', icon:'🧩', titleField:'label', dateField:'', fields:[
+  'custom-modules': { label:'Custom menus', menu:'custom-modules', icon:'🧩', titleField:'label', dateField:'', fields:[
     {key:'label', label:'Menu Name', type:'text', required:true},
     {key:'icon', label:'Icon (one emoji)', type:'text', default:'🗂️'},
-    {key:'category', label:'Category (which tab it appears under)', type:'select', options:['overview','academics','students','research','admin-duties','tools'], default:'tools'},
+    {key:'category', label:'Category (which tab it appears under)', type:'categoryRef', default:'tools'},
     {key:'fieldsSpec', label:'Fields — one per line: Label|type|options|required (type: text, textarea, number, date, select, email, tel — options comma-separated, only for select — write "required" as the 4th part to make it mandatory)', type:'textarea', required:true, default:'Details|textarea'}
   ]}
 };
@@ -804,6 +816,28 @@ function getRecord(key, id){ return getCollection(key).find(r=>r.id===id) || nul
 
 function defaultConfig(){
   return { academicYear:'', semester:'', digestHour:7, backupHour:23 };
+}
+
+/** Once Academic Year / Semester is set (Admin & Settings → Academic Term),
+ *  this shows up everywhere that names the current term — the top navigation
+ *  bar, the Dashboard, and every generated report — instead of only living
+ *  on the one settings screen. Returns '' until it's actually set. */
+function academicTermLabel(){
+  const cfg = STATE.config || {};
+  const year = (cfg.academicYear || '').trim();
+  const sem = (cfg.semester || '').trim();
+  if(!year && !sem) return '';
+  if(year && sem) return 'AY ' + year + ' · ' + sem;
+  return year ? ('AY ' + year) : sem;
+}
+
+// The topnav shell is only built once at app boot (renderShellSkeleton()), so
+// when the Academic Year/Semester is changed in Admin & Settings the topnav
+// tagline needs an explicit in-place refresh rather than a full shell re-render.
+function refreshTopnavTag(){
+  const tagEl = document.querySelector('.topnav-brand .tag');
+  if(!tagEl) return;
+  tagEl.innerHTML = escapeHtml(DEPARTMENT_NAME) + (academicTermLabel() ? ' · ' + escapeHtml(academicTermLabel()) : '');
 }
 
 async function loadAllData(){
@@ -1001,10 +1035,10 @@ const AREA_COLORS = {
 const NAV_CATEGORIES = [
   { key:'overview', label:'Overview', icon:'🏠', groups:['dashboard','work-diary','calendar'] },
   { key:'academics', label:'Academics', icon:'📘', groups:['teaching','exams','laboratory','extra-classes'] },
-  { key:'students', label:'Students', icon:'🎓', groups:['mentoring','responsibilities'] },
-  { key:'research', label:'Research & Projects', icon:'🔬', groups:['research','projects'] },
-  { key:'admin-duties', label:'Administrative Duties', icon:'🏛️', groups:['incharge','committees','meetings','reminders'] },
-  { key:'tools', label:'Tools', icon:'🛠️', groups:['analytics','reports','audit-log','custom-modules','admin'] }
+  { key:'research', label:'Research', icon:'🔬', groups:['research','projects'] },
+  // Students + Administrative Duties combined into one "Responsibilities" category.
+  { key:'admin-duties', label:'Responsibilities', icon:'📋', groups:['mentoring','responsibilities','incharge','committees','meetings','reminders'] },
+  { key:'tools', label:'Settings', icon:'⚙️', groups:['analytics','reports','audit-log','custom-modules','admin'] }
 ];
 
 function parseRoute(){
@@ -1091,7 +1125,7 @@ function renderRoute(){
     titleEl.textContent = 'Calendar';
     content.innerHTML = renderCalendar();
   }else if(r.screen === 'admin'){
-    titleEl.textContent = 'Admin & Settings';
+    titleEl.textContent = 'Admin & settings';
     content.innerHTML = renderAdmin();
     wireAdmin();
   }else{
@@ -1269,7 +1303,7 @@ function renderShellSkeleton(){
   return '<div id="app">'
     + '<div class="topnav" id="topnav">'
     + '<div class="topnav-row1">'
-    + '<div class="topnav-brand">' + logoMarkSvg(30, 'tn') + '<div class="name">FAMS<span>+</span><div class="tag">' + escapeHtml(DEPARTMENT_NAME) + '</div></div></div>'
+    + '<div class="topnav-brand">' + logoMarkSvg(30, 'tn') + '<div class="name">FAMS<span>+</span><div class="tag">' + escapeHtml(DEPARTMENT_NAME) + (academicTermLabel() ? ' · ' + escapeHtml(academicTermLabel()) : '') + '</div></div></div>'
     + '<div class="topnav-utils">'
     + '<div class="mono" id="live-clock" style="font-size:12px;color:var(--text-dim);"></div>'
     + '<button class="btn btn-ghost btn-sm fullscreen-toggle" id="fullscreen-toggle" title="Toggle fullscreen">⛶</button>'
@@ -1364,6 +1398,10 @@ function fieldDisplayValue(mod, field, rec){
   const v = rec[field.key];
   if(field.type === 'reference') return escapeHtml(refLabel(field.ref, v));
   if(field.type === 'moduleRef') return v ? escapeHtml((MODULES[v] && MODULES[v].label) || v) : '<span style="color:var(--text-faint)">—</span>';
+  if(field.type === 'categoryRef'){
+    const c = NAV_CATEGORIES.find(c=>c.key===v);
+    return c ? escapeHtml(c.icon + ' ' + c.label) : '<span style="color:var(--text-faint)">—</span>';
+  }
   if(field.type === 'recordRef'){
     const depModKey = rec[field.dependsOn];
     return (depModKey && v) ? escapeHtml(refLabel(depModKey, v)) : '<span style="color:var(--text-faint)">—</span>';
@@ -1557,6 +1595,11 @@ function fieldInputHtml(mod, field, value, rec){
     const opts = polyrefTargetModules().map(k=>'<option value="' + k + '"' + (k === v ? ' selected' : '') + '>'
       + escapeHtml((MODULES[k].icon || '') + ' ' + MODULES[k].label) + '</option>').join('');
     return '<select class="input" id="' + id + '" data-poly-module-picker="1"><option value="">— Select a menu —</option>' + opts + '</select>';
+  }
+  if(field.type === 'categoryRef'){
+    const opts = NAV_CATEGORIES.map(c=>'<option value="' + c.key + '"' + (c.key === v ? ' selected' : '') + '>'
+      + escapeHtml(c.icon + ' ' + c.label) + '</option>').join('');
+    return '<select class="input" id="' + id + '">' + opts + '</select>';
   }
   if(field.type === 'recordRef'){
     const curModKey = rec ? rec[field.dependsOn] : '';
@@ -1986,6 +2029,64 @@ function startOfWeekStr(){
   const mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diffToMon);
   return mon.toISOString().slice(0,10);
 }
+function endOfWeekStr(){
+  const d = new Date();
+  const day = d.getDay(); // 0=Sun
+  const diffToSun = (day === 0) ? 0 : (7 - day);
+  const sun = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diffToSun);
+  return sun.toISOString().slice(0,10);
+}
+/** Open (not-done) DEADLINE_SOURCES items whose date falls within an
+ *  inclusive range — the shared engine behind both "due this week" and
+ *  the "Deadlines by area" breakdown on the Dashboard. */
+function itemsDueBetween(fromStr, toStr){
+  const items = [];
+  DEADLINE_SOURCES.forEach(src=>{
+    const key = src[0], dateField = src[1], statusField = src[2], doneValues = src[3], label = src[4];
+    if(!dateField) return;
+    getActive(key).forEach(rec=>{
+      const d = rec[dateField];
+      if(!d || d < fromStr || d > toStr) return;
+      if(statusField && doneValues.indexOf(rec[statusField]) !== -1) return;
+      items.push({ moduleKey:key, label:label, date:d, title: rec[MODULES[key].titleField] || '(untitled)' });
+    });
+  });
+  return items;
+}
+/** Every open overdue/upcoming item (next 30 days), grouped by functional
+ *  area using the same AREA_COLORS every other screen already uses — so an
+ *  area's color means the same thing here as it does in the nav, Analytics,
+ *  and the recent-activity feed. */
+function deadlinesByArea(){
+  const items = overdueItems().concat(upcomingItems(30));
+  const counts = {};
+  items.forEach(it=>{
+    const menu = MODULES[it.moduleKey].menu;
+    counts[menu] = (counts[menu] || 0) + 1;
+  });
+  return Object.keys(counts).map(menu=>{
+    const group = MAIN_MENUS.find(m=>m.key===menu);
+    return { menu:menu, count:counts[menu], color: AREA_COLORS[menu] || '#8a92a6', label: group ? group.label : menu };
+  }).sort((a,b)=>b.count-a.count);
+}
+/** Classes per weekday (Mon–Sat) from the recurring Timetable — the data
+ *  behind the Dashboard's "This Week's Teaching Load" mini chart. */
+function weekdayClassCounts(){
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+  return { days: days, counts: days.map(d=>getActive('timetable').filter(t=>t.day===d && t.status!=='Cancelled').length) };
+}
+/** Work Diary hours grouped by category for the current month; falls back
+ *  to all-time totals (flagged via `fallback`) so the Dashboard chart isn't
+ *  just blank before this month has any entries logged yet. */
+function workDiaryHoursByCategory(){
+  const monthPrefix = todayStr().slice(0,7);
+  let entries = getActive('work-diary').filter(w=>String(w.date||'').startsWith(monthPrefix));
+  let fallback = false;
+  if(entries.length === 0){ entries = getActive('work-diary'); fallback = true; }
+  const byCat = {};
+  entries.forEach(w=>{ const c = w.category || '(Uncategorized)'; byCat[c] = (byCat[c] || 0) + (parseFloat(w.hoursSpent) || 0); });
+  return { byCat: byCat, fallback: fallback };
+}
 function relativeTime(iso){
   if(!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
@@ -2055,17 +2156,29 @@ function renderDashboard(){
   const pendingLeave = getActive('leave-records').filter(l=>l.status==='Applied').length;
 
   const weekStart = startOfWeekStr();
+  const weekEnd = endOfWeekStr();
   const classLogThisWeek = getActive('class-log').filter(c=>c.date >= weekStart && c.status==='Held').length;
   const timetableSlots = getActive('timetable').filter(t=>t.status!=='Cancelled').length;
   const weekPct = timetableSlots > 0 ? (classLogThisWeek / timetableSlots) * 100 : 0;
   const actionPct = totalActions > 0 ? (doneActions / totalActions) * 100 : 0;
+
+  // "This week at a glance" — a second, faster-moving layer on top of the
+  // classic 4 stat cards above, since "today" alone doesn't say much about
+  // how the week as a whole is shaping up.
+  const meetingsThisWeek = getActive('meetings').filter(m=>m.date && m.date>=weekStart && m.date<=weekEnd).length;
+  const dueThisWeek = itemsDueBetween(weekStart, weekEnd).length;
+  const hoursThisWeek = getActive('work-diary').filter(w=>w.date && w.date>=weekStart && w.date<=weekEnd)
+    .reduce((sum,w)=>sum + (parseFloat(w.hoursSpent) || 0), 0);
+  const areaChips = deadlinesByArea();
+  const workDiaryHours = workDiaryHoursByCategory();
+  const chartsAvailable = typeof Chart !== 'undefined';
 
   const facultyName = (STATE.meta && STATE.meta.facultyName) || '';
   const now = new Date();
 
   let html = '<div class="hero"><div class="hero-row">'
     + '<div><div class="hero-greeting">' + greeting() + (facultyName ? ', ' + escapeHtml(facultyName) : '') + '</div>'
-    + '<div class="hero-sub">' + escapeHtml(DEPARTMENT_NAME) + ' · ' + escapeHtml(INSTITUTION_NAME) + '</div></div>'
+    + '<div class="hero-sub">' + escapeHtml(DEPARTMENT_NAME) + ' · ' + escapeHtml(INSTITUTION_NAME) + (academicTermLabel() ? ' · ' + escapeHtml(academicTermLabel()) : '') + '</div></div>'
     + '<div class="hero-clock"><div class="time mono" id="hero-clock">' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }) + '</div>'
     + '<div class="date">' + now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' }) + '</div></div>'
     + '</div>'
@@ -2120,14 +2233,69 @@ function renderDashboard(){
     : '<div class="empty">No activity yet — start by adding a record in any module.</div>') + '</div></div>';
   html += '</div>';
 
+  html += '<div class="section-label">This week at a glance</div>';
+  html += '<div class="grid grid-4">'
+    + statCardHtml('📘', timetableSlots, 'Classes this week', AREA_COLORS.teaching)
+    + statCardHtml('📅', meetingsThisWeek, 'Meetings this week', AREA_COLORS.meetings)
+    + statCardHtml('⏰', dueThisWeek, 'Due this week', AREA_COLORS.reminders)
+    + statCardHtml('📔', Math.round(hoursThisWeek * 10) / 10, 'Hours logged this week', AREA_COLORS['work-diary'])
+    + '</div>';
+
+  if(areaChips.length > 0){
+    html += '<div class="card" style="margin-top:16px;"><h3>🧭 Deadlines by Area <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(overdue + next 30 days)</span></h3>'
+      + '<div class="area-chip-row">' + areaChips.map(a=>'<span class="area-chip"><span class="dot" style="background:' + a.color + ';"></span>' + escapeHtml(a.label) + ' <span class="n">' + a.count + '</span></span>').join('')
+      + '</div></div>';
+  }
+
+  html += '<div class="grid grid-2" style="margin-top:16px;">';
+  html += '<div class="card"><h3>📘 This Week\'s Teaching Load</h3>' + (chartsAvailable
+    ? '<canvas id="dash-chart-week" height="140"></canvas>'
+    : '<div class="empty">Charts need an internet connection the first time they load.</div>') + '</div>';
+  html += '<div class="card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + '</h3>' + (chartsAvailable
+    ? '<canvas id="dash-chart-time" height="140"></canvas>'
+    : '<div class="empty">Charts need an internet connection the first time they load.</div>')
+    + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:14px 0 0;">No Work Diary entries logged yet.</div>' : '') + '</div>';
+  html += '</div>';
+
   return html;
 }
+let DASHBOARD_CHARTS = [];
+function destroyDashboardCharts(){ DASHBOARD_CHARTS.forEach(c=>{ try{ c.destroy(); }catch(e){} }); DASHBOARD_CHARTS = []; }
 function wireDashboard(){
   document.querySelectorAll('[data-qa]').forEach(btn=>{
     btn.addEventListener('click', ()=>openModuleForm(btn.dataset.qa, null));
   });
   document.querySelectorAll('.stat-num[data-count]').forEach(el=>animateCount(el, Number(el.dataset.count), 750));
   document.querySelectorAll('.ring-num[data-count]').forEach(el=>animateCount(el, Number(el.dataset.count), 750, '%'));
+
+  destroyDashboardCharts();
+  if(typeof Chart === 'undefined') return;
+  const palette = ['#0f1f3d','#c99a3c','#2a63c9','#1f8a52','#b9741c','#b3273b','#4b2e83','#8a92a6'];
+
+  const weekCanvas = document.getElementById('dash-chart-week');
+  if(weekCanvas){
+    const weekLoad = weekdayClassCounts();
+    const todayDow = DOW_NAMES3[new Date().getDay()];
+    DASHBOARD_CHARTS.push(new Chart(weekCanvas, {
+      type:'bar',
+      data:{ labels: weekLoad.days, datasets:[{ label:'Classes', data: weekLoad.counts,
+        backgroundColor: weekLoad.days.map(d=>d===todayDow ? AREA_COLORS.dashboard : AREA_COLORS.teaching) }] },
+      options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+    }));
+  }
+
+  const timeCanvas = document.getElementById('dash-chart-time');
+  if(timeCanvas){
+    const workDiaryHours = workDiaryHoursByCategory();
+    const labels = Object.keys(workDiaryHours.byCat);
+    if(labels.length){
+      DASHBOARD_CHARTS.push(new Chart(timeCanvas, {
+        type:'bar',
+        data:{ labels: labels, datasets:[{ label:'Hours', data: labels.map(l=>workDiaryHours.byCat[l]), backgroundColor: palette }] },
+        options:{ indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ beginAtZero:true } } }
+      }));
+    }
+  }
 }
 
 /* ============================================================
@@ -2360,6 +2528,7 @@ function fieldPlainValue(mod, field, rec){
   const v = rec[field.key];
   if(field.type === 'reference') return refLabel(field.ref, v);
   if(field.type === 'moduleRef') return v ? ((MODULES[v] && MODULES[v].label) || v) : '';
+  if(field.type === 'categoryRef'){ const c = NAV_CATEGORIES.find(c=>c.key===v); return c ? c.label : ''; }
   if(field.type === 'recordRef'){ const depModKey = rec[field.dependsOn]; return (depModKey && v) ? refLabel(depModKey, v) : ''; }
   if(field.type === 'date') return v ? fmtDate(v) : '';
   return v == null ? '' : String(v);
@@ -2370,7 +2539,8 @@ function moduleReportHtml(moduleKey, sectionBreak){
   let html = '<div' + (sectionBreak ? ' class="section-break"' : '') + '>'
     + '<h1>' + mod.icon + ' ' + escapeHtml(mod.label) + '</h1>'
     + '<div class="meta">Generated ' + escapeHtml(fmtDateTime(nowIso())) + ' &middot; '
-    + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + ' &middot; ' + escapeHtml(DEPARTMENT_NAME) + '</div>';
+    + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + ' &middot; ' + escapeHtml(DEPARTMENT_NAME)
+    + (academicTermLabel() ? ' &middot; ' + escapeHtml(academicTermLabel()) : '') + '</div>';
   if(rows.length === 0){
     html += '<p style="color:#888;">No records.</p></div>';
     return html;
@@ -2385,7 +2555,8 @@ function moduleReportHtml(moduleKey, sectionBreak){
 function fullReportBodyHtml(){
   let html = '<h1 style="font-size:22pt;">FAMS+ — Full Activity Report</h1>'
     + '<div class="meta">' + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + ' &middot; ' + escapeHtml(DEPARTMENT_NAME)
-    + ' &middot; ' + escapeHtml(INSTITUTION_NAME) + '<br>Generated ' + escapeHtml(fmtDateTime(nowIso())) + '</div>';
+    + ' &middot; ' + escapeHtml(INSTITUTION_NAME) + (academicTermLabel() ? ' &middot; ' + escapeHtml(academicTermLabel()) : '')
+    + '<br>Generated ' + escapeHtml(fmtDateTime(nowIso())) + '</div>';
   MODULE_KEYS.forEach((k, i)=>{ html += moduleReportHtml(k, i > 0); });
   return html;
 }
@@ -2490,7 +2661,8 @@ function moduleReportText(moduleKey){
   const mod = MODULES[moduleKey];
   const rows = getCollection(moduleKey);
   let out = mod.icon + ' ' + mod.label + '\n' + '='.repeat((mod.label || '').length + 2) + '\n'
-    + 'Generated ' + fmtDateTime(nowIso()) + ' · ' + ((STATE.meta && STATE.meta.facultyName) || '') + ' · ' + DEPARTMENT_NAME + '\n\n';
+    + 'Generated ' + fmtDateTime(nowIso()) + ' · ' + ((STATE.meta && STATE.meta.facultyName) || '') + ' · ' + DEPARTMENT_NAME
+    + (academicTermLabel() ? ' · ' + academicTermLabel() : '') + '\n\n';
   if(rows.length === 0){ out += '(No records)\n'; return out; }
   rows.forEach((r, i)=>{
     out += '#' + (i+1) + '\n';
@@ -2501,7 +2673,8 @@ function moduleReportText(moduleKey){
 }
 function fullReportText(){
   let out = 'FAMS+ — Full Activity Report\n' + '='.repeat(30) + '\n'
-    + ((STATE.meta && STATE.meta.facultyName) || '') + ' · ' + DEPARTMENT_NAME + ' · ' + INSTITUTION_NAME + '\n'
+    + ((STATE.meta && STATE.meta.facultyName) || '') + ' · ' + DEPARTMENT_NAME + ' · ' + INSTITUTION_NAME
+    + (academicTermLabel() ? ' · ' + academicTermLabel() : '') + '\n'
     + 'Generated ' + fmtDateTime(nowIso()) + '\n\n';
   MODULE_KEYS.forEach(k=>{ out += moduleReportText(k) + '\n'; });
   return out;
@@ -2645,7 +2818,7 @@ function wireCalendar(){
    ============================================================ */
 function renderAdmin(){
   const meta = STATE.meta, cfg = STATE.config;
-  let html = '<div class="page-head"><div><h2>⚙️ Admin &amp; Settings</h2><p>Profile, academic term, backend connection, automation &amp; mail merge</p></div></div>';
+  let html = '<div class="page-head"><div><h2>⚙️ Admin &amp; settings</h2><p>Profile, academic term, backend connection, automation &amp; mail merge</p></div></div>';
 
   html += '<div class="grid grid-2">';
   html += '<div class="card"><h3>👤 Profile</h3>'
@@ -2719,6 +2892,7 @@ function wireAdmin(){
     STATE.config.academicYear = document.getElementById('adm-year').value.trim();
     STATE.config.semester = document.getElementById('adm-sem').value.trim();
     await saveConfig();
+    refreshTopnavTag();
     toast('Academic term saved', 'ok');
   });
   document.getElementById('adm-send-test').addEventListener('click', async ()=>{
