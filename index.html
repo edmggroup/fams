@@ -79,17 +79,23 @@ button{font-family:inherit;}
 .topnav-brand .name .tag{font-weight:500;font-size:10.5px;letter-spacing:.02em;color:var(--text-dim);margin-top:2px;}
 .topnav-utils{display:flex;align-items:center;gap:10px;}
 .topnav-row2{display:flex;align-items:center;gap:6px 12px;padding:0 14px;min-height:46px;flex-wrap:wrap;}
-.topnav-row2 .row2-title{display:flex;align-items:center;gap:8px;flex:0 0 auto;font-weight:700;font-size:13.5px;color:var(--navy);
-  padding:8px 12px 8px 0;border-right:1px solid var(--border);white-space:nowrap;}
+/* Redundant with the active tab styling on the nav itself — kept in the DOM
+   (renderRoute() still writes to #topbar-title on every navigation) but no
+   longer shown, per feedback that it duplicated what the nav already shows. */
+.topnav-row2 .row2-title{display:none;}
 /* NOTE: deliberately NOT overflow-x:auto here — that would clip .topnav-dropdown's
    vertical overflow too (an overflow-x:auto ancestor forces overflow-y:auto and
    clips ANY descendant, including position:absolute ones, that extends past its
    box). Categories wrap onto a second line instead on narrow screens. */
+/* Tabs grow to fill the whole row edge-to-edge (row2-title above no longer
+   eats a column) instead of packing to the left with empty space at the
+   right — every tab gets an equal share of the available width. */
 .topnav-cats{display:flex;align-items:stretch;gap:2px;flex-wrap:wrap;flex:1;}
-.topnav-cat{position:relative;flex:0 0 auto;}
-.topnav-cat-btn{display:flex;align-items:center;gap:6px;padding:12px 12px;background:none;border:none;cursor:pointer;
-  font-family:inherit;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--text-dim);
-  white-space:nowrap;border-bottom:2.5px solid transparent;transition:color .12s,border-color .12s;}
+.topnav-cat{position:relative;flex:1 1 0;min-width:118px;}
+.topnav-cat-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 14px;width:100%;background:none;border:none;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--text-dim);
+  white-space:nowrap;border-bottom:2.5px solid transparent;transition:color .12s,border-color .12s,background .12s;}
+.topnav-cat-btn:hover{background:#f4f6fb;}
 .topnav-cat-btn:hover{color:var(--navy);}
 .topnav-cat.active .topnav-cat-btn{color:var(--navy);border-bottom-color:var(--gold);}
 .topnav-cat.open .topnav-cat-btn{color:var(--navy);}
@@ -124,7 +130,9 @@ button{font-family:inherit;}
 .grid-2{grid-template-columns:repeat(2,1fr);}
 .grid-3{grid-template-columns:repeat(3,1fr);}
 .grid-4{grid-template-columns:repeat(4,1fr);}
-@media (max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+.grid-6{grid-template-columns:repeat(6,1fr);}
+@media (max-width:1180px){.grid-6{grid-template-columns:repeat(3,1fr);}}
+@media (max-width:900px){.grid-2,.grid-3,.grid-4,.grid-6{grid-template-columns:1fr;}}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;border-radius:8px;
   font-size:13.5px;font-weight:600;border:1.5px solid transparent;cursor:pointer;transition:.12s;}
@@ -187,21 +195,22 @@ tr:hover td{background:#fafbfd;}
 .empty svg{opacity:.4;margin-bottom:10px;}
 
 /* ---------- dashboard: hero / quick actions / progress rings / activity feed ---------- */
-.hero{background:linear-gradient(120deg,var(--navy) 0%,#22336b 55%,#3a2a68 100%);color:#fff;border-radius:14px;
-  padding:24px 26px;margin-bottom:18px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg);}
-.hero::before{content:'';position:absolute;top:-40%;right:-8%;width:320px;height:320px;border-radius:50%;
-  background:radial-gradient(circle,rgba(201,154,60,.28),transparent 65%);}
-.hero::after{content:'';position:absolute;bottom:-60%;left:10%;width:280px;height:280px;border-radius:50%;
-  background:radial-gradient(circle,rgba(111,163,255,.16),transparent 65%);}
+.hero{background:linear-gradient(100deg,var(--navy) 0%,#1c2c58 100%);color:#fff;border-radius:12px;
+  padding:14px 20px;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:var(--shadow-md);}
+.hero::before{content:'';position:absolute;top:-60%;right:-6%;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,154,60,.20),transparent 65%);}
 .hero-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;position:relative;z-index:1;}
-.hero-greeting{font-size:21px;font-weight:800;letter-spacing:.2px;}
-.hero-sub{font-size:12.5px;color:#c3cbe8;margin-top:4px;}
+.hero-greeting{font-size:17px;font-weight:800;letter-spacing:.2px;}
+.hero-sub{font-size:11.5px;color:#b8c1e0;margin-top:2px;}
+.hero-quote{font-size:11.5px;color:#d9deef;margin-top:5px;font-style:italic;opacity:.9;max-width:560px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hero-quote .attr{font-style:normal;opacity:.75;}
 .hero-clock{text-align:right;}
-.hero-clock .time{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;}
-.hero-clock .date{font-size:11.5px;color:#c3cbe8;margin-top:2px;}
+.hero-clock .time{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700;}
+.hero-clock .date{font-size:11px;color:#b8c1e0;margin-top:1px;}
 
-.quick-actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 18px;position:relative;z-index:1;}
-.qa-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:99px;font-size:12.5px;font-weight:600;
+.quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;position:relative;z-index:1;}
+.qa-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:11.5px;font-weight:600;
   background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.22);cursor:pointer;transition:.15s;}
 .qa-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px);}
 
@@ -241,12 +250,6 @@ tr:hover td{background:#fafbfd;}
 .error-box{color:var(--danger);font-size:13px;margin-top:12px;min-height:16px;}
 .error-box.info{color:var(--info);}
 
-/* ---------- quote card ---------- */
-.quote-card{background:linear-gradient(120deg,#3a2a68 0%,#5b3a96 55%,#c99a3c 160%);color:#fff;border-radius:var(--radius);
-  padding:16px 18px;margin-bottom:16px;font-size:13.5px;line-height:1.5;position:relative;overflow:hidden;box-shadow:var(--shadow-md);}
-.quote-card::before{content:'\201C';position:absolute;top:-18px;right:10px;font-size:90px;font-family:Georgia,serif;
-  color:rgba(255,255,255,.12);line-height:1;}
-.quote-card .attr{margin-top:6px;font-size:11.5px;opacity:.8;position:relative;}
 
 /* ---------- modal / drawer ---------- */
 .overlay{position:fixed;inset:0;background:rgba(15,25,60,.45);display:flex;align-items:center;justify-content:center;
@@ -347,17 +350,57 @@ async function apiMailMerge(recipients, subject, bodyTemplate){
    ============================================================ */
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,9); }
 function nowIso(){ return new Date().toISOString(); }
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+/* IST_OFFSET_MS: FAMS+ is a single-institution app for a faculty member in
+   India, so every date/time shown anywhere in the app is fixed to IST
+   (GMT+5:30) — regardless of the timezone the browser/device itself is set
+   to (a laptop with its clock set to another zone, or this app's own test/
+   build environment, should never shift "today" or a timestamp's displayed
+   hour). Computed by shifting the UTC instant and reading it back with the
+   UTC getters, so it never depends on Intl/timeZone-database support. */
+const IST_OFFSET_MS = 5.5 * 3600 * 1000;
+function istParts(d){
+  const s = new Date((d instanceof Date ? d.getTime() : Date.now()) + IST_OFFSET_MS);
+  return { y:s.getUTCFullYear(), mo:s.getUTCMonth(), da:s.getUTCDate(), h:s.getUTCHours(), mi:s.getUTCMinutes(), dow:s.getUTCDay() };
+}
+function todayStr(){
+  const p = istParts(new Date());
+  return p.y + '-' + String(p.mo+1).padStart(2,'0') + '-' + String(p.da).padStart(2,'0');
+}
 function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEKDAY_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+/** Formats a plain 'YYYY-MM-DD' date-only string (from a <input type=date>
+ *  field) — pure string/number parsing, deliberately never routed through
+ *  a Date/timeZone conversion, so it can never be off by a day no matter
+ *  what timezone the browser is in. */
 function fmtDate(iso){
   if(!iso) return '';
-  try{ const d = new Date(iso+'T00:00:00'); return d.getDate()+' '+d.toLocaleDateString('en-US',{month:'short'})+' '+d.getFullYear(); }
-  catch(e){ return iso; }
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if(!m) return iso;
+  return Number(m[3]) + ' ' + MONTH_SHORT[Number(m[2])-1] + ' ' + m[1];
 }
+/** Formats a real timestamp (an ISO instant, e.g. createdAt/updatedAt/audit
+ *  "at") in IST, 12-hour clock with AM/PM — used everywhere a date+time
+ *  (not just a date) is shown. */
 function fmtDateTime(iso){
   if(!iso) return '';
-  try{ const d = new Date(iso); return d.toLocaleDateString('en-GB')+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
-  catch(e){ return iso; }
+  try{
+    const d = new Date(iso);
+    const p = istParts(d);
+    const h12 = p.h % 12 === 0 ? 12 : p.h % 12;
+    const ampm = p.h < 12 ? 'AM' : 'PM';
+    return String(p.da).padStart(2,'0') + '/' + String(p.mo+1).padStart(2,'0') + '/' + p.y + ', '
+      + h12 + ':' + String(p.mi).padStart(2,'0') + ' ' + ampm;
+  }catch(e){ return iso; }
+}
+/** 12-hour "h:mm AM/PM" IST clock string — for the live top-bar clock and
+ *  the Dashboard hero clock. */
+function fmtClock(d){
+  const p = istParts(d || new Date());
+  const h12 = p.h % 12 === 0 ? 12 : p.h % 12;
+  const ampm = p.h < 12 ? 'AM' : 'PM';
+  return h12 + ':' + String(p.mi).padStart(2,'0') + ' ' + ampm;
 }
 function waLink(phone){
   if(!phone) return '#';
@@ -445,6 +488,7 @@ const MAIN_MENUS = [
   { key:'dashboard', label:'Dashboard' },
   { key:'work-diary', label:'Work diary' },
   { key:'teaching', label:'Teaching' },
+  { key:'leave-holidays', label:'Leave & holidays' },
   { key:'exams', label:'Exams' },
   { key:'mentoring', label:'Student mentoring' },
   { key:'laboratory', label:'Laboratory' },
@@ -454,13 +498,16 @@ const MAIN_MENUS = [
   { key:'incharge', label:'In-charge roles' },
   { key:'committees', label:'Committees & events' },
   { key:'meetings', label:'Meetings' },
-  { key:'reminders', label:'Reminders & office follow-ups' },
+  { key:'action-items', label:'Action items' },
+  { key:'reminders', label:'Reminders' },
+  { key:'office-followups', label:'Office follow-ups' },
   { key:'responsibilities', label:'Class teacher / responsibilities' },
   { key:'analytics', label:'Analytics' },
   { key:'reports', label:'Reports' },
   { key:'calendar', label:'Calendar' },
   { key:'audit-log', label:'Activity log' },
   { key:'custom-modules', label:'Custom menus' },
+  { key:'mail-merge', label:'Mail merge' },
   { key:'admin', label:'Admin & settings' }
 ];
 
@@ -476,18 +523,21 @@ const MODULES = {
     {key:'startTime', label:'Start Time', type:'time', required:true},
     {key:'endTime', label:'End Time', type:'time', required:true},
     {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'subjectCode', label:'Subject Code', type:'text', required:true},
+    {key:'sessionType', label:'Session Type', type:'select', options:['Theory','Laboratory'], default:'Theory'},
+    {key:'batchNumber', label:'Batch Number (for Laboratory sessions)', type:'text'},
     {key:'section', label:'Section', type:'text'},
     {key:'venue', label:'Venue', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Scheduled','Cancelled','Rescheduled'], default:'Scheduled'}
   ]},
-  'leave-records': { label:'Leave / OD', menu:'teaching', icon:'🗓️', titleField:'type', dateField:'fromDate', fields:[
+  'leave-records': { label:'Leave / OD', menu:'leave-holidays', icon:'🗓️', titleField:'type', dateField:'fromDate', fields:[
     {key:'type', label:'Type', type:'select', options:['OD','CL','Medical Leave','Earned Leave','Other'], required:true},
     {key:'fromDate', label:'From Date', type:'date', required:true},
     {key:'toDate', label:'To Date', type:'date', required:true},
     {key:'reason', label:'Reason', type:'textarea'},
     {key:'status', label:'Status', type:'select', options:['Applied','Approved','Rejected'], default:'Applied'}
   ]},
-  'holidays': { label:'Holidays', menu:'teaching', icon:'🏖️', titleField:'name', dateField:'date', fields:[
+  'holidays': { label:'Holidays', menu:'leave-holidays', icon:'🏖️', titleField:'name', dateField:'date', fields:[
     {key:'date', label:'Date', type:'date', required:true},
     {key:'name', label:'Holiday Name', type:'text', required:true},
     {key:'type', label:'Type', type:'select', options:['University Holiday','National Holiday','Local Holiday'], default:'University Holiday'}
@@ -495,9 +545,15 @@ const MODULES = {
   'class-log': { label:'Class log', menu:'teaching', icon:'📝', titleField:'topic', dateField:'date', fields:[
     {key:'date', label:'Date', type:'date', required:true},
     {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'subjectCode', label:'Subject Code', type:'text', required:true},
     {key:'section', label:'Section', type:'text'},
     {key:'topic', label:'Topic Covered', type:'textarea', required:true},
-    {key:'status', label:'Status', type:'select', options:['Held','Cancelled','Rescheduled'], default:'Held'}
+    {key:'status', label:'Status', type:'select', options:['Held','Cancelled','Rescheduled'], default:'Held'},
+    {key:'students', label:'Students (optional attendance)', type:'subtable', rowLabel:'Student', rowLabelPlural:'students', subfields:[
+      {key:'name', label:'Name'},
+      {key:'regNo', label:'Reg. No.'},
+      {key:'status', label:'Status', type:'select', options:['Present','Absent']}
+    ]}
   ]},
   'invigilation-duties': { label:'Invigilation duty', menu:'exams', icon:'🖊️', titleField:'examName', dateField:'date', fields:[
     {key:'examName', label:'Exam Name', type:'text', required:true},
@@ -508,6 +564,7 @@ const MODULES = {
   ]},
   'question-bank': { label:'Question bank', menu:'exams', icon:'❓', titleField:'question', dateField:null, fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'subjectCode', label:'Subject Code', type:'text', required:true},
     {key:'unit', label:'Unit/Module', type:'text'},
     {key:'question', label:'Question', type:'textarea', required:true},
     {key:'type', label:'Type', type:'select', options:['MCQ','Short Answer','Long Answer','Numerical'], default:'Short Answer'},
@@ -520,6 +577,23 @@ const MODULES = {
     {key:'scriptsEvaluated', label:'Scripts Evaluated', type:'number'},
     {key:'deadline', label:'Deadline', type:'date'},
     {key:'status', label:'Status', type:'select', options:['Not Started','In Progress','Completed'], default:'Not Started'}
+  ]},
+  // CHRIST (Deemed to be University)'s internal-assessment pattern: three
+  // Continuous Internal Assessments per subject (CIA-1, Mid Sem = CIA-II,
+  // CIA-III). One row per student per subject — bulk-importable from Excel
+  // via the same generic ⬆ Bulk Import every module already has, so a
+  // whole class's marks can be entered in one go rather than one at a time.
+  'internal-marks': { label:'Internal Marks (CIA)', menu:'exams', icon:'📊', titleField:'studentName', dateField:null, fields:[
+    {key:'regNo', label:'Registration No.', type:'text', required:true},
+    {key:'studentName', label:'Student Name', type:'text', required:true},
+    {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'subjectCode', label:'Subject Code', type:'text'},
+    {key:'section', label:'Section', type:'text'},
+    {key:'cia1', label:'CIA-1', type:'number'},
+    {key:'midSem', label:'Mid Sem (CIA-II)', type:'number'},
+    {key:'cia3', label:'CIA-III', type:'number'},
+    {key:'total', label:'Total', type:'number'},
+    {key:'academicYear', label:'Academic Year', type:'text'}
   ]},
   'mentees': { label:'Mentees', menu:'mentoring', icon:'🎓', titleField:'name', dateField:null, fields:[
     {key:'regNo', label:'Registration No.', type:'text', required:true},
@@ -553,11 +627,12 @@ const MODULES = {
   'extra-classes': { label:'Extra / additional classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
     {key:'type', label:'Type', type:'select', options:['Extra Class','Compensatory Class','Makeup Class'], default:'Extra Class'},
     {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'subjectCode', label:'Subject Code', type:'text', required:true},
     {key:'reason', label:'Reason', type:'text'},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'time', label:'Time', type:'text'}
   ]},
-  'research-targets': { label:'Targets & progress', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
+  'research-targets': { label:'Plans', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
     {key:'description', label:'Target Description', type:'textarea', required:true},
     {key:'progressPercent', label:'Progress %', type:'number'},
     {key:'targetDate', label:'Target Date', type:'date'},
@@ -613,29 +688,28 @@ const MODULES = {
     {key:'durationType', label:'Duration', type:'select', options:['Semester','Annual','Ongoing'], default:'Semester'},
     {key:'startDate', label:'Start Date', type:'date'},
     {key:'endDate', label:'End Date', type:'date'},
-    {key:'status', label:'Status', type:'select', options:['Active','Completed'], default:'Active'}
-  ]},
-  'incharge-members': { label:'Members', menu:'incharge', icon:'👥', titleField:'studentName', dateField:null, fields:[
-    {key:'roleId', label:'Role', type:'reference', ref:'incharge-roles'},
-    {key:'studentName', label:'Student Name', type:'text', required:true},
-    {key:'regNo', label:'Registration No.', type:'text'},
-    {key:'email', label:'Email', type:'email'},
-    {key:'phone', label:'Phone', type:'phone'},
-    {key:'supervisor', label:'Supervisor', type:'text'},
-    {key:'progressStatus', label:'Progress Status', type:'select', options:['On Track','Delayed','Completed'], default:'On Track'}
+    {key:'status', label:'Status', type:'select', options:['Active','Completed'], default:'Active'},
+    {key:'members', label:'Members', type:'subtable', rowLabel:'Member', rowLabelPlural:'members', subfields:[
+      {key:'studentName', label:'Student Name'},
+      {key:'regNo', label:'Reg. No.'},
+      {key:'batch', label:'Batch'},
+      {key:'classSection', label:'Class / Section'},
+      {key:'email', label:'Email'},
+      {key:'phone', label:'Phone'},
+      {key:'progressStatus', label:'Progress', type:'select', options:['On Track','Delayed','Completed']}
+    ]}
   ]},
   'committees': { label:'Committees', menu:'committees', icon:'🏛️', titleField:'name', dateField:null, fields:[
     {key:'name', label:'Committee Name', type:'text', required:true},
     {key:'myRole', label:'My Role', type:'text'},
     {key:'academicYear', label:'Academic Year', type:'text'},
-    {key:'status', label:'Status', type:'select', options:['Active','Completed'], default:'Active'}
-  ]},
-  'committee-members': { label:'Committee members', menu:'committees', icon:'👤', titleField:'name', dateField:null, fields:[
-    {key:'committeeId', label:'Committee', type:'reference', ref:'committees'},
-    {key:'name', label:'Name', type:'text', required:true},
-    {key:'role', label:'Role', type:'text'},
-    {key:'email', label:'Email', type:'email'},
-    {key:'phone', label:'Phone', type:'phone'}
+    {key:'status', label:'Status', type:'select', options:['Active','Completed'], default:'Active'},
+    {key:'members', label:'Members', type:'subtable', rowLabel:'Member', rowLabelPlural:'members', subfields:[
+      {key:'name', label:'Name'},
+      {key:'role', label:'Role'},
+      {key:'email', label:'Email'},
+      {key:'phone', label:'Phone'}
+    ]}
   ]},
   'meetings': { label:'Meetings', menu:'meetings', icon:'📅', titleField:'title', dateField:'date', fields:[
     {key:'title', label:'Title', type:'text', required:true},
@@ -646,7 +720,7 @@ const MODULES = {
     {key:'minutes', label:'Minutes', type:'textarea'},
     {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'}
   ]},
-  'action-items': { label:'Action items', menu:'meetings', icon:'☑️', titleField:'action', dateField:'dueDate', fields:[
+  'action-items': { label:'Action items', menu:'action-items', icon:'☑️', titleField:'action', dateField:'dueDate', fields:[
     {key:'meetingId', label:'Meeting', type:'reference', ref:'meetings'},
     {key:'action', label:'Action', type:'text', required:true},
     {key:'owner', label:'Owner', type:'text'},
@@ -661,7 +735,7 @@ const MODULES = {
     {key:'priority', label:'Priority', type:'select', options:['Low','Medium','High'], default:'Medium'},
     {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
   ]},
-  'office-followups': { label:'Office follow-ups', menu:'reminders', icon:'📮', titleField:'subject', dateField:'followUpDate', fields:[
+  'office-followups': { label:'Office follow-ups', menu:'office-followups', icon:'📮', titleField:'subject', dateField:'followUpDate', fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'office', label:'Office', type:'text'},
     {key:'submittedDate', label:'Submitted Date', type:'date'},
@@ -671,14 +745,14 @@ const MODULES = {
   'responsibilities': { label:'Responsibilities', menu:'responsibilities', icon:'📋', titleField:'title', dateField:null, fields:[
     {key:'title', label:'Title (e.g. Class Teacher)', type:'text', required:true},
     {key:'classSection', label:'Class / Section', type:'text'},
-    {key:'academicYear', label:'Academic Year', type:'text'}
-  ]},
-  'responsibility-contacts': { label:'Contacts', menu:'responsibilities', icon:'👤', titleField:'name', dateField:null, fields:[
-    {key:'responsibilityId', label:'Responsibility', type:'reference', ref:'responsibilities'},
-    {key:'name', label:'Name', type:'text', required:true},
-    {key:'regNo', label:'Registration No.', type:'text'},
-    {key:'email', label:'Email', type:'email'},
-    {key:'phone', label:'Phone', type:'phone'}
+    {key:'academicYear', label:'Academic Year', type:'text'},
+    {key:'contacts', label:'Students / Contacts', type:'subtable', rowLabel:'Contact', rowLabelPlural:'contacts', subfields:[
+      {key:'name', label:'Name'},
+      {key:'regNo', label:'Reg. No.'},
+      {key:'batch', label:'Batch'},
+      {key:'email', label:'Email'},
+      {key:'phone', label:'Phone'}
+    ]}
   ]},
   'audit-log': { label:'Activity log', menu:'audit-log', icon:'🕘', titleField:'action', dateField:'at', readOnly:true, fields:[
     {key:'action', label:'Action', type:'text'},
@@ -815,7 +889,7 @@ function getActive(key){ return getCollection(key).filter(r=>!r.deleted); }
 function getRecord(key, id){ return getCollection(key).find(r=>r.id===id) || null; }
 
 function defaultConfig(){
-  return { academicYear:'', semester:'', digestHour:7, backupHour:23 };
+  return { academicYear:'', semester:'', termStartDate:'', termEndDate:'', digestHour:7, backupHour:23, migratedLegacyMembers:false, academicTermHistory:[] };
 }
 
 /** Once Academic Year / Semester is set (Admin & Settings → Academic Term),
@@ -838,6 +912,48 @@ function refreshTopnavTag(){
   const tagEl = document.querySelector('.topnav-brand .tag');
   if(!tagEl) return;
   tagEl.innerHTML = escapeHtml(DEPARTMENT_NAME) + (academicTermLabel() ? ' · ' + escapeHtml(academicTermLabel()) : '');
+}
+
+/** One-time data migration: In-charges/Members, Committees/Committee members
+ *  and Responsibilities/Contacts used to be two separate top-level modules
+ *  linked by a reference field — now each "members" list lives as an
+ *  embedded subtable field directly on its parent record instead (see the
+ *  'subtable' field type). This folds any old separately-stored child
+ *  records into their parent's new subtable field, then clears the old
+ *  storage key. Guarded by STATE.config.migratedLegacyMembers so it only
+ *  ever does real work once per install — every load after that is a
+ *  single cheap boolean check, not three extra network round trips. */
+const LEGACY_SUBTABLE_MIGRATIONS = [
+  { oldKey:'incharge-members', parentKey:'incharge-roles', parentRefField:'roleId', subtableField:'members',
+    map:(m)=>({ studentName:m.studentName||'', regNo:m.regNo||'', batch:'', classSection:'', email:m.email||'', phone:m.phone||'', progressStatus:m.progressStatus||'' }) },
+  { oldKey:'committee-members', parentKey:'committees', parentRefField:'committeeId', subtableField:'members',
+    map:(m)=>({ name:m.name||'', role:m.role||'', email:m.email||'', phone:m.phone||'' }) },
+  { oldKey:'responsibility-contacts', parentKey:'responsibilities', parentRefField:'responsibilityId', subtableField:'contacts',
+    map:(m)=>({ name:m.name||'', regNo:m.regNo||'', batch:'', email:m.email||'', phone:m.phone||'' }) }
+];
+async function migrateLegacySubtableModules(){
+  let oldValues;
+  try{ oldValues = await apiGetAll(LEGACY_SUBTABLE_MIGRATIONS.map(l=>l.oldKey)); }
+  catch(e){ return; } // offline/backend hiccup — skip for now, retried on the next load since the flag isn't set yet
+  for(const legacy of LEGACY_SUBTABLE_MIGRATIONS){
+    let oldRecords = [];
+    try{ oldRecords = oldValues[legacy.oldKey] ? JSON.parse(oldValues[legacy.oldKey]) : []; }
+    catch(e){ oldRecords = []; }
+    const activeOld = oldRecords.filter(r=>!r.deleted);
+    if(activeOld.length === 0) continue;
+    const parentArr = (STATE.data[legacy.parentKey] || []).slice();
+    let changed = false;
+    activeOld.forEach(child=>{
+      const parentIdx = parentArr.findIndex(p=>p.id === child[legacy.parentRefField]);
+      if(parentIdx === -1) return; // orphaned child (parent since deleted) — nothing sane to attach it to
+      const parent = parentArr[parentIdx];
+      const existingRows = Array.isArray(parent[legacy.subtableField]) ? parent[legacy.subtableField] : [];
+      parentArr[parentIdx] = Object.assign({}, parent, { [legacy.subtableField]: existingRows.concat([legacy.map(child)]) });
+      changed = true;
+    });
+    if(changed) await saveCollection(legacy.parentKey, parentArr);
+    await apiSetRaw(legacy.oldKey, JSON.stringify([])); // clear so it can never double-migrate
+  }
 }
 
 async function loadAllData(){
@@ -863,6 +979,11 @@ async function loadAllData(){
   catch(e){ STATE.meta = null; }
   try{ STATE.config = values['app-config'] ? Object.assign(defaultConfig(), JSON.parse(values['app-config'])) : defaultConfig(); }
   catch(e){ STATE.config = defaultConfig(); }
+  if(STATE.meta && !STATE.config.migratedLegacyMembers){
+    await migrateLegacySubtableModules();
+    STATE.config.migratedLegacyMembers = true;
+    await saveConfig();
+  }
   STATE.loaded = true;
 }
 
@@ -957,21 +1078,24 @@ function recordOptionsHtml(moduleKey, selectedId){
 
 /* ============================================================
    AUTH — a single-faculty app, so "auth" is just: has a PIN been
-   set (first-run), and does the PIN typed in match it. Session
-   is a plain expiry timestamp in localStorage — good enough for
-   a personal device, and explicitly NOT presented as enterprise
-   -grade security (same disclaimer as the reference project).
+   set (first-run), and does the PIN typed in match it. The signed-in
+   state is held in a plain in-memory flag (NOT persisted to
+   localStorage) so that opening the app — a fresh page load, a PWA
+   relaunch, a browser restart — always lands on the PIN screen first,
+   every time, rather than silently skipping straight to the last
+   screen because an old session was still "valid". Once unlocked for
+   this page load, in-app navigation (hash changes) keeps working
+   without re-prompting, since that's still the same running page.
    ============================================================ */
-const SESSION_KEY = 'fams_session_until';
-const SESSION_HOURS = 16;
+let SESSION_ACTIVE = false;
 const PIN_FAIL_KEY = 'fams_pin_fails';
 const PIN_LOCK_KEY = 'fams_pin_lock_until';
 const PIN_MAX_FAILS = 5;
 const PIN_LOCK_MINUTES = 5;
 
-function isAuthed(){ return Number(localStorage.getItem(SESSION_KEY) || 0) > Date.now(); }
-function startSession(){ localStorage.setItem(SESSION_KEY, String(Date.now() + SESSION_HOURS*3600*1000)); }
-function endSession(){ localStorage.removeItem(SESSION_KEY); }
+function isAuthed(){ return SESSION_ACTIVE; }
+function startSession(){ SESSION_ACTIVE = true; }
+function endSession(){ SESSION_ACTIVE = false; }
 
 function pinLocked(){ return Number(localStorage.getItem(PIN_LOCK_KEY) || 0) > Date.now(); }
 function pinLockRemainingSec(){ return Math.max(0, Math.ceil((Number(localStorage.getItem(PIN_LOCK_KEY) || 0) - Date.now())/1000)); }
@@ -1014,7 +1138,7 @@ function doLogout(){ endSession(); location.hash = ''; render(); }
 /* ============================================================
    ROUTER
    ============================================================ */
-const SPECIAL_SCREENS = { dashboard:'📊', 'work-diary':'📔', analytics:'📈', reports:'📤', calendar:'🗓️', admin:'⚙️' };
+const SPECIAL_SCREENS = { dashboard:'📊', 'work-diary':'📔', analytics:'📈', reports:'📤', calendar:'🗓️', admin:'⚙️', 'mail-merge':'✉️' };
 
 /* Area accent colours — one per functional zone (mirrors the --a-* CSS
    custom properties in :root) so the sidebar, dashboard stat cards and
@@ -1023,22 +1147,35 @@ const SPECIAL_SCREENS = { dashboard:'📊', 'work-diary':'📔', analytics:'📈
    referencing the CSS vars) so call sites can cheaply append an alpha
    suffix like color+'22' for tinted backgrounds. */
 const AREA_COLORS = {
-  dashboard:'#c99a3c', 'work-diary':'#7c5cbf', teaching:'#2a63c9', exams:'#7c3aed',
+  dashboard:'#c99a3c', 'work-diary':'#7c5cbf', teaching:'#2a63c9', 'leave-holidays':'#0d9488', exams:'#7c3aed',
   mentoring:'#0891b2', laboratory:'#0e9f6e', 'extra-classes':'#d97706', research:'#059669',
-  projects:'#c99a3c', incharge:'#dc2626', committees:'#ea580c', meetings:'#4f46e5',
-  reminders:'#db2777', responsibilities:'#0f766e', analytics:'#6fa3f5', reports:'#8a92a6',
-  calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b', 'custom-modules':'#6d4aa8'
+  projects:'#c99a3c', incharge:'#dc2626', committees:'#ea580c', meetings:'#4f46e5', 'action-items':'#6d5bd0',
+  reminders:'#db2777', 'office-followups':'#a8386d', responsibilities:'#0f766e', analytics:'#6fa3f5', reports:'#8a92a6',
+  calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b', 'custom-modules':'#6d4aa8', 'mail-merge':'#c2410c'
 };
 
 /* Sidebar menus clubbed into broad categories (collapsible accordions) so
-   the ~18 menu groups read as ~6 sections instead of one long flat list. */
+   the ~18 menu groups read as ~6 sections instead of one long flat list.
+   Dashboard is deliberately NOT one of these groups — it's promoted to its
+   own standalone top-level button (see topNavCatsHtml()) since it's the
+   most-visited screen and doesn't belong behind a dropdown click. Work
+   Diary and Calendar (previously grouped with Dashboard under an "Overview"
+   category) are folded into Academics instead, since a two-item leftover
+   category wasn't worth a whole extra tab. */
 const NAV_CATEGORIES = [
-  { key:'overview', label:'Overview', icon:'🏠', groups:['dashboard','work-diary','calendar'] },
-  { key:'academics', label:'Academics', icon:'📘', groups:['teaching','exams','laboratory','extra-classes'] },
+  { key:'academics', label:'Academics', icon:'📘', groups:['work-diary','calendar','teaching','leave-holidays','exams','laboratory','extra-classes'] },
   { key:'research', label:'Research', icon:'🔬', groups:['research','projects'] },
   // Students + Administrative Duties combined into one "Responsibilities" category.
-  { key:'admin-duties', label:'Responsibilities', icon:'📋', groups:['mentoring','responsibilities','incharge','committees','meetings','reminders'] },
-  { key:'tools', label:'Settings', icon:'⚙️', groups:['analytics','reports','audit-log','custom-modules','admin'] }
+  { key:'admin-duties', label:'Roles & Responsibilities', icon:'📋', groups:['mentoring','responsibilities','incharge','committees','meetings','action-items','reminders','office-followups'] },
+  { key:'tools', label:'Administrator', icon:'⚙️', groups:['analytics','audit-log','custom-modules','mail-merge','admin'] }
+];
+
+/* Screens promoted to their own always-visible top-level nav button rather
+   than living behind a dropdown click — Dashboard (most-visited) and
+   Reports (a frequently-needed export/print destination). */
+const STANDALONE_NAV_SCREENS = [
+  { key:'dashboard', label:'Dashboard', icon:'🏠' },
+  { key:'reports', label:'Reports', icon:'📤' }
 ];
 
 function parseRoute(){
@@ -1086,9 +1223,11 @@ function startClock(){
   const tick = ()=>{
     const el = document.getElementById('live-clock');
     if(!el){ clearInterval(clockTimer); return; }
-    el.textContent = new Date().toLocaleString('en-IN', { weekday:'short', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    const now = new Date();
+    const p = istParts(now);
+    el.textContent = WEEKDAY_LONG[p.dow].slice(0,3) + ', ' + String(p.da).padStart(2,'0') + ' ' + MONTH_SHORT[p.mo] + ', ' + fmtClock(now);
     const heroClock = document.getElementById('hero-clock');
-    if(heroClock) heroClock.textContent = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    if(heroClock) heroClock.textContent = fmtClock(now);
   };
   tick();
   clockTimer = setInterval(tick, 30000);
@@ -1128,6 +1267,10 @@ function renderRoute(){
     titleEl.textContent = 'Admin & settings';
     content.innerHTML = renderAdmin();
     wireAdmin();
+  }else if(r.screen === 'mail-merge'){
+    titleEl.textContent = 'Mail merge';
+    content.innerHTML = renderMailMergeScreen();
+    wireMailMergeScreen();
   }else{
     titleEl.textContent = 'Dashboard';
     content.innerHTML = renderDashboard();
@@ -1192,6 +1335,7 @@ function wireFirstRunScreen(){
     try{
       await doFirstRunSetup(name, email, phone, pin);
       toast('Welcome to FAMS+, ' + name + '!', 'ok');
+      location.hash = '#/dashboard';
       render();
     }catch(err){
       errEl.textContent = err && err.message ? err.message : String(err);
@@ -1230,6 +1374,7 @@ function wireLoginScreen(){
     errEl.textContent = 'Checking…';
     try{
       await doLogin(input.value);
+      location.hash = '#/dashboard';
       render();
     }catch(err){
       input.value = '';
@@ -1271,6 +1416,7 @@ function navGroupHtml(group){
 }
 function activeCategoryKey(){
   const r = parseRoute();
+  if(STANDALONE_NAV_SCREENS.some(s=>s.key === r.screen)) return null; // these have their own top-level button, not a dropdown category.
   const groupKey = r.screen === 'module' ? MODULES[r.moduleKey].menu : r.screen;
   const cat = NAV_CATEGORIES.find(c => c.groups.indexOf(groupKey) !== -1);
   return cat ? cat.key : NAV_CATEGORIES[0].key;
@@ -1283,7 +1429,12 @@ function currentScreenLabel(){
 }
 function topNavCatsHtml(){
   const activeCat = activeCategoryKey();
+  const currentScreen = parseRoute().screen;
   let html = '';
+  STANDALONE_NAV_SCREENS.forEach(s=>{
+    html += '<div class="topnav-cat' + (currentScreen === s.key ? ' active' : '') + '">'
+      + '<button type="button" class="topnav-cat-btn" data-standalone-link="' + s.key + '"><span>' + s.icon + '</span><span>' + escapeHtml(s.label) + '</span></button></div>';
+  });
   NAV_CATEGORIES.forEach(cat=>{
     html += '<div class="topnav-cat' + (cat.key === activeCat ? ' active' : '') + '" data-cat="' + cat.key + '">';
     html += '<button type="button" class="topnav-cat-btn" data-cat-toggle="' + cat.key + '"><span>' + cat.icon + '</span><span>' + escapeHtml(cat.label) + '</span><span class="topnav-cat-chevron">▾</span></button>';
@@ -1327,6 +1478,8 @@ function closeAllNavDropdowns(){
 function wireShell(){
   const catsEl = document.getElementById('topnav-cats');
   catsEl.addEventListener('click', (e)=>{
+    const standaloneLink = e.target.closest('[data-standalone-link]');
+    if(standaloneLink){ closeAllNavDropdowns(); navigate('#/' + standaloneLink.dataset.standaloneLink); return; }
     const catToggle = e.target.closest('[data-cat-toggle]');
     if(catToggle){
       const catEl = catToggle.closest('.topnav-cat');
@@ -1378,11 +1531,20 @@ function moduleDisplayColumns(mod){
     const df = fieldByKey(mod, mod.dateField);
     if(df && cols.indexOf(df)===-1) cols.push(df);
   }
+  // A subtable field (e.g. "Members") is never itself a plain column — it's
+  // a whole mini-table — but its row count is genuinely useful in the list
+  // view, so a slot for it is reserved UP FRONT (before the general fields
+  // loop below fills the cap with other fields and leaves no room for it).
+  const hasSubtable = mod.fields.some(f=>f.type === 'subtable');
+  const cap = hasSubtable ? 3 : 4;
   mod.fields.forEach(f=>{
-    if(cols.length >= 4) return;
+    if(cols.length >= cap) return;
     if(cols.indexOf(f) !== -1) return;
-    if(f.type === 'textarea') return;
+    if(f.type === 'textarea' || f.type === 'subtable') return;
     cols.push(f);
+  });
+  mod.fields.forEach(f=>{
+    if(f.type === 'subtable' && cols.indexOf(f) === -1) cols.push(f);
   });
   return cols;
 }
@@ -1408,6 +1570,14 @@ function fieldDisplayValue(mod, field, rec){
   }
   if(field.type === 'date') return v ? escapeHtml(fmtDate(v)) : '<span style="color:var(--text-faint)">—</span>';
   if(field.type === 'datetime') return v ? escapeHtml(fmtDateTime(v)) : '<span style="color:var(--text-faint)">—</span>';
+  if(field.type === 'subtable'){
+    const rows = Array.isArray(v) ? v : [];
+    if(rows.length === 0) return '<span style="color:var(--text-faint)">—</span>';
+    const firstKey = field.subfields[0].key;
+    const names = rows.map(r=>r[firstKey]).filter(Boolean).slice(0,3).join(', ');
+    return '<span class="badge badge-ok">' + rows.length + ' ' + escapeHtml(rows.length===1 ? (field.rowLabel||'member') : (field.rowLabelPlural||(field.rowLabel||'member')+'s')) + '</span>'
+      + (names ? '<div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;">' + escapeHtml(names) + (rows.length>3?'…':'') + '</div>' : '');
+  }
   if(v === null || v === undefined || v === '') return '<span style="color:var(--text-faint)">—</span>';
   if(field.key === 'status') return '<span class="badge ' + statusBadgeClass(v) + '">' + escapeHtml(v) + '</span>';
   return escapeHtml(String(v));
@@ -1607,8 +1777,80 @@ function fieldInputHtml(mod, field, value, rec){
     return '<select class="input" id="' + id + '" data-poly-record-picker="1" data-depends-on="f_' + field.dependsOn + '">'
       + '<option value="">' + (curModKey ? '— Select a record —' : '— Select a menu first —') + '</option>' + opts + '</select>';
   }
+  if(field.type === 'subtable') return subtableFieldHtml(field, Array.isArray(v) ? v : []);
   const typeMap = { text:'text', email:'email', phone:'tel', tel:'tel', number:'number', date:'date', time:'time', datetime:'datetime-local' };
   return '<input class="input" id="' + id + '" type="' + (typeMap[field.type] || 'text') + '" value="' + escapeHtml(v) + '">';
+}
+
+/* ============================================================
+   SUBTABLE FIELD — an embedded, editable mini-table stored directly
+   on the parent record (e.g. an In-charge role's own list of student
+   members, batch/class and all), rather than being its own separate
+   top-level module linked back by a reference field. Row data is a
+   plain array of {subfieldKey: value} objects on the parent record —
+   no separate storage key, no separate CRUD screen, nothing to keep
+   in sync: it saves/loads as part of the parent record like any other
+   field. See wireSubtableFields() for the add/remove-row wiring and
+   collectSubtableValue() for how a field's rows are read back out of
+   the DOM on form submit.
+   ============================================================ */
+function subtableRowHtml(field, rowData){
+  rowData = rowData || {};
+  const cells = field.subfields.map(sf=>{
+    const val = rowData[sf.key] != null ? rowData[sf.key] : '';
+    if(sf.type === 'select'){
+      const opts = (sf.options || []).map(o=>'<option value="' + escapeHtml(o) + '"' + (o === val ? ' selected' : '') + '>' + escapeHtml(o) + '</option>').join('');
+      return '<td style="padding:4px;"><select class="input subtable-cell" data-subkey="' + sf.key + '" style="min-width:110px;padding:6px 8px;font-size:12.5px;"><option value="">—</option>' + opts + '</select></td>';
+    }
+    return '<td style="padding:4px;"><input class="input subtable-cell" data-subkey="' + sf.key + '" type="text" value="' + escapeHtml(val) + '" placeholder="' + escapeHtml(sf.label) + '" style="min-width:110px;padding:6px 8px;font-size:12.5px;"></td>';
+  }).join('');
+  return '<tr class="subtable-row">' + cells + '<td style="padding:4px;text-align:center;"><button type="button" class="btn btn-ghost btn-sm subtable-remove-row" title="Remove row" style="padding:4px 8px;">✕</button></td></tr>';
+}
+function subtableFieldHtml(field, rows){
+  const headerCells = field.subfields.map(sf=>'<th style="text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-dim);padding:4px 8px;">' + escapeHtml(sf.label) + '</th>').join('') + '<th></th>';
+  const bodyRows = rows.map(r=>subtableRowHtml(field, r)).join('');
+  return '<div class="subtable-field" id="f_' + field.key + '">'
+    + '<div style="overflow-x:auto;"><table class="subtable-table" style="width:100%;border-collapse:collapse;"><thead><tr>' + headerCells + '</tr></thead>'
+    + '<tbody class="subtable-body">' + bodyRows + '</tbody></table></div>'
+    + '<button type="button" class="btn btn-ghost btn-sm subtable-add-row" style="margin-top:8px;">+ Add ' + escapeHtml(field.rowLabel || 'Row') + '</button>'
+    + '</div>';
+}
+/** Wires the +Add/✕Remove buttons for every subtable field in a just-opened
+ *  record form. Called once from wireModuleForm() alongside the existing
+ *  moduleRef/recordRef cascading-picker wiring. */
+function wireSubtableFields(mod){
+  mod.fields.filter(f=>f.type === 'subtable').forEach(f=>{
+    const container = document.getElementById('f_' + f.key);
+    if(!container) return;
+    const tbody = container.querySelector('.subtable-body');
+    const addBtn = container.querySelector('.subtable-add-row');
+    if(addBtn) addBtn.addEventListener('click', ()=>{ tbody.insertAdjacentHTML('beforeend', subtableRowHtml(f, {})); });
+    tbody.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.subtable-remove-row');
+      if(btn) btn.closest('tr').remove();
+    });
+  });
+}
+/** Reads a subtable field's current rows back out of the DOM (called from
+ *  the record-form submit handler in place of the usual `el.value` read) —
+ *  rows where every cell is blank are dropped so an untouched blank "+ Add
+ *  Row" doesn't get saved as an empty member. */
+function collectSubtableValue(field){
+  const container = document.getElementById('f_' + field.key);
+  if(!container) return [];
+  const result = [];
+  container.querySelectorAll('.subtable-row').forEach(tr=>{
+    const obj = {};
+    let hasAny = false;
+    field.subfields.forEach(sf=>{
+      const cell = tr.querySelector('[data-subkey="' + sf.key + '"]');
+      const val = cell ? cell.value.trim() : '';
+      if(val) hasAny = true;
+      obj[sf.key] = val;
+    });
+    if(hasAny) result.push(obj);
+  });
+  return result;
 }
 
 function notesTabHtml(rec){
@@ -1671,6 +1913,7 @@ function wireModuleForm(moduleKey, id){
       });
     });
   });
+  wireSubtableFields(mod);
   const cancelBtn = document.getElementById('form-cancel');
   if(cancelBtn) cancelBtn.addEventListener('click', closeDrawer);
   const form = document.getElementById('record-form');
@@ -1682,6 +1925,7 @@ function wireModuleForm(moduleKey, id){
       const data = {};
       for(let i=0;i<mod.fields.length;i++){
         const f = mod.fields[i];
+        if(f.type === 'subtable'){ data[f.key] = collectSubtableValue(f); continue; }
         const el = document.getElementById('f_' + f.key);
         let v = el.value;
         if(f.type === 'number') v = v === '' ? '' : Number(v);
@@ -1801,9 +2045,14 @@ function bulkImportAvailable(){ return typeof XLSX !== 'undefined'; }
 
 function downloadModuleTemplate(moduleKey){
   const mod = MODULES[moduleKey];
-  const headers = mod.fields.map(f=>f.label);
+  // A subtable field (e.g. "Members") is a whole nested mini-table, not a
+  // single cell — it isn't representable as one flat spreadsheet column, so
+  // bulk import simply doesn't cover it (add members after import, from the
+  // record's own edit form).
+  const importableFields = mod.fields.filter(f=>f.type !== 'subtable');
+  const headers = importableFields.map(f=>f.label);
   const sampleRow = {};
-  mod.fields.forEach(f=>{
+  importableFields.forEach(f=>{
     sampleRow[f.label] = f.type === 'select' ? (f.options && f.options[0] || '') : (f.type === 'date' ? todayStr() : '');
   });
   const ws = XLSX.utils.json_to_sheet([sampleRow], { header: headers });
@@ -1816,8 +2065,8 @@ function downloadModuleTemplate(moduleKey){
  *  exact label, then by field key, both case/space-insensitive. */
 function matchFieldForHeader(mod, header){
   const norm = String(header || '').trim().toLowerCase();
-  return mod.fields.find(f => f.label.trim().toLowerCase() === norm)
-    || mod.fields.find(f => f.key.trim().toLowerCase() === norm)
+  return mod.fields.filter(f => f.type !== 'subtable').find(f => f.label.trim().toLowerCase() === norm)
+    || mod.fields.filter(f => f.type !== 'subtable').find(f => f.key.trim().toLowerCase() === norm)
     || null;
 }
 /** Loosely coerces a spreadsheet cell into the shape a field expects —
@@ -1860,7 +2109,7 @@ function parseWorkbookForModule(moduleKey, arrayBuffer){
       skipped.push({ row: idx + 2, reason: 'missing ' + missingRequired.map(f=>f.label).join(', ') });
       return;
     }
-    mod.fields.forEach(f=>{ if(data[f.key] === undefined) data[f.key] = f.default === '__today__' ? todayStr() : (f.default != null ? f.default : ''); });
+    mod.fields.forEach(f=>{ if(data[f.key] === undefined) data[f.key] = f.type === 'subtable' ? [] : (f.default === '__today__' ? todayStr() : (f.default != null ? f.default : '')); });
     records.push(data);
   });
   return { records, skipped, totalRows: rows.length };
@@ -2017,24 +2266,30 @@ function urgencyClass(dateStr){
   return 'urgency-later';
 }
 function greeting(){
-  const h = new Date().getHours();
+  const h = istParts(new Date()).h;
   if(h < 12) return 'Good morning';
   if(h < 17) return 'Good afternoon';
   return 'Good evening';
 }
+/** Adds `n` IST calendar days to a 'YYYY-MM-DD' date string, returning
+ *  another 'YYYY-MM-DD' string — pure date-math (via istParts on a shifted
+ *  instant), so it's never affected by the runtime's own timezone. */
+function addDaysStr(dateStr, n){
+  const [y,mo,da] = dateStr.split('-').map(Number);
+  const shifted = new Date(Date.UTC(y, mo-1, da + n));
+  return shifted.getUTCFullYear() + '-' + String(shifted.getUTCMonth()+1).padStart(2,'0') + '-' + String(shifted.getUTCDate()).padStart(2,'0');
+}
 function startOfWeekStr(){
-  const d = new Date();
-  const day = d.getDay(); // 0=Sun
-  const diffToMon = (day === 0) ? -6 : (1 - day);
-  const mon = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diffToMon);
-  return mon.toISOString().slice(0,10);
+  const p = istParts(new Date()); // p.dow: 0=Sun
+  const today = p.y + '-' + String(p.mo+1).padStart(2,'0') + '-' + String(p.da).padStart(2,'0');
+  const diffToMon = (p.dow === 0) ? -6 : (1 - p.dow);
+  return addDaysStr(today, diffToMon);
 }
 function endOfWeekStr(){
-  const d = new Date();
-  const day = d.getDay(); // 0=Sun
-  const diffToSun = (day === 0) ? 0 : (7 - day);
-  const sun = new Date(d.getFullYear(), d.getMonth(), d.getDate() + diffToSun);
-  return sun.toISOString().slice(0,10);
+  const p = istParts(new Date()); // p.dow: 0=Sun
+  const today = p.y + '-' + String(p.mo+1).padStart(2,'0') + '-' + String(p.da).padStart(2,'0');
+  const diffToSun = (p.dow === 0) ? 0 : (7 - p.dow);
+  return addDaysStr(today, diffToSun);
 }
 /** Open (not-done) DEADLINE_SOURCES items whose date falls within an
  *  inclusive range — the shared engine behind both "due this week" and
@@ -2130,8 +2385,8 @@ function animateCount(el, target, duration, suffix){
   }
   requestAnimationFrame(tick);
 }
-function statCardHtml(icon, num, label, color, trend){
-  return '<div class="stat-card"><div class="stat-icon" style="background:' + color + '22;color:' + color + ';">' + icon + '</div>'
+function statCardHtml(icon, num, label, color, trend, compact){
+  return '<div class="stat-card' + (compact ? ' compact' : '') + '"><div class="stat-icon" style="background:' + color + '22;color:' + color + ';">' + icon + '</div>'
     + '<div><div class="stat-num" data-count="' + num + '">0</div><div class="stat-label">' + escapeHtml(label) + '</div>'
     + (trend ? '<div class="stat-trend ' + trend.cls + '">' + escapeHtml(trend.text) + '</div>' : '') + '</div></div>';
 }
@@ -2178,9 +2433,11 @@ function renderDashboard(){
 
   let html = '<div class="hero"><div class="hero-row">'
     + '<div><div class="hero-greeting">' + greeting() + (facultyName ? ', ' + escapeHtml(facultyName) : '') + '</div>'
-    + '<div class="hero-sub">' + escapeHtml(DEPARTMENT_NAME) + ' · ' + escapeHtml(INSTITUTION_NAME) + (academicTermLabel() ? ' · ' + escapeHtml(academicTermLabel()) : '') + '</div></div>'
-    + '<div class="hero-clock"><div class="time mono" id="hero-clock">' + now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }) + '</div>'
-    + '<div class="date">' + now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' }) + '</div></div>'
+    + '<div class="hero-sub">' + escapeHtml(DEPARTMENT_NAME) + ' · ' + escapeHtml(INSTITUTION_NAME) + (academicTermLabel() ? ' · ' + escapeHtml(academicTermLabel()) : '') + '</div>'
+    + '<div class="hero-quote">"' + escapeHtml(q.text) + '" <span class="attr">— ' + escapeHtml(q.by) + '</span></div>'
+    + '</div>'
+    + '<div class="hero-clock"><div class="time mono" id="hero-clock">' + fmtClock(now) + '</div>'
+    + '<div class="date">' + WEEKDAY_LONG[istParts(now).dow] + ', ' + istParts(now).da + ' ' + MONTH_LONG[istParts(now).mo] + '</div></div>'
     + '</div>'
     + '<div class="quick-actions">'
     + '<button class="qa-btn" data-qa="work-diary">📔 Log Work Diary</button>'
@@ -2189,13 +2446,16 @@ function renderDashboard(){
     + '<button class="qa-btn" data-qa="action-items">☑️ Add Action Item</button>'
     + '</div></div>';
 
-  html += '<div class="quote-card"><div style="font-size:15px;font-style:italic;position:relative;">"' + escapeHtml(q.text) + '"</div><div class="attr">— ' + escapeHtml(q.by) + '</div></div>';
-
-  html += '<div class="grid grid-4" style="margin:16px 0;">'
-    + statCardHtml('📘', classes.length, "Today's Classes", AREA_COLORS.teaching)
-    + statCardHtml('☑️', openActions, 'Open Action Items', AREA_COLORS.meetings, totalActions ? { cls:'flat', text: doneActions + ' of ' + totalActions + ' done' } : null)
-    + statCardHtml('🔔', openReminders, 'Open Reminders', AREA_COLORS.reminders)
-    + statCardHtml('🗓️', pendingLeave, 'Pending Leave/OD', AREA_COLORS.incharge)
+  // One consolidated stat strip — merges the old "today" row and the old
+  // separate "this week at a glance" row into a single set of compact cards,
+  // so the same numbers aren't shown twice in two different sections.
+  html += '<div class="grid grid-6" style="margin:14px 0;">'
+    + statCardHtml('📘', classes.length, "Today's Classes", AREA_COLORS.teaching, { cls:'flat', text: timetableSlots + ' this week' }, true)
+    + statCardHtml('☑️', openActions, 'Open Action Items', AREA_COLORS.meetings, totalActions ? { cls:'flat', text: doneActions + ' of ' + totalActions + ' done' } : null, true)
+    + statCardHtml('🔔', openReminders, 'Open Reminders', AREA_COLORS.reminders, null, true)
+    + statCardHtml('🗓️', pendingLeave, 'Pending Leave/OD', AREA_COLORS.incharge, null, true)
+    + statCardHtml('📅', meetingsThisWeek, 'Meetings This Week', AREA_COLORS.meetings, null, true)
+    + statCardHtml('📔', Math.round(hoursThisWeek * 10) / 10, 'Hours Logged This Week', AREA_COLORS['work-diary'], null, true)
     + '</div>';
 
   if(overdue.length > 0){
@@ -2232,14 +2492,6 @@ function renderDashboard(){
       + '<span class="activity-time">' + relativeTime(a.at) + '</span></div>').join('')
     : '<div class="empty">No activity yet — start by adding a record in any module.</div>') + '</div></div>';
   html += '</div>';
-
-  html += '<div class="section-label">This week at a glance</div>';
-  html += '<div class="grid grid-4">'
-    + statCardHtml('📘', timetableSlots, 'Classes this week', AREA_COLORS.teaching)
-    + statCardHtml('📅', meetingsThisWeek, 'Meetings this week', AREA_COLORS.meetings)
-    + statCardHtml('⏰', dueThisWeek, 'Due this week', AREA_COLORS.reminders)
-    + statCardHtml('📔', Math.round(hoursThisWeek * 10) / 10, 'Hours logged this week', AREA_COLORS['work-diary'])
-    + '</div>';
 
   if(areaChips.length > 0){
     html += '<div class="card" style="margin-top:16px;"><h3>🧭 Deadlines by Area <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(overdue + next 30 days)</span></h3>'
@@ -2303,6 +2555,69 @@ function wireDashboard(){
    generic table, since a Mon–Sat x time grid reads far better
    than a flat list for a recurring weekly schedule).
    ============================================================ */
+/** Per-subject teaching-hours tracker: weekly recurring slot count (from
+ *  Timetable), hours actually taken so far (Held entries in Class Log up to
+ *  today), and hours remaining — weekly slots × remaining teaching weeks
+ *  until the current term's End Date (Admin & Settings → Academic Term).
+ *  hoursRemaining is null (shown as "—") until an End Date is set, since
+ *  there's nothing to compute it from. Subjects are matched by Subject +
+ *  Subject Code together so two different courses that happen to share a
+ *  plain-text subject name aren't merged into one row. */
+function subjectHoursSummary(){
+  const bySubject = {};
+  getActive('timetable').filter(t=>t.status !== 'Cancelled').forEach(t=>{
+    const key = (t.subjectCode || '') + '||' + (t.subject || '');
+    if(!bySubject[key]) bySubject[key] = { subject: t.subject || '(blank)', subjectCode: t.subjectCode || '', weeklySlots: 0, hoursTaken: 0 };
+    bySubject[key].weeklySlots++;
+  });
+  const today = todayStr();
+  getActive('class-log').filter(c=>c.status === 'Held' && c.date && c.date <= today).forEach(c=>{
+    const key = (c.subjectCode || '') + '||' + (c.subject || '');
+    if(bySubject[key]) bySubject[key].hoursTaken++;
+  });
+  const endDate = (STATE.config || {}).termEndDate || '';
+  let remainingWeeks = null;
+  if(endDate && endDate >= today){
+    const diffDays = Math.round((new Date(endDate + 'T00:00:00Z') - new Date(today + 'T00:00:00Z')) / 86400000);
+    remainingWeeks = Math.ceil(diffDays / 7);
+  }else if(endDate){
+    remainingWeeks = 0; // term end date already passed
+  }
+  return Object.keys(bySubject).map(key=>{
+    const s = bySubject[key];
+    return { subject: s.subject, subjectCode: s.subjectCode, weeklySlots: s.weeklySlots, hoursTaken: s.hoursTaken,
+      hoursRemaining: remainingWeeks == null ? null : s.weeklySlots * remainingWeeks };
+  }).sort((a,b)=> a.subject.localeCompare(b.subject));
+}
+function subjectHoursSummaryHtml(){
+  const rows = subjectHoursSummary();
+  const endDate = (STATE.config || {}).termEndDate || '';
+  let html = '<div class="card" style="margin-top:16px;"><h3>⏱️ Subject Hours Summary</h3>';
+  if(rows.length === 0){
+    html += '<div class="empty">Add subjects to the Timetable to see hours taken vs. remaining here.</div></div>';
+    return html;
+  }
+  if(!endDate){
+    html += '<p style="font-size:12.5px;color:var(--text-dim);">Set a <b>Term End Date</b> (Admin &amp; settings → Academic Term) to also see hours remaining this semester.</p>';
+  }
+  html += '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;"><thead><tr>'
+    + '<th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Subject</th>'
+    + '<th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Code</th>'
+    + '<th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Weekly Hrs</th>'
+    + '<th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Hours Taken</th>'
+    + '<th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Hours Remaining</th>'
+    + '</tr></thead><tbody>';
+  rows.forEach(r=>{
+    html += '<tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + escapeHtml(r.subject) + '</td>'
+      + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;" class="mono">' + escapeHtml(r.subjectCode || '—') + '</td>'
+      + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right;">' + r.weeklySlots + '</td>'
+      + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right;">' + r.hoursTaken + '</td>'
+      + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right;">' + (r.hoursRemaining == null ? '<span style="color:var(--text-faint);">—</span>' : r.hoursRemaining) + '</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div></div>';
+  return html;
+}
 function renderTimetableScreen(){
   const days = ['Mon','Tue','Wed','Thu','Fri','Sat'];
   const rows = getActive('timetable').slice().sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||'')));
@@ -2339,6 +2654,7 @@ function renderTimetableScreen(){
     });
     html += '</tbody></table></div>';
   }
+  html += subjectHoursSummaryHtml();
   html += '<div style="margin-top:16px;"><h3 style="font-size:13.5px;color:var(--text-dim);margin-bottom:8px;">All entries (list view)</h3>'
     + '<div class="search-bar"><input class="input" id="module-search" placeholder="Search…">'
     + '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);"><input type="checkbox" id="show-deleted"> Show deleted</label></div>'
@@ -2391,14 +2707,21 @@ function renderAnalytics(){
       + '<div class="error-box" style="margin-top:0;">Chart library failed to load (no internet connection to the CDN right now). '
       + 'Charts need an internet connection the first time they load on a device; everything else in FAMS+ still works offline.</div>';
   }
+  // Every chart canvas sits inside a fixed-height wrapper (rather than
+  // relying on the canvas's own height attribute) with maintainAspectRatio
+  // set to false on each Chart instance below — that combination is what
+  // keeps Chart.js charts a consistent, compact size regardless of card
+  // width, instead of stretching tall on wide screens.
+  const chartBox = (id)=>'<div style="position:relative;height:190px;">' + '<canvas id="' + id + '"></canvas></div>';
   return '<div class="page-head"><div><h2>📈 Analytics</h2><p>A quick visual summary of your activity data</p></div></div>'
-    + '<div class="grid grid-2">'
-    + '<div class="card"><h3>Weekly Teaching Load (classes/week)</h3><canvas id="chart-teaching" height="220"></canvas></div>'
-    + '<div class="card"><h3>Activity Mix (records per area)</h3><canvas id="chart-mix" height="220"></canvas></div>'
-    + '<div class="card"><h3>Leave/OD Status</h3><canvas id="chart-leave" height="220"></canvas></div>'
-    + '<div class="card"><h3>Action Items &amp; Reminders Status</h3><canvas id="chart-actions" height="220"></canvas></div>'
-    + '<div class="card"><h3>Time Spent by Activity (Work Diary hours)</h3><canvas id="chart-time" height="220"></canvas></div>'
-    + '<div class="card"><h3>Progress Status (open vs. done, by area)</h3><canvas id="chart-progress" height="220"></canvas></div>'
+    + '<div class="grid grid-3">'
+    + '<div class="card"><h3>Weekly Teaching Load</h3>' + chartBox('chart-teaching') + '</div>'
+    + '<div class="card"><h3>Activity Mix</h3>' + chartBox('chart-mix') + '</div>'
+    + '<div class="card"><h3>Leave / OD Status</h3>' + chartBox('chart-leave') + '</div>'
+    + '<div class="card"><h3>Action Items &amp; Reminders</h3>' + chartBox('chart-actions') + '</div>'
+    + '<div class="card"><h3>Time Spent by Activity</h3>' + chartBox('chart-time') + '</div>'
+    + '<div class="card"><h3>Progress Status by Area</h3>' + chartBox('chart-progress') + '</div>'
+    + '<div class="card"><h3>Average Internal Marks (CIA) by Subject</h3>' + chartBox('chart-cia') + '</div>'
     + '</div>';
 }
 function wireAnalytics(){
@@ -2413,8 +2736,8 @@ function wireAnalytics(){
     options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
   }));
 
-  const areaLabels = ['Teaching','Exams','Mentoring','Laboratory','Extra Classes','Research','Projects','In-Charge','Committees','Meetings','Reminders','Responsibilities'];
-  const areaMenus = ['teaching','exams','mentoring','laboratory','extra-classes','research','projects','incharge','committees','meetings','reminders','responsibilities'];
+  const areaLabels = ['Teaching','Exams','Mentoring','Laboratory','Extra Classes','Research','Projects','In-Charge','Committees','Meetings','Action Items','Reminders','Follow-ups','Responsibilities'];
+  const areaMenus = ['teaching','exams','mentoring','laboratory','extra-classes','research','projects','incharge','committees','meetings','action-items','reminders','office-followups','responsibilities'];
   const areaCounts = areaMenus.map(m => MODULE_KEYS.filter(k=>MODULES[k].menu===m).reduce((sum,k)=>sum+getActive(k).length, 0));
   ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-mix'), {
     type:'pie',
@@ -2468,21 +2791,130 @@ function wireAnalytics(){
     ]},
     options:{ plugins:{ legend:{ position:'bottom' } }, scales:{ x:{ stacked:true }, y:{ stacked:true, beginAtZero:true, ticks:{ precision:0 } } } }
   }));
+
+  // CIA-1 / Mid Sem / CIA-3 averages, grouped by subject — lets a subject
+  // with a weak batch average stand out at a glance.
+  const ciaBySubject = {};
+  getActive('internal-marks').forEach(r=>{
+    const subj = r.subject || '(blank)';
+    if(!ciaBySubject[subj]) ciaBySubject[subj] = { cia1:[], midSem:[], cia3:[] };
+    ['cia1','midSem','cia3'].forEach(k=>{ const n = parseFloat(r[k]); if(!isNaN(n)) ciaBySubject[subj][k].push(n); });
+  });
+  const ciaSubjects = Object.keys(ciaBySubject);
+  const avg = (arr)=> arr.length ? Math.round((arr.reduce((s,n)=>s+n,0) / arr.length) * 10) / 10 : 0;
+  ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-cia'), {
+    type:'bar',
+    data:{ labels: ciaSubjects, datasets:[
+      { label:'CIA-1', data: ciaSubjects.map(s=>avg(ciaBySubject[s].cia1)), backgroundColor:'#2a63c9' },
+      { label:'Mid Sem', data: ciaSubjects.map(s=>avg(ciaBySubject[s].midSem)), backgroundColor:'#c99a3c' },
+      { label:'CIA-3', data: ciaSubjects.map(s=>avg(ciaBySubject[s].cia3)), backgroundColor:'#1f8a52' }
+    ]},
+    options:{ plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true } } }
+  }));
 }
 
 /* ============================================================
-   REPORTS — export any module (or everything) to CSV.
+   REPORTS — export any module (or everything) in CSV, Excel, Word,
+   PDF, or plain text, each optionally scoped to a period: this week,
+   this month, one specific semester, a whole academic year (every
+   semester tagged with that year), or the default "whole data".
    ============================================================ */
+/** Every academic term FAMS+ knows about — the current one (from Admin &
+ *  Settings → Academic Term) plus every archived one in
+ *  STATE.config.academicTermHistory — newest first, each tagged
+ *  {academicYear, semester, startDate, endDate, current}. Used to build the
+ *  Reports period picker's semester/academic-year options. */
+function allAcademicTerms(){
+  const cfg = STATE.config || {};
+  const current = (cfg.academicYear || cfg.semester || cfg.termStartDate || cfg.termEndDate)
+    ? [{ academicYear: cfg.academicYear||'', semester: cfg.semester||'', startDate: cfg.termStartDate||'', endDate: cfg.termEndDate||'', current:true }] : [];
+  return current.concat((cfg.academicTermHistory || []).slice().reverse());
+}
+/** Resolves a Reports period-picker value into a {from,to} date-string
+ *  range (or null for "whole data" / a term with no dates recorded yet —
+ *  in the no-dates case, exporting falls back to unfiltered rather than
+ *  silently returning zero rows). */
+function periodDateRange(periodValue){
+  if(!periodValue || periodValue === 'all') return null;
+  if(periodValue === 'week') return { from: startOfWeekStr(), to: endOfWeekStr() };
+  if(periodValue === 'month'){
+    const p = istParts(new Date());
+    const from = p.y + '-' + String(p.mo+1).padStart(2,'0') + '-01';
+    const lastDay = new Date(Date.UTC(p.y, p.mo+1, 0)).getUTCDate();
+    const to = p.y + '-' + String(p.mo+1).padStart(2,'0') + '-' + String(lastDay).padStart(2,'0');
+    return { from, to };
+  }
+  if(periodValue.indexOf('term:') === 0){
+    const t = allAcademicTerms()[Number(periodValue.slice(5))];
+    return (t && t.startDate && t.endDate) ? { from:t.startDate, to:t.endDate } : null;
+  }
+  if(periodValue.indexOf('year:') === 0){
+    const year = periodValue.slice(5);
+    const terms = allAcademicTerms().filter(t=>t.academicYear === year && t.startDate && t.endDate);
+    if(!terms.length) return null;
+    return { from: terms.map(t=>t.startDate).sort()[0], to: terms.map(t=>t.endDate).sort().slice(-1)[0] };
+  }
+  return null;
+}
+/** Human-readable description of the active period, appended to report
+ *  headers so an exported file is self-documenting about its own scope. */
+function periodRangeLabel(periodValue, range){
+  if(!periodValue || periodValue === 'all') return '';
+  if(periodValue === 'week') return 'This week (' + fmtDate(range.from) + ' – ' + fmtDate(range.to) + ')';
+  if(periodValue === 'month') return 'This month (' + fmtDate(range.from) + ' – ' + fmtDate(range.to) + ')';
+  if(periodValue.indexOf('term:') === 0){
+    const t = allAcademicTerms()[Number(periodValue.slice(5))];
+    if(!t) return '';
+    return 'Semester: ' + (t.academicYear||'—') + ' · ' + (t.semester||'—') + (range ? ' (' + fmtDate(range.from) + ' – ' + fmtDate(range.to) + ')' : ' — no dates recorded, showing whole data');
+  }
+  if(periodValue.indexOf('year:') === 0){
+    const year = periodValue.slice(5);
+    return 'Academic Year: ' + year + (range ? ' (' + fmtDate(range.from) + ' – ' + fmtDate(range.to) + ')' : ' — no dates recorded, showing whole data');
+  }
+  return '';
+}
+/** Builds the Reports screen's period-picker <option>s: Whole data, This
+ *  week, This month, one "Semester: …" entry per known academic term, then
+ *  one "Academic Year: …" entry per distinct year among those terms. */
+function reportPeriodOptionsHtml(){
+  const terms = allAcademicTerms();
+  let html = '<option value="all">Whole data</option>'
+    + '<option value="week">This week</option>'
+    + '<option value="month">This month</option>';
+  terms.forEach((t, i)=>{
+    html += '<option value="term:' + i + '">Semester: ' + escapeHtml((t.academicYear||'—') + ' · ' + (t.semester||'—')) + (t.current ? ' (current)' : '') + '</option>';
+  });
+  const years = [];
+  terms.forEach(t=>{ if(t.academicYear && years.indexOf(t.academicYear) === -1) years.push(t.academicYear); });
+  years.forEach(y=>{ html += '<option value="year:' + y + '">Academic Year: ' + escapeHtml(y) + '</option>'; });
+  return html;
+}
+/** All of a module's records, narrowed to a period range by its dateField
+ *  — records with no date value are excluded from any period-filtered view
+ *  (they still show up under "Whole data") since there's no date to judge
+ *  them by. A module with no dateField at all (e.g. Mentees) is never
+ *  period-filterable and always returns its full collection. */
+function filterByPeriod(moduleKey, range){
+  const mod = MODULES[moduleKey];
+  const all = getCollection(moduleKey);
+  if(!range || !mod.dateField) return all;
+  return all.filter(r=>{
+    const d = r[mod.dateField];
+    if(!d) return false;
+    const dOnly = String(d).slice(0, 10);
+    return dOnly >= range.from && dOnly <= range.to;
+  });
+}
 function toCsvValue(v){
   const s = v == null ? '' : String(v);
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
 }
-function collectionToCsv(moduleKey){
+function collectionToCsv(moduleKey, range){
   const mod = MODULES[moduleKey];
   const cols = mod.fields.map(f=>f.key);
   const header = ['id'].concat(cols).concat(['createdAt','updatedAt','deleted']);
   const lines = [header.join(',')];
-  getCollection(moduleKey).forEach(r=>{
+  filterByPeriod(moduleKey, range).forEach(r=>{
     const row = [r.id].concat(cols.map(c=>toCsvValue(r[c]))).concat([r.createdAt||'', r.updatedAt||'', r.deleted?'1':'0']);
     lines.push(row.join(','));
   });
@@ -2531,18 +2963,24 @@ function fieldPlainValue(mod, field, rec){
   if(field.type === 'categoryRef'){ const c = NAV_CATEGORIES.find(c=>c.key===v); return c ? c.label : ''; }
   if(field.type === 'recordRef'){ const depModKey = rec[field.dependsOn]; return (depModKey && v) ? refLabel(depModKey, v) : ''; }
   if(field.type === 'date') return v ? fmtDate(v) : '';
+  if(field.type === 'subtable'){
+    const rows = Array.isArray(v) ? v : [];
+    return rows.map(r => field.subfields.map(sf => r[sf.key]).filter(Boolean).join(' - ')).join('; ');
+  }
   return v == null ? '' : String(v);
 }
-function moduleReportHtml(moduleKey, sectionBreak){
+function moduleReportHtml(moduleKey, sectionBreak, periodValue, range){
   const mod = MODULES[moduleKey];
-  const rows = getCollection(moduleKey);
+  const rows = filterByPeriod(moduleKey, range);
+  const periodLabel = periodRangeLabel(periodValue, range);
   let html = '<div' + (sectionBreak ? ' class="section-break"' : '') + '>'
     + '<h1>' + mod.icon + ' ' + escapeHtml(mod.label) + '</h1>'
     + '<div class="meta">Generated ' + escapeHtml(fmtDateTime(nowIso())) + ' &middot; '
     + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + ' &middot; ' + escapeHtml(DEPARTMENT_NAME)
-    + (academicTermLabel() ? ' &middot; ' + escapeHtml(academicTermLabel()) : '') + '</div>';
+    + (academicTermLabel() ? ' &middot; ' + escapeHtml(academicTermLabel()) : '')
+    + (periodLabel ? ' &middot; ' + escapeHtml(periodLabel) : '') + '</div>';
   if(rows.length === 0){
-    html += '<p style="color:#888;">No records.</p></div>';
+    html += '<p style="color:#888;">No records' + (periodLabel ? ' in this period' : '') + '.</p></div>';
     return html;
   }
   html += '<table><thead><tr>' + mod.fields.map(c=>'<th>' + escapeHtml(c.label) + '</th>').join('') + '<th>Status</th></tr></thead><tbody>';
@@ -2552,12 +2990,14 @@ function moduleReportHtml(moduleKey, sectionBreak){
   html += '</tbody></table></div>';
   return html;
 }
-function fullReportBodyHtml(){
+function fullReportBodyHtml(periodValue, range){
+  const periodLabel = periodRangeLabel(periodValue, range);
   let html = '<h1 style="font-size:22pt;">FAMS+ — Full Activity Report</h1>'
     + '<div class="meta">' + escapeHtml((STATE.meta && STATE.meta.facultyName) || '') + ' &middot; ' + escapeHtml(DEPARTMENT_NAME)
     + ' &middot; ' + escapeHtml(INSTITUTION_NAME) + (academicTermLabel() ? ' &middot; ' + escapeHtml(academicTermLabel()) : '')
+    + (periodLabel ? ' &middot; ' + escapeHtml(periodLabel) : '')
     + '<br>Generated ' + escapeHtml(fmtDateTime(nowIso())) + '</div>';
-  MODULE_KEYS.forEach((k, i)=>{ html += moduleReportHtml(k, i > 0); });
+  MODULE_KEYS.forEach((k, i)=>{ html += moduleReportHtml(k, i > 0, periodValue, range); });
   return html;
 }
 function reportDocStyles(){
@@ -2599,9 +3039,9 @@ function printHtmlDocument(title, bodyHtml){
 
 /* ---------- Excel (.xlsx) + plain-text (.txt) export ----------
    Reuses the same SheetJS library already loaded for bulk import. */
-function moduleRowsAsObjects(moduleKey){
+function moduleRowsAsObjects(moduleKey, range){
   const mod = MODULES[moduleKey];
-  return getCollection(moduleKey).map(r=>{
+  return filterByPeriod(moduleKey, range).map(r=>{
     const row = {};
     mod.fields.forEach(f=>{ row[f.label] = fieldPlainValue(mod, f, r); });
     row['Status'] = r.deleted ? 'Deleted' : 'Active';
@@ -2632,9 +3072,9 @@ function deliverWorkbook(wb, filename){
   }
   XLSX.writeFile(wb, filename);
 }
-function downloadModuleXlsx(moduleKey){
+function downloadModuleXlsx(moduleKey, range){
   const mod = MODULES[moduleKey];
-  const rows = moduleRowsAsObjects(moduleKey);
+  const rows = moduleRowsAsObjects(moduleKey, range);
   const headers = mod.fields.map(f=>f.label).concat(['Status','Created','Updated']);
   const ws = rows.length
     ? XLSX.utils.json_to_sheet(rows, { header: headers })
@@ -2643,12 +3083,12 @@ function downloadModuleXlsx(moduleKey){
   XLSX.utils.book_append_sheet(wb, ws, safeSheetName(mod.label, new Set()));
   deliverWorkbook(wb, 'fams-plus-' + moduleKey + '-' + todayStr() + '.xlsx');
 }
-function downloadFullXlsx(){
+function downloadFullXlsx(range){
   const wb = XLSX.utils.book_new();
   const usedNames = new Set();
   MODULE_KEYS.forEach(k=>{
     const mod = MODULES[k];
-    const rows = moduleRowsAsObjects(k);
+    const rows = moduleRowsAsObjects(k, range);
     const headers = mod.fields.map(f=>f.label).concat(['Status','Created','Updated']);
     const ws = rows.length
       ? XLSX.utils.json_to_sheet(rows, { header: headers })
@@ -2657,13 +3097,14 @@ function downloadFullXlsx(){
   });
   deliverWorkbook(wb, 'fams-plus-full-report-' + todayStr() + '.xlsx');
 }
-function moduleReportText(moduleKey){
+function moduleReportText(moduleKey, periodValue, range){
   const mod = MODULES[moduleKey];
-  const rows = getCollection(moduleKey);
+  const rows = filterByPeriod(moduleKey, range);
+  const periodLabel = periodRangeLabel(periodValue, range);
   let out = mod.icon + ' ' + mod.label + '\n' + '='.repeat((mod.label || '').length + 2) + '\n'
     + 'Generated ' + fmtDateTime(nowIso()) + ' · ' + ((STATE.meta && STATE.meta.facultyName) || '') + ' · ' + DEPARTMENT_NAME
-    + (academicTermLabel() ? ' · ' + academicTermLabel() : '') + '\n\n';
-  if(rows.length === 0){ out += '(No records)\n'; return out; }
+    + (academicTermLabel() ? ' · ' + academicTermLabel() : '') + (periodLabel ? ' · ' + periodLabel : '') + '\n\n';
+  if(rows.length === 0){ out += '(No records' + (periodLabel ? ' in this period' : '') + ')\n'; return out; }
   rows.forEach((r, i)=>{
     out += '#' + (i+1) + '\n';
     mod.fields.forEach(f=>{ out += '  ' + f.label + ': ' + fieldPlainValue(mod, f, r) + '\n'; });
@@ -2671,18 +3112,22 @@ function moduleReportText(moduleKey){
   });
   return out;
 }
-function fullReportText(){
+function fullReportText(periodValue, range){
+  const periodLabel = periodRangeLabel(periodValue, range);
   let out = 'FAMS+ — Full Activity Report\n' + '='.repeat(30) + '\n'
     + ((STATE.meta && STATE.meta.facultyName) || '') + ' · ' + DEPARTMENT_NAME + ' · ' + INSTITUTION_NAME
-    + (academicTermLabel() ? ' · ' + academicTermLabel() : '') + '\n'
+    + (academicTermLabel() ? ' · ' + academicTermLabel() : '') + (periodLabel ? ' · ' + periodLabel : '') + '\n'
     + 'Generated ' + fmtDateTime(nowIso()) + '\n\n';
-  MODULE_KEYS.forEach(k=>{ out += moduleReportText(k) + '\n'; });
+  MODULE_KEYS.forEach(k=>{ out += moduleReportText(k, periodValue, range) + '\n'; });
   return out;
 }
 
 function renderReports(){
   let html = '<div class="page-head"><div><h2>📤 Reports</h2><p>Export any module in CSV, Excel, Word, PDF, or plain text — everywhere your data goes, it goes with you</p></div></div>';
-  html += '<div class="card"><h3>Export a single module</h3><div class="table-wrap"><table style="width:100%;border-collapse:collapse;">'
+  html += '<div class="card"><h3>Period</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">Scopes every export below to a date range — records with no date on the relevant field are only included under "Whole data".</p>'
+    + '<div class="field" style="max-width:360px;"><select class="input" id="report-period">' + reportPeriodOptionsHtml() + '</select></div></div>';
+  html += '<div class="card" style="margin-top:16px;"><h3>Export a single module</h3><div class="table-wrap"><table style="width:100%;border-collapse:collapse;">'
     + '<thead><tr><th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Module</th>'
     + '<th style="border-bottom:1px solid var(--border);width:370px;"></th></tr></thead><tbody id="report-rows">';
   MODULE_KEYS.forEach(k=>{
@@ -2709,41 +3154,45 @@ function renderReports(){
   return html;
 }
 function wireReports(){
+  const periodSelect = document.getElementById('report-period');
+  const currentPeriod = ()=> periodSelect ? periodSelect.value : 'all';
+  const currentRange = ()=> periodDateRange(currentPeriod());
   document.getElementById('report-rows').addEventListener('click', (e)=>{
     const btn = e.target.closest('[data-export]');
     if(!btn) return;
     const key = btn.dataset.mod;
     const mod = MODULES[key];
     const format = btn.dataset.export;
+    const periodValue = currentPeriod(), range = currentRange();
     if(format === 'csv'){
-      downloadText('fams-plus-' + key + '-' + todayStr() + '.csv', collectionToCsv(key), 'text/csv');
+      downloadText('fams-plus-' + key + '-' + todayStr() + '.csv', collectionToCsv(key, range), 'text/csv');
     }else if(format === 'xlsx'){
       if(!bulkImportAvailable()){ toast('Excel export library not loaded', 'danger'); return; }
-      downloadModuleXlsx(key);
+      downloadModuleXlsx(key, range);
     }else if(format === 'txt'){
-      downloadText('fams-plus-' + key + '-' + todayStr() + '.txt', moduleReportText(key), 'text/plain');
+      downloadText('fams-plus-' + key + '-' + todayStr() + '.txt', moduleReportText(key, periodValue, range), 'text/plain');
     }else if(format === 'word'){
-      downloadWordDoc('fams-plus-' + key + '-' + todayStr() + '.doc', moduleReportHtml(key, false), mod.label + ' — FAMS+ Export');
+      downloadWordDoc('fams-plus-' + key + '-' + todayStr() + '.doc', moduleReportHtml(key, false, periodValue, range), mod.label + ' — FAMS+ Export');
     }else if(format === 'pdf'){
-      printHtmlDocument(mod.label + ' — FAMS+ Export', moduleReportHtml(key, false));
+      printHtmlDocument(mod.label + ' — FAMS+ Export', moduleReportHtml(key, false, periodValue, range));
     }
     toast('Exported ' + mod.label + ' (' + format.toUpperCase() + ')', 'ok');
   });
   document.getElementById('export-all-excel').addEventListener('click', ()=>{
     if(!bulkImportAvailable()){ toast('Excel export library not loaded', 'danger'); return; }
-    downloadFullXlsx();
+    downloadFullXlsx(currentRange());
     toast('Full report (Excel) exported', 'ok');
   });
   document.getElementById('export-all-text').addEventListener('click', ()=>{
-    downloadText('fams-plus-full-report-' + todayStr() + '.txt', fullReportText(), 'text/plain');
+    downloadText('fams-plus-full-report-' + todayStr() + '.txt', fullReportText(currentPeriod(), currentRange()), 'text/plain');
     toast('Full report (Text) exported', 'ok');
   });
   document.getElementById('export-all-word').addEventListener('click', ()=>{
-    downloadWordDoc('fams-plus-full-report-' + todayStr() + '.doc', fullReportBodyHtml(), 'FAMS+ Full Activity Report');
+    downloadWordDoc('fams-plus-full-report-' + todayStr() + '.doc', fullReportBodyHtml(currentPeriod(), currentRange()), 'FAMS+ Full Activity Report');
     toast('Full report (Word) exported', 'ok');
   });
   document.getElementById('export-all-pdf').addEventListener('click', ()=>{
-    printHtmlDocument('FAMS+ Full Activity Report', fullReportBodyHtml());
+    printHtmlDocument('FAMS+ Full Activity Report', fullReportBodyHtml(currentPeriod(), currentRange()));
   });
   document.getElementById('export-all-json').addEventListener('click', ()=>{
     const dump = { exportedAt: nowIso(), data: STATE.data, meta: { facultyName: STATE.meta.facultyName } };
@@ -2818,7 +3267,7 @@ function wireCalendar(){
    ============================================================ */
 function renderAdmin(){
   const meta = STATE.meta, cfg = STATE.config;
-  let html = '<div class="page-head"><div><h2>⚙️ Admin &amp; settings</h2><p>Profile, academic term, backend connection, automation &amp; mail merge</p></div></div>';
+  let html = '<div class="page-head"><div><h2>⚙️ Admin &amp; settings</h2><p>Profile, academic term, custom menus, backend connection &amp; automation</p></div></div>';
 
   html += '<div class="grid grid-2">';
   html += '<div class="card"><h3>👤 Profile</h3>'
@@ -2834,10 +3283,25 @@ function renderAdmin(){
     + '<div class="error-box" id="adm-pin-error"></div>'
     + '<button class="btn btn-primary btn-sm" id="adm-save-pin">Update PIN</button></div>';
 
+  const termHistory = (cfg.academicTermHistory || []).slice().reverse();
   html += '<div class="card"><h3>🎓 Academic Term</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">The current term is shown throughout the app (top bar, Dashboard, Reports) and used to filter Reports by semester/academic year.</p>'
     + '<div class="field"><label>Academic Year (e.g. 2026-27)</label><input class="input" id="adm-year" value="' + escapeHtml(cfg.academicYear||'') + '"></div>'
     + '<div class="field"><label>Semester / Term</label><input class="input" id="adm-sem" value="' + escapeHtml(cfg.semester||'') + '"></div>'
-    + '<button class="btn btn-primary btn-sm" id="adm-save-term">Save Term</button></div>';
+    + '<div class="grid grid-2">'
+    + '<div class="field"><label>Term Start Date</label><input class="input" id="adm-term-start" type="date" value="' + escapeHtml(cfg.termStartDate||'') + '"></div>'
+    + '<div class="field"><label>Term End Date <span style="font-weight:400;color:var(--text-dim);">— used to compute remaining teaching hours per subject</span></label><input class="input" id="adm-term-end" type="date" value="' + escapeHtml(cfg.termEndDate||'') + '"></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+    + '<button class="btn btn-ghost btn-sm" id="adm-save-term">Save (edit current term)</button>'
+    + '<button class="btn btn-primary btn-sm" id="adm-new-term">Start New Term (archive current)</button>'
+    + '</div>'
+    + '<div class="error-box info" id="adm-term-result" style="display:none;"></div>'
+    + (termHistory.length ? ('<div style="margin-top:14px;"><div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--text-faint);margin-bottom:6px;">Previous terms (preserved, read-only)</div>'
+      + termHistory.map(t=>'<div style="font-size:12.5px;color:var(--text-dim);padding:4px 0;border-bottom:1px solid var(--border);">'
+        + escapeHtml((t.academicYear||'—') + ' · ' + (t.semester||'—')) + (t.startDate||t.endDate ? ' <span class="mono" style="font-size:11px;">(' + escapeHtml(fmtDate(t.startDate)||'?') + ' – ' + escapeHtml(fmtDate(t.endDate)||'?') + ')</span>' : '')
+        + '</div>').join('') + '</div>') : '')
+    + '</div>';
 
   html += '<div class="card"><h3>📧 Email &amp; Automation</h3>'
     + '<p style="font-size:12.5px;color:var(--text-dim);">Send a test email to confirm the backend can send mail (and check whether it\'s using your verified office alias — see SETUP.md §6).</p>'
@@ -2847,14 +3311,6 @@ function renderAdmin(){
     + '<p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">To turn on the daily digest, deadline reminders and daily backup, open the Apps Script editor for your backend and run <code>setUpAllTriggers</code> once (see SETUP.md §7).</p></div>';
 
   html += '</div>';
-
-  html += '<div class="card" style="margin-top:16px;"><h3>✉️ Mail Merge</h3>'
-    + '<p style="font-size:12.5px;color:var(--text-dim);">Send the same templated email to a list of people. Use <code>{{name}}</code>, <code>{{email}}</code> etc. as placeholders — they\'ll be substituted per recipient from the fields below.</p>'
-    + '<div class="field"><label>Recipients — one per line, format: <span class="mono">name, email</span></label><textarea class="input" id="mm-recipients" placeholder="Jane Doe, jane@example.com"></textarea></div>'
-    + '<div class="field"><label>Subject</label><input class="input" id="mm-subject" placeholder="Subject with {{name}} placeholders"></div>'
-    + '<div class="field"><label>Body</label><textarea class="input" id="mm-body" placeholder="Dear {{name}}, ..."></textarea></div>'
-    + '<button class="btn btn-primary btn-sm" id="mm-send">Send Mail Merge</button>'
-    + '<div id="mm-result" style="margin-top:10px;"></div></div>';
 
   html += '<div class="card" style="margin-top:16px;"><h3>🧩 Custom Menus &amp; Fields</h3>'
     + '<p style="font-size:12.5px;color:var(--text-dim);">Need a whole new menu that isn\'t built in — a departmental register, a grants tracker, anything? Add it yourself, no coding required: give it a name, an icon, which tab it should live under, and a list of fields (one per line). It appears in the navigation immediately and behaves exactly like every other menu — search, add, edit, bulk import, bulk email, bulk delete, notes, activity log and every report format all work on it automatically. Each custom menu keeps its own separate storage, so adding one never touches any other menu\'s data or code.</p>'
@@ -2889,11 +3345,45 @@ function wireAdmin(){
     catch(err){ errEl.textContent = err.message || String(err); }
   });
   document.getElementById('adm-save-term').addEventListener('click', async ()=>{
+    // In-place edit — corrects the current term's details (e.g. a typo in
+    // the year, or filling in the end date later) WITHOUT archiving it to
+    // history, since nothing about which term is "current" is changing.
     STATE.config.academicYear = document.getElementById('adm-year').value.trim();
     STATE.config.semester = document.getElementById('adm-sem').value.trim();
+    STATE.config.termStartDate = document.getElementById('adm-term-start').value;
+    STATE.config.termEndDate = document.getElementById('adm-term-end').value;
     await saveConfig();
     refreshTopnavTag();
     toast('Academic term saved', 'ok');
+  });
+  document.getElementById('adm-new-term').addEventListener('click', async ()=>{
+    // Starting a new term: the OLD current term (year/semester/dates) is
+    // pushed into academicTermHistory first — preserved, but no longer
+    // "current" anywhere in the app — then the form's values become the
+    // new current term. This is how "previous semester must be preserved"
+    // is satisfied: nothing is overwritten in place, it's archived.
+    const resEl = document.getElementById('adm-term-result');
+    const newYear = document.getElementById('adm-year').value.trim();
+    const newSem = document.getElementById('adm-sem').value.trim();
+    const newStart = document.getElementById('adm-term-start').value;
+    const newEnd = document.getElementById('adm-term-end').value;
+    const cfg = STATE.config;
+    const hadPreviousTerm = cfg.academicYear || cfg.semester;
+    if(hadPreviousTerm){
+      const history = (cfg.academicTermHistory || []).slice();
+      history.push({ academicYear: cfg.academicYear || '', semester: cfg.semester || '', startDate: cfg.termStartDate || '', endDate: cfg.termEndDate || '' });
+      cfg.academicTermHistory = history;
+    }
+    cfg.academicYear = newYear;
+    cfg.semester = newSem;
+    cfg.termStartDate = newStart;
+    cfg.termEndDate = newEnd;
+    await saveConfig();
+    refreshTopnavTag();
+    resEl.style.display = 'block';
+    resEl.textContent = hadPreviousTerm ? 'New term started — the previous term is preserved below.' : 'Term saved.';
+    toast('New term started', 'ok');
+    renderRoute();
   });
   document.getElementById('adm-send-test').addEventListener('click', async ()=>{
     const resEl = document.getElementById('adm-test-result');
@@ -2903,6 +3393,26 @@ function wireAdmin(){
     const res = await apiTestEmail(to);
     resEl.textContent = res.ok ? ('Sent as ' + (res.sentAs || '(unknown)') + '. Remaining daily quota: ' + res.remainingQuota) : ('Failed: ' + (res.error || 'unknown error'));
   });
+}
+
+/* ============================================================
+   MAIL MERGE — a standalone screen (Settings tab), reachable directly
+   from the nav rather than tucked away inside Admin & Settings. Sends
+   the same templated email to an arbitrary pasted-in list of people —
+   for one-off recipients not necessarily stored in any FAMS+ module
+   (for per-module bulk email to your own records, use "Email Selected"
+   on that module's list instead — see openEmailComposeDrawer()).
+   ============================================================ */
+function renderMailMergeScreen(){
+  return '<div class="page-head"><div><h2>✉️ Mail Merge</h2><p>Send the same templated email to a list of people</p></div></div>'
+    + '<div class="card"><p style="font-size:12.5px;color:var(--text-dim);">Use <code>{{name}}</code>, <code>{{email}}</code> etc. as placeholders — they\'ll be substituted per recipient from the fields below. For emailing people already stored in a menu (Mentees, Committee Members, …), use that menu\'s own "Email Selected" bulk action instead — this tool is for one-off/external recipient lists.</p>'
+    + '<div class="field"><label>Recipients — one per line, format: <span class="mono">name, email</span></label><textarea class="input" id="mm-recipients" placeholder="Jane Doe, jane@example.com" style="min-height:110px;"></textarea></div>'
+    + '<div class="field"><label>Subject</label><input class="input" id="mm-subject" placeholder="Subject with {{name}} placeholders"></div>'
+    + '<div class="field"><label>Body</label><textarea class="input" id="mm-body" placeholder="Dear {{name}}, ..." style="min-height:150px;"></textarea></div>'
+    + '<button class="btn btn-primary btn-sm" id="mm-send">Send Mail Merge</button>'
+    + '<div id="mm-result" style="margin-top:10px;"></div></div>';
+}
+function wireMailMergeScreen(){
   document.getElementById('mm-send').addEventListener('click', async ()=>{
     const resEl = document.getElementById('mm-result');
     const lines = document.getElementById('mm-recipients').value.split('\n').map(l=>l.trim()).filter(Boolean);
