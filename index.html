@@ -448,6 +448,7 @@ const MAIN_MENUS = [
   { key:'reports', label:'Reports' },
   { key:'calendar', label:'Calendar' },
   { key:'audit-log', label:'Activity Log' },
+  { key:'custom-modules', label:'Custom Menus' },
   { key:'admin', label:'Admin & Settings' }
 ];
 
@@ -626,7 +627,8 @@ const MODULES = {
   ]},
   'meetings': { label:'Meetings', menu:'meetings', icon:'📅', titleField:'title', dateField:'date', fields:[
     {key:'title', label:'Title', type:'text', required:true},
-    {key:'relatedMenu', label:'Related To', type:'select', options: MAIN_MENUS.map(m=>m.label)},
+    {key:'relatedModule', label:'Related To — Menu', type:'moduleRef'},
+    {key:'relatedRecordId', label:'Related To — Specific Record (e.g. a student, project, committee…)', type:'recordRef', dependsOn:'relatedModule'},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'attendees', label:'Attendees', type:'textarea'},
     {key:'minutes', label:'Minutes', type:'textarea'},
@@ -642,7 +644,8 @@ const MODULES = {
   'reminders': { label:'Reminders', menu:'reminders', icon:'🔔', titleField:'title', dateField:'dueDate', fields:[
     {key:'title', label:'Title', type:'text', required:true},
     {key:'dueDate', label:'Due Date', type:'date'},
-    {key:'relatedMenu', label:'Related To', type:'select', options: MAIN_MENUS.map(m=>m.label)},
+    {key:'relatedModule', label:'Related To — Menu', type:'moduleRef'},
+    {key:'relatedRecordId', label:'Related To — Specific Record', type:'recordRef', dependsOn:'relatedModule'},
     {key:'priority', label:'Priority', type:'select', options:['Low','Medium','High'], default:'Medium'},
     {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
   ]},
@@ -672,9 +675,86 @@ const MODULES = {
     {key:'recordTitle', label:'Record', type:'text'},
     {key:'actor', label:'By', type:'text'},
     {key:'details', label:'Details', type:'textarea'}
+  ]},
+  'custom-modules': { label:'Custom Menus', menu:'custom-modules', icon:'🧩', titleField:'label', dateField:'', fields:[
+    {key:'label', label:'Menu Name', type:'text', required:true},
+    {key:'icon', label:'Icon (one emoji)', type:'text', default:'🗂️'},
+    {key:'category', label:'Category (which tab it appears under)', type:'select', options:['overview','academics','students','research','admin-duties','tools'], default:'tools'},
+    {key:'fieldsSpec', label:'Fields — one per line: Label|type|options|required (type: text, textarea, number, date, select, email, tel — options comma-separated, only for select — write "required" as the 4th part to make it mandatory)', type:'textarea', required:true, default:'Details|textarea'}
   ]}
 };
-const MODULE_KEYS = Object.keys(MODULES);
+let MODULE_KEYS = Object.keys(MODULES);
+
+/* ============================================================
+   ADMIN-DEFINABLE CUSTOM MENUS — lets the Admin control add a
+   brand-new main menu (with its own fields) from inside the UI,
+   with no code changes, per the "additional main menu and
+   submenu can be addable in the admin control" requirement.
+   Definitions are stored as ordinary records in the 'custom-modules'
+   module (itself a normal MODULES entry, so it gets the generic
+   add/edit/delete UI for free) and, on load and after every save,
+   are compiled into real MODULES/MAIN_MENUS/NAV_CATEGORIES/AREA_COLORS
+   entries so the rest of the app treats them exactly like a
+   built-in module — isolated from every other module's data/coding,
+   per the "other menus should not affect" requirement, since each
+   gets its own dedicated storage key.
+   ============================================================ */
+function slugifyKey(s){
+  return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+function customModuleKeyFor(rec){
+  const base = slugifyKey(rec.id || '') || Math.random().toString(36).slice(2, 10);
+  return 'cm_' + base.slice(0, 20);
+}
+function parseCustomFieldsSpec(text){
+  const allowedTypes = ['text','textarea','number','date','datetime','select','email','tel'];
+  const lines = String(text || '').split('\n').map(l=>l.trim()).filter(Boolean);
+  const fields = [];
+  const seen = {};
+  lines.forEach(line=>{
+    const parts = line.split('|').map(p=>p.trim());
+    const label = parts[0];
+    if(!label) return;
+    let type = (parts[1] || 'text').toLowerCase();
+    if(allowedTypes.indexOf(type) === -1) type = 'text';
+    const optionsRaw = parts[2] || '';
+    const required = (parts[3] || '').toLowerCase() === 'required';
+    let key = slugifyKey(label) || ('field_' + (fields.length + 1));
+    if(seen[key]){ seen[key]++; key = key + '_' + seen[key]; } else { seen[key] = 1; }
+    const field = { key: key, label: label, type: type };
+    if(type === 'select'){ field.options = optionsRaw.split(',').map(o=>o.trim()).filter(Boolean); if(!field.options.length) field.options=['Option 1']; }
+    if(required) field.required = true;
+    fields.push(field);
+  });
+  return fields;
+}
+function registerCustomModule(def){
+  if(MODULES[def.key]) return; // already registered this session
+  const dateFieldMatch = def.fields.find(f=>f.type === 'date' || f.type === 'datetime');
+  MODULES[def.key] = {
+    label: def.label, menu: def.key, icon: def.icon || '🗂️',
+    titleField: (def.fields[0] && def.fields[0].key) || 'id',
+    dateField: dateFieldMatch ? dateFieldMatch.key : '',
+    fields: def.fields,
+    custom: true
+  };
+  MODULE_KEYS = Object.keys(MODULES);
+  if(!MAIN_MENUS.find(m=>m.key === def.key)) MAIN_MENUS.push({ key: def.key, label: def.label });
+  if(!AREA_COLORS[def.key]) AREA_COLORS[def.key] = def.color || '#6d4aa8';
+  const cat = NAV_CATEGORIES.find(c=>c.key === def.category) || NAV_CATEGORIES.find(c=>c.key === 'tools');
+  if(cat && cat.groups.indexOf(def.key) === -1) cat.groups.push(def.key);
+}
+function registerAllCustomModules(){
+  getActive('custom-modules').forEach(rec=>{
+    try{
+      const key = customModuleKeyFor(rec);
+      if(MODULES[key]) return;
+      const fields = parseCustomFieldsSpec(rec.fieldsSpec);
+      if(!fields.length) fields.push({ key:'details', label:'Details', type:'textarea' });
+      registerCustomModule({ key: key, label: rec.label || 'Custom Menu', icon: rec.icon || '🗂️', category: rec.category || 'tools', fields: fields });
+    }catch(e){ console.error('[FAMS+] failed to register custom module', rec, e); }
+  });
+}
 
 /* ============================================================
    MOTIVATIONAL QUOTES — shown on the Dashboard, rotates daily
@@ -728,7 +808,19 @@ function defaultConfig(){
 
 async function loadAllData(){
   const keys = MODULE_KEYS.concat(['app-meta','app-config']);
-  const values = await apiGetAll(keys);
+  let values = await apiGetAll(keys);
+  // 'custom-modules' (a built-in module) is fetched above. Parse it first and
+  // compile its records into real MODULES entries so their own storage keys
+  // (e.g. 'cm_xxxx') exist before the rest of the load — then fetch those
+  // newly-discovered keys in one extra round trip (only when any exist).
+  try{ STATE.data['custom-modules'] = values['custom-modules'] ? JSON.parse(values['custom-modules']) : []; }
+  catch(e){ STATE.data['custom-modules'] = []; }
+  registerAllCustomModules();
+  const customKeys = MODULE_KEYS.filter(k => MODULES[k].custom && values[k] === undefined);
+  if(customKeys.length){
+    const moreValues = await apiGetAll(customKeys);
+    values = Object.assign(values, moreValues);
+  }
   MODULE_KEYS.forEach(k=>{
     try{ STATE.data[k] = values[k] ? JSON.parse(values[k]) : []; }
     catch(e){ STATE.data[k] = []; }
@@ -816,6 +908,19 @@ function refLabel(moduleKey, id){
   return rec[mod.titleField] || '(untitled)';
 }
 
+/** Modules that shouldn't appear as link targets in the "Related To" menu
+ *  picker (internal registries, not day-to-day records). */
+const POLYREF_EXCLUDED_MODULES = { 'custom-modules':1, 'audit-log':1 };
+function polyrefTargetModules(){ return MODULE_KEYS.filter(k => !POLYREF_EXCLUDED_MODULES[k]); }
+/** `<option>`s listing a module's active records, for a 'recordRef' field's
+ *  cascading dropdown (populated once a 'moduleRef' sibling field is chosen). */
+function recordOptionsHtml(moduleKey, selectedId){
+  const m = MODULES[moduleKey];
+  if(!m) return '';
+  return getActive(moduleKey).map(r=>'<option value="' + r.id + '"' + (r.id === selectedId ? ' selected' : '') + '>'
+    + escapeHtml(r[m.titleField] || '(untitled)') + '</option>').join('');
+}
+
 /* ============================================================
    AUTH — a single-faculty app, so "auth" is just: has a PIN been
    set (first-run), and does the PIN typed in match it. Session
@@ -888,7 +993,7 @@ const AREA_COLORS = {
   mentoring:'#0891b2', laboratory:'#0e9f6e', 'extra-classes':'#d97706', research:'#059669',
   projects:'#c99a3c', incharge:'#dc2626', committees:'#ea580c', meetings:'#4f46e5',
   reminders:'#db2777', responsibilities:'#0f766e', analytics:'#6fa3f5', reports:'#8a92a6',
-  calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b'
+  calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b', 'custom-modules':'#6d4aa8'
 };
 
 /* Sidebar menus clubbed into broad categories (collapsible accordions) so
@@ -899,7 +1004,7 @@ const NAV_CATEGORIES = [
   { key:'students', label:'Students', icon:'🎓', groups:['mentoring','responsibilities'] },
   { key:'research', label:'Research & Projects', icon:'🔬', groups:['research','projects'] },
   { key:'admin-duties', label:'Administrative Duties', icon:'🏛️', groups:['incharge','committees','meetings','reminders'] },
-  { key:'tools', label:'Tools', icon:'🛠️', groups:['analytics','reports','audit-log','admin'] }
+  { key:'tools', label:'Tools', icon:'🛠️', groups:['analytics','reports','audit-log','custom-modules','admin'] }
 ];
 
 function parseRoute(){
@@ -1258,6 +1363,11 @@ function statusBadgeClass(v){
 function fieldDisplayValue(mod, field, rec){
   const v = rec[field.key];
   if(field.type === 'reference') return escapeHtml(refLabel(field.ref, v));
+  if(field.type === 'moduleRef') return v ? escapeHtml((MODULES[v] && MODULES[v].label) || v) : '<span style="color:var(--text-faint)">—</span>';
+  if(field.type === 'recordRef'){
+    const depModKey = rec[field.dependsOn];
+    return (depModKey && v) ? escapeHtml(refLabel(depModKey, v)) : '<span style="color:var(--text-faint)">—</span>';
+  }
   if(field.type === 'date') return v ? escapeHtml(fmtDate(v)) : '<span style="color:var(--text-faint)">—</span>';
   if(field.type === 'datetime') return v ? escapeHtml(fmtDateTime(v)) : '<span style="color:var(--text-faint)">—</span>';
   if(v === null || v === undefined || v === '') return '<span style="color:var(--text-faint)">—</span>';
@@ -1416,17 +1526,20 @@ function wireModuleList(moduleKey){
     else if(action === 'whatsapp') window.open(waLink(rec.phone), '_blank');
     else if(action === 'delete'){
       if(!confirm('Delete this record? You can restore it later from "Show deleted".')) return;
-      await softDeleteRecord(moduleKey, id); logAudit(moduleKey, 'Deleted', id, rec[mod.titleField] || ''); toast('Deleted', 'ok'); refreshTable();
+      await softDeleteRecord(moduleKey, id); logAudit(moduleKey, 'Deleted', id, rec[mod.titleField] || ''); toast('Deleted', 'ok');
+      if(moduleKey === 'custom-modules') render(); else refreshTable();
     }else if(action === 'restore'){
-      await restoreRecord(moduleKey, id); logAudit(moduleKey, 'Restored', id, rec[mod.titleField] || ''); toast('Restored', 'ok'); refreshTable();
+      await restoreRecord(moduleKey, id); logAudit(moduleKey, 'Restored', id, rec[mod.titleField] || ''); toast('Restored', 'ok');
+      if(moduleKey === 'custom-modules'){ registerAllCustomModules(); render(); } else refreshTable();
     }else if(action === 'purge'){
       if(!confirm('Permanently delete this record? This cannot be undone.')) return;
-      await purgeRecord(moduleKey, id); logAudit(moduleKey, 'Purged', id, rec[mod.titleField] || ''); toast('Purged', 'ok'); refreshTable();
+      await purgeRecord(moduleKey, id); logAudit(moduleKey, 'Purged', id, rec[mod.titleField] || ''); toast('Purged', 'ok');
+      if(moduleKey === 'custom-modules') render(); else refreshTable();
     }
   });
 }
 
-function fieldInputHtml(mod, field, value){
+function fieldInputHtml(mod, field, value, rec){
   const id = 'f_' + field.key;
   let v = value;
   if(v === undefined || v === null) v = (field.default === '__today__' ? todayStr() : (field.default != null ? field.default : ''));
@@ -1440,7 +1553,18 @@ function fieldInputHtml(mod, field, value){
     const opts = getActive(field.ref).map(r=>'<option value="' + r.id + '"' + (r.id === v ? ' selected' : '') + '>' + escapeHtml(r[refMod.titleField] || '(untitled)') + '</option>').join('');
     return '<select class="input" id="' + id + '"><option value="">— None —</option>' + opts + '</select>';
   }
-  const typeMap = { text:'text', email:'email', phone:'tel', number:'number', date:'date', time:'time' };
+  if(field.type === 'moduleRef'){
+    const opts = polyrefTargetModules().map(k=>'<option value="' + k + '"' + (k === v ? ' selected' : '') + '>'
+      + escapeHtml((MODULES[k].icon || '') + ' ' + MODULES[k].label) + '</option>').join('');
+    return '<select class="input" id="' + id + '" data-poly-module-picker="1"><option value="">— Select a menu —</option>' + opts + '</select>';
+  }
+  if(field.type === 'recordRef'){
+    const curModKey = rec ? rec[field.dependsOn] : '';
+    const opts = curModKey ? recordOptionsHtml(curModKey, v) : '';
+    return '<select class="input" id="' + id + '" data-poly-record-picker="1" data-depends-on="f_' + field.dependsOn + '">'
+      + '<option value="">' + (curModKey ? '— Select a record —' : '— Select a menu first —') + '</option>' + opts + '</select>';
+  }
+  const typeMap = { text:'text', email:'email', phone:'tel', tel:'tel', number:'number', date:'date', time:'time', datetime:'datetime-local' };
   return '<input class="input" id="' + id + '" type="' + (typeMap[field.type] || 'text') + '" value="' + escapeHtml(v) + '">';
 }
 
@@ -1461,7 +1585,7 @@ function openModuleForm(moduleKey, id){
   let html = '<h3 style="margin:0 0 4px;padding-right:26px;">' + (rec ? 'Edit ' : 'Add ') + escapeHtml(mod.label) + '</h3>';
   if(rec) html += '<div class="drawer-tabs"><div class="drawer-tab active" data-tab="details">Details</div><div class="drawer-tab" data-tab="notes">Notes (' + ((rec.notes || []).length) + ')</div></div>';
   html += '<div id="tab-details"><form id="record-form">';
-  mod.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : undefined) + '</div>'; });
+  mod.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : undefined, rec) + '</div>'; });
   html += '<div class="error-box" id="form-error"></div>';
   html += '<div style="display:flex;gap:8px;margin-top:6px;"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" id="form-cancel">Cancel</button></div>';
   html += '</form></div>';
@@ -1484,6 +1608,24 @@ function wireModuleForm(moduleKey, id){
       t.classList.add('active');
       const dTab = drawer.querySelector('#tab-details'); if(dTab) dTab.classList.toggle('hidden', t.dataset.tab !== 'details');
       const nTab = drawer.querySelector('#tab-notes'); if(nTab) nTab.classList.toggle('hidden', t.dataset.tab !== 'notes');
+    });
+  });
+  // "Related To" polymorphic-reference fields: a moduleRef select feeds one
+  // or more recordRef selects — when the menu choice changes, repopulate the
+  // dependent record dropdown(s) from that module's active records.
+  mod.fields.filter(f=>f.type === 'moduleRef').forEach(mf=>{
+    const modSelect = document.getElementById('f_' + mf.key);
+    if(!modSelect) return;
+    const dependents = mod.fields.filter(df=>df.type === 'recordRef' && df.dependsOn === mf.key);
+    if(!dependents.length) return;
+    modSelect.addEventListener('change', ()=>{
+      const chosenModKey = modSelect.value;
+      dependents.forEach(df=>{
+        const recSelect = document.getElementById('f_' + df.key);
+        if(!recSelect) return;
+        recSelect.innerHTML = '<option value="">' + (chosenModKey ? '— Select a record —' : '— Select a menu first —') + '</option>'
+          + (chosenModKey ? recordOptionsHtml(chosenModKey, '') : '');
+      });
     });
   });
   const cancelBtn = document.getElementById('form-cancel');
@@ -1511,9 +1653,17 @@ function wireModuleForm(moduleKey, id){
         else{ savedRec = await createRecord(moduleKey, data); logAudit(moduleKey, 'Created', savedRec.id, savedRec[mod.titleField] || ''); }
         toast('Saved', 'ok');
         closeDrawer();
-        const r = parseRoute();
-        if(r.screen === 'module' && r.moduleKey === moduleKey){ renderRoute(); }
-        else if(r.screen === 'dashboard'){ renderRoute(); }
+        if(moduleKey === 'custom-modules'){
+          // A new/edited custom menu definition — compile it into a real
+          // module and rebuild the whole shell so its nav entry shows up
+          // immediately, without needing a page reload.
+          registerAllCustomModules();
+          render();
+        }else{
+          const r = parseRoute();
+          if(r.screen === 'module' && r.moduleKey === moduleKey){ renderRoute(); }
+          else if(r.screen === 'dashboard'){ renderRoute(); }
+        }
       }catch(err){
         errEl.textContent = err && err.message ? err.message : String(err);
         btn.disabled = false; btn.textContent = 'Save';
@@ -1615,8 +1765,8 @@ function downloadModuleTemplate(moduleKey){
   });
   const ws = XLSX.utils.json_to_sheet([sampleRow], { header: headers });
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, mod.label.slice(0, 28) || 'Sheet1');
-  XLSX.writeFile(wb, 'fams-plus-' + moduleKey + '-template.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, safeSheetName(mod.label, new Set()));
+  deliverWorkbook(wb, 'fams-plus-' + moduleKey + '-template.xlsx');
 }
 
 /** Best-effort match of a spreadsheet column header to a module field, by
@@ -1785,6 +1935,19 @@ function todaysClasses(){
   return getActive('timetable').filter(t=>t.day===dow && t.status!=='Cancelled')
     .sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||'')));
 }
+/* ---------- cross-module day status: Holidays/Leave automatically affect
+   the Timetable/Dashboard, per the "leave marked ... automatically connects
+   with other menus" requirement. A holiday cancels the day outright; an
+   approved Leave/OD flags today's classes as needing rescheduling — neither
+   requires touching the Timetable module's own records. ---------- */
+function holidayOn(dateStr){ return getActive('holidays').find(h=>h.date===dateStr) || null; }
+function approvedLeaveOn(dateStr){
+  return getActive('leave-records').find(l=>l.status==='Approved' && l.fromDate && l.toDate && l.fromDate<=dateStr && dateStr<=l.toDate) || null;
+}
+function todayDayStatus(){
+  const today = todayStr();
+  return { holiday: holidayOn(today), leave: approvedLeaveOn(today) };
+}
 function overdueItems(){
   const today = todayStr();
   const items = [];
@@ -1882,6 +2045,7 @@ function progressRingHtml(percent, color, label, sub){
 function renderDashboard(){
   const q = quoteOfTheDay();
   const classes = todaysClasses();
+  const dayStatus = todayDayStatus();
   const upcoming = upcomingItems(7);
   const overdue = overdueItems();
   const openActions = getActive('action-items').filter(a=>a.status!=='Done').length;
@@ -1929,8 +2093,14 @@ function renderDashboard(){
   }
 
   html += '<div class="grid grid-2">';
-  html += '<div class="card"><h3>📅 Today\'s Schedule</h3>' + (classes.length
-    ? classes.map(c=>'<div style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + AREA_COLORS.teaching + ';font-size:13px;"><b>' + escapeHtml(c.startTime||'') + '–' + escapeHtml(c.endTime||'') + '</b>&nbsp; ' + escapeHtml(c.subject||'') + ' <span style="color:var(--text-dim);">(' + escapeHtml(c.section||'') + ', ' + escapeHtml(c.venue||'') + ')</span></div>').join('')
+  html += '<div class="card"><h3>📅 Today\'s Schedule</h3>';
+  if(dayStatus.holiday){
+    html += '<div class="activity-item urgency-later" style="padding-left:8px;background:#f1f3f9;border-radius:6px;margin-bottom:8px;">🏖️ <b>Holiday today:</b>&nbsp;' + escapeHtml(dayStatus.holiday.name || '') + ' — no classes. <i>(auto-detected from Holidays)</i></div>';
+  }else if(dayStatus.leave){
+    html += '<div class="activity-item urgency-today" style="padding-left:8px;background:#fff7ec;border-radius:6px;margin-bottom:8px;">🗓️ <b>You are on approved ' + escapeHtml(dayStatus.leave.type || 'Leave') + ' today.</b> Classes below may need rescheduling. <i>(auto-detected from Leave / OD)</i></div>';
+  }
+  html += (classes.length
+    ? classes.map(c=>'<div style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + (dayStatus.holiday || dayStatus.leave ? 'var(--warn,#d97706)' : AREA_COLORS.teaching) + ';font-size:13px;' + (dayStatus.holiday ? 'opacity:.55;text-decoration:line-through;' : '') + '"><b>' + escapeHtml(c.startTime||'') + '–' + escapeHtml(c.endTime||'') + '</b>&nbsp; ' + escapeHtml(c.subject||'') + ' <span style="color:var(--text-dim);">(' + escapeHtml(c.section||'') + ', ' + escapeHtml(c.venue||'') + ')</span></div>').join('')
     : '<div class="empty">No classes today. Enjoy the breathing room.</div>') + '</div>';
   html += '<div class="card"><h3>⏰ Upcoming (next 7 days)</h3>' + (upcoming.length
     ? upcoming.slice(0,10).map(it=>'<div class="' + urgencyClass(it.date) + '" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;gap:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span><span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></div>').join('')
@@ -1972,6 +2142,12 @@ function renderTimetableScreen(){
   let html = '<div class="page-head"><div><h2>📘 Timetable</h2><p>Weekly recurring class schedule</p></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-ghost" id="bulk-import-btn">⬆ Bulk Import</button>'
     + '<button class="btn btn-primary" id="add-record-btn">+ Add Class</button></div></div>';
+  const dayStatus = todayDayStatus();
+  if(dayStatus.holiday){
+    html += '<div class="card" style="margin-bottom:14px;background:#f1f3f9;font-size:13px;">🏖️ <b>Holiday today:</b>&nbsp;' + escapeHtml(dayStatus.holiday.name || '') + ' — auto-detected from Holidays, today\'s slots below are shown as usual (recurring), but no class is expected to run.</div>';
+  }else if(dayStatus.leave){
+    html += '<div class="card" style="margin-bottom:14px;background:#fff7ec;font-size:13px;">🗓️ <b>You are on approved ' + escapeHtml(dayStatus.leave.type || 'Leave') + ' today</b> — auto-detected from Leave / OD. Consider marking today\'s affected class(es) as Cancelled or arranging cover.</div>';
+  }
   if(slots.length === 0){
     html += '<div class="empty">No timetable entries yet. Click "Add Class" to create your first slot.</div>';
   }else{
@@ -2053,6 +2229,8 @@ function renderAnalytics(){
     + '<div class="card"><h3>Activity Mix (records per area)</h3><canvas id="chart-mix" height="220"></canvas></div>'
     + '<div class="card"><h3>Leave/OD Status</h3><canvas id="chart-leave" height="220"></canvas></div>'
     + '<div class="card"><h3>Action Items &amp; Reminders Status</h3><canvas id="chart-actions" height="220"></canvas></div>'
+    + '<div class="card"><h3>Time Spent by Activity (Work Diary hours)</h3><canvas id="chart-time" height="220"></canvas></div>'
+    + '<div class="card"><h3>Progress Status (open vs. done, by area)</h3><canvas id="chart-progress" height="220"></canvas></div>'
     + '</div>';
 }
 function wireAnalytics(){
@@ -2095,6 +2273,33 @@ function wireAnalytics(){
     ]},
     options:{ plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
   }));
+
+  const hoursByCategory = {};
+  getActive('work-diary').forEach(r=>{
+    const cat = r.category || '(blank)';
+    const hrs = parseFloat(r.hoursSpent) || 0;
+    hoursByCategory[cat] = (hoursByCategory[cat] || 0) + hrs;
+  });
+  ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-time'), {
+    type:'bar',
+    data:{ labels:Object.keys(hoursByCategory), datasets:[{ label:'Hours logged', data:Object.values(hoursByCategory), backgroundColor:'#4b2e83' }] },
+    options:{ indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ beginAtZero:true } } }
+  }));
+
+  const progressAreas = [
+    { label:'Action Items', done: getActive('action-items').filter(a=>a.status==='Done').length, open: getActive('action-items').filter(a=>a.status!=='Done').length },
+    { label:'Reminders', done: getActive('reminders').filter(r=>r.status==='Done').length, open: getActive('reminders').filter(r=>r.status!=='Done').length },
+    { label:'Meetings', done: getActive('meetings').filter(m=>m.status==='Completed').length, open: getActive('meetings').filter(m=>m.status!=='Completed').length },
+    { label:'Leave/OD', done: getActive('leave-records').filter(l=>l.status!=='Applied').length, open: getActive('leave-records').filter(l=>l.status==='Applied').length }
+  ];
+  ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-progress'), {
+    type:'bar',
+    data:{ labels: progressAreas.map(a=>a.label), datasets:[
+      { label:'Done/Resolved', data: progressAreas.map(a=>a.done), backgroundColor:'#1f8a52' },
+      { label:'Open/Pending', data: progressAreas.map(a=>a.open), backgroundColor:'#b3273b' }
+    ]},
+    options:{ plugins:{ legend:{ position:'bottom' } }, scales:{ x:{ stacked:true }, y:{ stacked:true, beginAtZero:true, ticks:{ precision:0 } } } }
+  }));
 }
 
 /* ============================================================
@@ -2115,13 +2320,33 @@ function collectionToCsv(moduleKey){
   });
   return lines.join('\n');
 }
-function downloadText(filename, text, mime){
-  const blob = new Blob([text], { type: mime || 'text/plain' });
+/** Delivers a Blob to the user as a download. In a plain browser this is a
+ *  standard object-URL <a download> click. Inside the FAMS+ Android app,
+ *  blob: URLs can't be downloaded natively by WebView, so when it detects
+ *  window.AndroidBridge (injected by the Android wrapper — see
+ *  android-app/…/MainActivity.kt) it instead base64-encodes the blob and
+ *  hands it to AndroidBridge.saveFile(), which writes straight to the
+ *  device's Downloads folder. Every export in this file (CSV/TXT/DOC/XLSX)
+ *  funnels through this one function so both platforms stay in sync. */
+function deliverFile(filename, blob){
+  if(typeof AndroidBridge !== 'undefined' && AndroidBridge && AndroidBridge.saveFile){
+    const reader = new FileReader();
+    reader.onload = function(){
+      const base64 = String(reader.result).split(',')[1] || '';
+      try{ AndroidBridge.saveFile(base64, blob.type || 'application/octet-stream', filename); }
+      catch(e){ console.error('[FAMS+] AndroidBridge.saveFile failed:', e); toast('Could not save file on device', 'danger'); }
+    };
+    reader.readAsDataURL(blob);
+    return;
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function downloadText(filename, text, mime){
+  deliverFile(filename, new Blob([text], { type: mime || 'text/plain' }));
 }
 
 /* ---------- Word (.doc) + printable-PDF export ----------
@@ -2134,6 +2359,8 @@ function downloadText(filename, text, mime){
 function fieldPlainValue(mod, field, rec){
   const v = rec[field.key];
   if(field.type === 'reference') return refLabel(field.ref, v);
+  if(field.type === 'moduleRef') return v ? ((MODULES[v] && MODULES[v].label) || v) : '';
+  if(field.type === 'recordRef'){ const depModKey = rec[field.dependsOn]; return (depModKey && v) ? refLabel(depModKey, v) : ''; }
   if(field.type === 'date') return v ? fmtDate(v) : '';
   return v == null ? '' : String(v);
 }
@@ -2178,33 +2405,120 @@ function wordDocumentHtml(title, bodyHtml){
 }
 function downloadWordDoc(filename, bodyHtml, title){
   const html = wordDocumentHtml(title, bodyHtml);
-  const blob = new Blob(['﻿', html], { type: 'application/msword' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  deliverFile(filename, new Blob(['﻿', html], { type: 'application/msword' }));
 }
 function printHtmlDocument(title, bodyHtml){
+  const fullHtml = '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title>'
+    + '<style>' + reportDocStyles() + '</style></head><body>' + bodyHtml + '</body></html>';
+  // Inside the Android app, window.open()/window.print() don't drive a real
+  // print/PDF dialog (WebView doesn't implement window.print()) — hand the
+  // HTML to the native bridge instead, which prints it via Android's own
+  // PrintManager (→ "Save as PDF" is one of the built-in destinations there).
+  if(typeof AndroidBridge !== 'undefined' && AndroidBridge && AndroidBridge.printHtml){
+    try{ AndroidBridge.printHtml(fullHtml, title); return; }
+    catch(e){ console.error('[FAMS+] AndroidBridge.printHtml failed:', e); }
+  }
   const win = window.open('', '_blank');
   if(!win){ toast('Please allow pop-ups for this site to export a PDF', 'danger'); return; }
-  win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title>'
-    + '<style>' + reportDocStyles() + '</style></head><body>' + bodyHtml + '</body></html>');
+  win.document.write(fullHtml);
   win.document.close();
   win.focus();
   setTimeout(()=>{ win.print(); }, 350);
 }
 
+/* ---------- Excel (.xlsx) + plain-text (.txt) export ----------
+   Reuses the same SheetJS library already loaded for bulk import. */
+function moduleRowsAsObjects(moduleKey){
+  const mod = MODULES[moduleKey];
+  return getCollection(moduleKey).map(r=>{
+    const row = {};
+    mod.fields.forEach(f=>{ row[f.label] = fieldPlainValue(mod, f, r); });
+    row['Status'] = r.deleted ? 'Deleted' : 'Active';
+    row['Created'] = r.createdAt ? fmtDateTime(r.createdAt) : '';
+    row['Updated'] = r.updatedAt ? fmtDateTime(r.updatedAt) : '';
+    return row;
+  });
+}
+/** Excel worksheet names can't contain : \ / ? * [ ] and must be <=31 chars
+ *  and unique within a workbook — sanitize + de-duplicate against a
+ *  running set of names already used in this workbook. */
+function safeSheetName(rawLabel, usedNames){
+  let name = String(rawLabel || 'Sheet1').replace(/[:\\\/\?\*\[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 28) || 'Sheet1';
+  let candidate = name, n = 1;
+  while(usedNames.has(candidate)){ n++; candidate = (name.slice(0, 25) + ' ' + n).slice(0, 31); }
+  usedNames.add(candidate);
+  return candidate;
+}
+/** Writes a SheetJS workbook to disk — via the Android save bridge (base64,
+ *  no filesystem-level "download" involved) when running in the FAMS+
+ *  Android app, or XLSX.writeFile's normal browser download otherwise. */
+function deliverWorkbook(wb, filename){
+  if(typeof AndroidBridge !== 'undefined' && AndroidBridge && AndroidBridge.saveFile){
+    const base64 = XLSX.write(wb, { type:'base64', bookType:'xlsx' });
+    try{ AndroidBridge.saveFile(base64, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename); }
+    catch(e){ console.error('[FAMS+] AndroidBridge.saveFile failed:', e); toast('Could not save file on device', 'danger'); }
+    return;
+  }
+  XLSX.writeFile(wb, filename);
+}
+function downloadModuleXlsx(moduleKey){
+  const mod = MODULES[moduleKey];
+  const rows = moduleRowsAsObjects(moduleKey);
+  const headers = mod.fields.map(f=>f.label).concat(['Status','Created','Updated']);
+  const ws = rows.length
+    ? XLSX.utils.json_to_sheet(rows, { header: headers })
+    : XLSX.utils.aoa_to_sheet([headers]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, safeSheetName(mod.label, new Set()));
+  deliverWorkbook(wb, 'fams-plus-' + moduleKey + '-' + todayStr() + '.xlsx');
+}
+function downloadFullXlsx(){
+  const wb = XLSX.utils.book_new();
+  const usedNames = new Set();
+  MODULE_KEYS.forEach(k=>{
+    const mod = MODULES[k];
+    const rows = moduleRowsAsObjects(k);
+    const headers = mod.fields.map(f=>f.label).concat(['Status','Created','Updated']);
+    const ws = rows.length
+      ? XLSX.utils.json_to_sheet(rows, { header: headers })
+      : XLSX.utils.aoa_to_sheet([headers]);
+    XLSX.utils.book_append_sheet(wb, ws, safeSheetName(mod.label || k, usedNames));
+  });
+  deliverWorkbook(wb, 'fams-plus-full-report-' + todayStr() + '.xlsx');
+}
+function moduleReportText(moduleKey){
+  const mod = MODULES[moduleKey];
+  const rows = getCollection(moduleKey);
+  let out = mod.icon + ' ' + mod.label + '\n' + '='.repeat((mod.label || '').length + 2) + '\n'
+    + 'Generated ' + fmtDateTime(nowIso()) + ' · ' + ((STATE.meta && STATE.meta.facultyName) || '') + ' · ' + DEPARTMENT_NAME + '\n\n';
+  if(rows.length === 0){ out += '(No records)\n'; return out; }
+  rows.forEach((r, i)=>{
+    out += '#' + (i+1) + '\n';
+    mod.fields.forEach(f=>{ out += '  ' + f.label + ': ' + fieldPlainValue(mod, f, r) + '\n'; });
+    out += '  Status: ' + (r.deleted ? 'Deleted' : 'Active') + '\n\n';
+  });
+  return out;
+}
+function fullReportText(){
+  let out = 'FAMS+ — Full Activity Report\n' + '='.repeat(30) + '\n'
+    + ((STATE.meta && STATE.meta.facultyName) || '') + ' · ' + DEPARTMENT_NAME + ' · ' + INSTITUTION_NAME + '\n'
+    + 'Generated ' + fmtDateTime(nowIso()) + '\n\n';
+  MODULE_KEYS.forEach(k=>{ out += moduleReportText(k) + '\n'; });
+  return out;
+}
+
 function renderReports(){
-  let html = '<div class="page-head"><div><h2>📤 Reports</h2><p>Export any module in CSV, Word, or PDF — everywhere your data goes, it goes with you</p></div></div>';
+  let html = '<div class="page-head"><div><h2>📤 Reports</h2><p>Export any module in CSV, Excel, Word, PDF, or plain text — everywhere your data goes, it goes with you</p></div></div>';
   html += '<div class="card"><h3>Export a single module</h3><div class="table-wrap"><table style="width:100%;border-collapse:collapse;">'
     + '<thead><tr><th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Module</th>'
-    + '<th style="border-bottom:1px solid var(--border);width:290px;"></th></tr></thead><tbody id="report-rows">';
+    + '<th style="border-bottom:1px solid var(--border);width:370px;"></th></tr></thead><tbody id="report-rows">';
   MODULE_KEYS.forEach(k=>{
     const mod = MODULES[k];
     html += '<tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + mod.icon + ' ' + escapeHtml(mod.label) + '</td>'
       + '<td style="padding:6px 12px;border-bottom:1px solid var(--border);"><div class="row-actions">'
       + '<button class="btn btn-ghost btn-sm" data-export="csv" data-mod="' + k + '">CSV</button>'
+      + '<button class="btn btn-ghost btn-sm" data-export="xlsx" data-mod="' + k + '">Excel</button>'
+      + '<button class="btn btn-ghost btn-sm" data-export="txt" data-mod="' + k + '">Text</button>'
       + '<button class="btn btn-ghost btn-sm" data-export="word" data-mod="' + k + '">Word</button>'
       + '<button class="btn btn-ghost btn-sm" data-export="pdf" data-mod="' + k + '">PDF</button>'
       + '</div></td></tr>';
@@ -2213,6 +2527,8 @@ function renderReports(){
   html += '<div class="card" style="margin-top:16px;"><h3>Export everything</h3>'
     + '<p style="font-size:13px;color:var(--text-dim);">One document covering every module at once — the same data behind the daily Drive backup.</p>'
     + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+    + '<button class="btn btn-ghost" id="export-all-excel">📊 Full Report (Excel)</button>'
+    + '<button class="btn btn-ghost" id="export-all-text">📝 Full Report (Text)</button>'
     + '<button class="btn btn-ghost" id="export-all-word">📄 Full Report (Word)</button>'
     + '<button class="btn btn-ghost" id="export-all-pdf">🖨️ Full Report (PDF)</button>'
     + '<button class="btn btn-primary" id="export-all-json">⬇ Full Backup (JSON)</button>'
@@ -2228,12 +2544,26 @@ function wireReports(){
     const format = btn.dataset.export;
     if(format === 'csv'){
       downloadText('fams-plus-' + key + '-' + todayStr() + '.csv', collectionToCsv(key), 'text/csv');
+    }else if(format === 'xlsx'){
+      if(!bulkImportAvailable()){ toast('Excel export library not loaded', 'danger'); return; }
+      downloadModuleXlsx(key);
+    }else if(format === 'txt'){
+      downloadText('fams-plus-' + key + '-' + todayStr() + '.txt', moduleReportText(key), 'text/plain');
     }else if(format === 'word'){
       downloadWordDoc('fams-plus-' + key + '-' + todayStr() + '.doc', moduleReportHtml(key, false), mod.label + ' — FAMS+ Export');
     }else if(format === 'pdf'){
       printHtmlDocument(mod.label + ' — FAMS+ Export', moduleReportHtml(key, false));
     }
     toast('Exported ' + mod.label + ' (' + format.toUpperCase() + ')', 'ok');
+  });
+  document.getElementById('export-all-excel').addEventListener('click', ()=>{
+    if(!bulkImportAvailable()){ toast('Excel export library not loaded', 'danger'); return; }
+    downloadFullXlsx();
+    toast('Full report (Excel) exported', 'ok');
+  });
+  document.getElementById('export-all-text').addEventListener('click', ()=>{
+    downloadText('fams-plus-full-report-' + todayStr() + '.txt', fullReportText(), 'text/plain');
+    toast('Full report (Text) exported', 'ok');
   });
   document.getElementById('export-all-word').addEventListener('click', ()=>{
     downloadWordDoc('fams-plus-full-report-' + todayStr() + '.doc', fullReportBodyHtml(), 'FAMS+ Full Activity Report');
@@ -2353,6 +2683,10 @@ function renderAdmin(){
     + '<button class="btn btn-primary btn-sm" id="mm-send">Send Mail Merge</button>'
     + '<div id="mm-result" style="margin-top:10px;"></div></div>';
 
+  html += '<div class="card" style="margin-top:16px;"><h3>🧩 Custom Menus &amp; Fields</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">Need a whole new menu that isn\'t built in — a departmental register, a grants tracker, anything? Add it yourself, no coding required: give it a name, an icon, which tab it should live under, and a list of fields (one per line). It appears in the navigation immediately and behaves exactly like every other menu — search, add, edit, bulk import, bulk email, bulk delete, notes, activity log and every report format all work on it automatically. Each custom menu keeps its own separate storage, so adding one never touches any other menu\'s data or code.</p>'
+    + '<button class="btn btn-primary btn-sm" id="adm-open-custom-modules">🧩 Manage Custom Menus</button></div>';
+
   html += '<div class="card" style="margin-top:16px;"><h3>🔌 Backend Connection</h3>'
     + '<p style="font-size:12.5px;color:var(--text-dim);">Web App URL: <span class="mono">' + escapeHtml(DATA_API_URL) + '</span></p>'
     + '<p style="font-size:12.5px;color:var(--text-dim);">To point this app at a different backend or change the shared key, edit <code>DATA_API_URL</code> / <code>APP_KEY</code> near the top of index.html\'s &lt;script&gt; section.</p></div>';
@@ -2360,6 +2694,8 @@ function renderAdmin(){
   return html;
 }
 function wireAdmin(){
+  const openCustomBtn = document.getElementById('adm-open-custom-modules');
+  if(openCustomBtn) openCustomBtn.addEventListener('click', ()=>navigate('#/module/custom-modules'));
   document.getElementById('adm-save-profile').addEventListener('click', async ()=>{
     STATE.meta.facultyName = document.getElementById('adm-name').value.trim();
     STATE.meta.email = document.getElementById('adm-email').value.trim();
