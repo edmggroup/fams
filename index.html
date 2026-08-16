@@ -244,10 +244,21 @@ tr:hover td{background:#fafbfd;}
 
 /* ---------- auth screens ---------- */
 .center-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
-  background:radial-gradient(circle at 20% 20%, rgba(201,154,60,.10), transparent 45%),
-             radial-gradient(circle at 80% 80%, rgba(42,99,201,.10), transparent 45%), var(--bg);}
+  position:relative;overflow:hidden;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1.5px),
+    radial-gradient(circle at 15% 12%, rgba(201,154,60,.20), transparent 40%),
+    radial-gradient(circle at 88% 22%, rgba(42,99,201,.22), transparent 42%),
+    radial-gradient(circle at 78% 90%, rgba(91,58,150,.18), transparent 46%),
+    radial-gradient(circle at 6% 88%, rgba(201,154,60,.12), transparent 40%),
+    linear-gradient(135deg, #0e1c38 0%, #16234a 45%, #1c2c58 100%);
+  background-size:26px 26px, auto, auto, auto, auto, auto;}
+.center-screen::before, .center-screen::after{content:'';position:absolute;border-radius:50%;
+  border:1px solid rgba(255,255,255,.07);pointer-events:none;}
+.center-screen::before{width:920px;height:920px;top:-340px;left:-280px;}
+.center-screen::after{width:620px;height:620px;bottom:-260px;right:-160px;border-color:rgba(201,154,60,.10);}
 .auth-card{width:400px;max-width:92vw;background:var(--card);border-radius:16px;box-shadow:var(--shadow-lg);
-  padding:34px 30px;position:relative;overflow:hidden;}
+  padding:34px 30px;position:relative;z-index:1;overflow:hidden;}
 .auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;
   background:linear-gradient(90deg,var(--navy),var(--gold));}
 .logo-wrap{text-align:center;margin-bottom:20px;}
@@ -1260,30 +1271,32 @@ const NAV_CATEGORIES = [
 ];
 
 /* Screens promoted to their own always-visible top-level nav button rather
-   than living behind a dropdown click — Dashboard, Work Diary, Calendar,
-   Meetings, Action Items, Reminders, and Office Follow-ups (all used every
-   day) and Reports (a frequently-needed export/print destination).
-   `kind:'module'` links straight to that module's own screen
+   than living behind a dropdown click — Dashboard, Work Diary, Calendar
+   (all used every day) and Reports (a frequently-needed export/print
+   destination). `kind:'module'` links straight to that module's own screen
    (#/module/<key>); `kind:'screen'` links to a special, non-module screen
-   (#/<key>). */
+   (#/<key>).
+   Meetings, Action Items, Reminders, and Office Follow-ups are deliberately
+   NOT in the top nav at all (they used to be their own standalone buttons,
+   which pushed the nav row onto two lines) — they're reached instead via
+   the "quick add" buttons on the Dashboard's hero banner (same place as
+   Log Work Diary / Add Class), plus deep links from the Dashboard's
+   Overdue/Today/Upcoming/Recent Activity rows once a record exists. */
 const STANDALONE_NAV_SCREENS = [
   { key:'dashboard', label:'Dashboard', icon:'🏠', kind:'screen' },
   { key:'work-diary', label:'Work Diary', icon:'📔', kind:'module' },
   { key:'calendar', label:'Calendar', icon:'🗓️', kind:'screen' },
-  { key:'meetings', label:'Meetings', icon:'📅', kind:'module' },
-  { key:'action-items', label:'Action Items', icon:'☑️', kind:'module' },
-  { key:'reminders', label:'Reminders', icon:'🔔', kind:'module' },
-  { key:'office-followups', label:'Office Follow-ups', icon:'📮', kind:'module' },
   { key:'reports', label:'Reports', icon:'📤', kind:'screen' }
 ];
 
 /* Left-to-right order of the main nav row: Dashboard, Work Diary, Calendar
    (daily-use standalone buttons), then the dropdown categories, then
-   Meetings, Action Items, Reminders, Office Follow-ups (more daily-use
-   standalone buttons), then Reports. Administrator ("tools") is deliberately
-   excluded here — it's rendered separately, anchored to the far right of the
-   row (see topNavCatsHtml()), since it's an admin-control button rather than
-   an everyday-use menu item. */
+   Reports. Administrator ("tools") is deliberately excluded here — it's
+   rendered separately, anchored to the far right of the row (see
+   topNavCatsHtml()), since it's an admin-control button rather than an
+   everyday-use menu item. Kept short and single-line on purpose — see the
+   STANDALONE_NAV_SCREENS comment above for why Meetings/Action
+   Items/Reminders/Office Follow-ups aren't here. */
 const NAV_MAIN_ORDER = [
   { type:'standalone', key:'dashboard' },
   { type:'standalone', key:'work-diary' },
@@ -1292,10 +1305,6 @@ const NAV_MAIN_ORDER = [
   { type:'category', key:'academics' },
   { type:'category', key:'research' },
   { type:'category', key:'admin-duties' },
-  { type:'standalone', key:'meetings' },
-  { type:'standalone', key:'action-items' },
-  { type:'standalone', key:'reminders' },
-  { type:'standalone', key:'office-followups' },
   { type:'standalone', key:'reports' }
 ];
 const NAV_ADMIN_CATEGORY_KEY = 'tools';
@@ -1546,7 +1555,11 @@ function activeCategoryKey(){
   if(STANDALONE_NAV_SCREENS.some(s=>s.key === screenKey)) return null; // these have their own top-level button, not a dropdown category.
   const groupKey = r.screen === 'module' ? MODULES[r.moduleKey].menu : r.screen;
   const cat = NAV_CATEGORIES.find(c => c.groups.indexOf(groupKey) !== -1);
-  return cat ? cat.key : NAV_CATEGORIES[0].key;
+  // Modules reachable only via a Dashboard quick-add / deep link (Meetings,
+  // Action Items, Reminders, Office Follow-ups) have no nav presence at all
+  // — nothing should light up as "active" for them, rather than guessing
+  // the first category tab.
+  return cat ? cat.key : null;
 }
 function currentScreenLabel(){
   const r = parseRoute();
@@ -2602,8 +2615,10 @@ function renderDashboard(){
     + '<div class="quick-actions">'
     + '<button class="qa-btn" data-qa="work-diary">📔 Log Work Diary</button>'
     + '<button class="qa-btn" data-qa="timetable">📘 Add Class</button>'
-    + '<button class="qa-btn" data-qa="reminders">🔔 Add Reminder</button>'
+    + '<button class="qa-btn" data-qa="meetings">📅 Add Meeting</button>'
     + '<button class="qa-btn" data-qa="action-items">☑️ Add Action Item</button>'
+    + '<button class="qa-btn" data-qa="reminders">🔔 Add Reminder</button>'
+    + '<button class="qa-btn" data-qa="office-followups">📮 Add Office Follow-up</button>'
     + '</div></div>';
 
   // One consolidated stat strip — merges the old "today" row and the old
