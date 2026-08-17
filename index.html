@@ -149,6 +149,10 @@ button{font-family:inherit;}
 .btn-gold{background:var(--gold);color:#20200a;}
 .btn-gold:hover{background:var(--gold-2);}
 .btn-ghost{background:transparent;color:var(--navy);border-color:var(--border-strong);}
+.cal-view-toggle{display:inline-flex;border:1px solid var(--border-strong);border-radius:8px;overflow:hidden;}
+.cal-view-toggle .btn{border-radius:0;border:none;border-right:1px solid var(--border-strong);}
+.cal-view-toggle .btn:last-child{border-right:none;}
+.cal-view-toggle .btn.active{background:var(--navy,#0f1f3d);color:#fff;}
 .btn-ghost:hover{background:#f1f3f9;}
 .btn-danger{background:var(--danger);color:#fff;}
 .btn-sm{padding:6px 11px;font-size:12px;border-radius:6px;}
@@ -179,6 +183,7 @@ tr:hover td{background:#fafbfd;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
   padding:16px;display:flex;align-items:center;gap:13px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;}
 .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+a.stat-card{color:inherit;text-decoration:none;cursor:pointer;}
 .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;}
 .stat-num{font-size:23px;font-weight:800;line-height:1.1;}
 .stat-label{font-size:12px;color:var(--text-dim);}
@@ -191,7 +196,26 @@ tr:hover td{background:#fafbfd;}
 .stat-card.compact .stat-icon{width:36px;height:36px;font-size:16px;border-radius:10px;}
 .stat-card.compact .stat-num{font-size:19px;}
 
+.dash-layout{display:flex;align-items:flex-start;gap:16px;}
+.dash-main{flex:1;min-width:0;}
+.news-ticker{width:280px;flex:0 0 280px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:16px;position:sticky;top:16px;}
+.news-ticker h3{margin:0 0 10px;font-size:14.5px;display:flex;align-items:center;gap:8px;}
+.news-ticker-viewport{height:360px;overflow:hidden;position:relative;
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+  mask-image:linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);}
+.news-ticker-track{display:flex;flex-direction:column;animation:ticker-scroll 30s linear infinite;}
+.news-ticker-track:hover{animation-play-state:paused;}
+.ticker-item{display:block;padding:9px 4px;font-size:12.5px;line-height:1.35;color:var(--text);text-decoration:none;
+  border-bottom:1px solid var(--border);white-space:normal;overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.ticker-item:hover{color:var(--gold,#c99a3c);}
+@keyframes ticker-scroll{ from{transform:translateY(0);} to{transform:translateY(-50%);} }
+@media (max-width:1180px){ .dash-layout{flex-direction:column;} .news-ticker{width:100%;flex:1 1 auto;position:static;} }
+
 .area-chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+a.area-chip{color:inherit;text-decoration:none;cursor:pointer;transition:transform .12s;}
+a.area-chip:hover{transform:translateY(-1px);}
 .area-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;background:var(--card);
   border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text);}
 .area-chip .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
@@ -223,6 +247,8 @@ tr:hover td{background:#fafbfd;}
 .qa-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px);}
 
 .ring-wrap{display:flex;align-items:center;gap:14px;}
+a.ring-wrap{color:inherit;text-decoration:none;cursor:pointer;}
+a.ring-wrap:hover .ring-label{text-decoration:underline;}
 .ring{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;position:relative;}
 .ring .ring-num{font-size:15px;font-weight:800;color:var(--text);}
 .ring-label{font-size:12.5px;font-weight:600;color:var(--text);}
@@ -268,7 +294,7 @@ tr:hover td{background:#fafbfd;}
 .bg-watermark .wm-main span{color:rgba(201,154,60,.09);}
 .bg-watermark .wm-sub{font-size:clamp(12px,2.1vw,20px);font-weight:700;color:rgba(255,255,255,.045);
   letter-spacing:9px;margin-top:10px;white-space:nowrap;text-transform:uppercase;}
-.auth-card{width:400px;max-width:92vw;background:var(--card);border-radius:16px;box-shadow:var(--shadow-lg);
+.auth-card{width:480px;max-width:92vw;background:var(--card);border-radius:16px;box-shadow:var(--shadow-lg);
   padding:34px 30px;position:relative;z-index:1;overflow:hidden;}
 .auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;
   background:linear-gradient(90deg,var(--navy),var(--gold));}
@@ -280,7 +306,7 @@ tr:hover td{background:#fafbfd;}
 .auth-quote{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:12.5px;
   font-style:italic;color:var(--text-dim);line-height:1.5;}
 .auth-quote .attr{display:block;font-style:normal;font-weight:600;color:var(--gold);margin-top:4px;font-size:11.5px;}
-.pin-input{text-align:center;font-size:30px;letter-spacing:16px;font-family:'IBM Plex Mono',monospace;
+.pin-input{text-align:left;font-size:30px;letter-spacing:16px;font-family:'IBM Plex Mono',monospace;
   padding:16px 10px 16px 26px;font-weight:600;margin-top:22px;}
 .pin-input:disabled{background:#f1f3f9;color:var(--text-faint);}
 .error-box{color:var(--danger);font-size:13px;margin-top:12px;min-height:16px;}
@@ -416,6 +442,28 @@ function fmtDate(iso){
   if(!m) return iso;
   return Number(m[3]) + ' ' + MONTH_SHORT[Number(m[2])-1] + ' ' + m[1];
 }
+/** Formats a plain 'HH:MM' (24-hour, from a <input type=time> field) as a
+ *  12-hour clock with AM/PM — e.g. '14:30' → '2:30 PM'. Every place the app
+ *  DISPLAYS a saved time value (list views, the Timetable grid, Dashboard's
+ *  Today's Schedule, exports…) goes through this, so times always read in
+ *  12-hour format everywhere, even though the underlying <input type=time>
+ *  picker itself still follows the browser/OS's own locale for its native
+ *  UI (that part isn't something a web page can override). */
+function fmtTime12(hhmm){
+  const m = /^(\d{1,2}):(\d{2})/.exec(String(hhmm||''));
+  if(!m) return '';
+  let h = Number(m[1]);
+  const mins = m[2];
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if(h === 0) h = 12;
+  return h + ':' + mins + ' ' + ampm;
+}
+/** A plain JS Date's own local year/month/day as a 'YYYY-MM-DD' string —
+ *  used by the Calendar screen (which already navigates in local-Date
+ *  terms via CAL_CURSOR), as opposed to todayStr()'s fixed-IST "today". */
+function fmtIsoDate(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
 /** Formats a real timestamp (an ISO instant, e.g. createdAt/updatedAt/audit
  *  "at") in IST, 12-hour clock with AM/PM — used everywhere a date+time
  *  (not just a date) is shown. */
@@ -458,11 +506,18 @@ function toast(msg, kind){
 }
 function closeModal(){ document.getElementById('modal-overlay').classList.add('hidden'); document.getElementById('modal-body').innerHTML=''; }
 function openModal(html){ document.getElementById('modal-body').innerHTML = html; document.getElementById('modal-overlay').classList.remove('hidden'); }
+// Tracks the deferred "clear the drawer's HTML" timeout from closeDrawer()
+// below, so a fast close-then-reopen (e.g. Cancel an edit, then immediately
+// click "+ Add" again) can cancel it — otherwise that stale timeout fires
+// ~220ms later and wipes out the NEW drawer's content (mid-fill, mid-click)
+// instead of the old one, since both share the same #drawer-body element.
+let drawerCloseTimeout = null;
 function closeDrawer(){
   document.getElementById('drawer-overlay').classList.remove('visible');
-  setTimeout(()=>{ document.getElementById('drawer-body').innerHTML = ''; }, 220);
+  drawerCloseTimeout = setTimeout(()=>{ document.getElementById('drawer-body').innerHTML = ''; drawerCloseTimeout = null; }, 220);
 }
 function openDrawer(html){
+  if(drawerCloseTimeout){ clearTimeout(drawerCloseTimeout); drawerCloseTimeout = null; }
   document.getElementById('drawer-body').innerHTML = html;
   document.getElementById('drawer-overlay').classList.add('visible');
 }
@@ -605,16 +660,16 @@ const MAIN_MENUS = [
 ];
 
 const MODULES = {
-  'work-diary': { label:'Work diary', menu:'work-diary', icon:'📔', titleField:'summary', dateField:'date', fields:[
+  'work-diary': { label:'Work diary', menu:'work-diary', icon:'📔', titleField:'summary', dateField:'date', groupByMonth:true, fields:[
     {key:'date', label:'Date', type:'date', required:true, default:'__today__'},
     {key:'category', label:'Category', type:'select', options:['Teaching','Research','Mentoring','Admin/In-Charge','Committee/Meeting','Other'], default:'Teaching'},
     {key:'summary', label:'What did you work on', type:'textarea', required:true},
     {key:'hoursSpent', label:'Hours Spent', type:'number'}
   ]},
   'timetable': { label:'Timetable', menu:'teaching', icon:'📘', titleField:'subject', dateField:'startTime', fields:[
-    {key:'day', label:'Day', type:'select', options:['Mon','Tue','Wed','Thu','Fri','Sat'], required:true},
     {key:'startTime', label:'Start Time', type:'time', required:true},
     {key:'endTime', label:'End Time', type:'time', required:true},
+    {key:'day', label:'Day', type:'select', options:['Mon','Tue','Wed','Thu','Fri','Sat'], required:true},
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'subjectCode', label:'Subject Code', type:'text', required:true},
     {key:'sessionType', label:'Session Type', type:'select', options:['Theory','Laboratory'], default:'Theory'},
@@ -655,7 +710,9 @@ const MODULES = {
     {key:'session', label:'Session', type:'select', options:['Forenoon','Afternoon','Evening'], default:'Forenoon'},
     {key:'venue', label:'Venue', type:'text'},
     {key:'role', label:'Role', type:'select', options:['Invigilator','Chief Superintendent','Squad Member'], default:'Invigilator'},
-    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
+    {key:'fromTime', label:'From Time', type:'time'},
+    {key:'toTime', label:'To Time', type:'time'},
+    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'question-bank': { label:'Question bank', menu:'exams', icon:'❓', titleField:'question', dateField:null, fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
@@ -708,7 +765,8 @@ const MODULES = {
   ]},
   'lab-timetable': { label:'Lab timetable', menu:'laboratory', icon:'🧪', titleField:'labCourse', dateField:null, fields:[
     {key:'day', label:'Day', type:'select', options:['Mon','Tue','Wed','Thu','Fri','Sat'], required:true},
-    {key:'time', label:'Time', type:'text'},
+    {key:'fromTime', label:'From Time', type:'time'},
+    {key:'toTime', label:'To Time', type:'time'},
     {key:'labCourse', label:'Lab Course', type:'text', required:true},
     {key:'batch', label:'Batch', type:'text'},
     {key:'venue', label:'Venue', type:'text'}
@@ -718,7 +776,9 @@ const MODULES = {
     {key:'date', label:'Date', type:'date', required:true},
     {key:'batch', label:'Batch', type:'text'},
     {key:'externalExaminer', label:'External Examiner', type:'text'},
-    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
+    {key:'fromTime', label:'From Time', type:'time'},
+    {key:'toTime', label:'To Time', type:'time'},
+    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'extra-classes': { label:'Extra / additional classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
     {key:'type', label:'Type', type:'select', options:['Extra Class','Compensatory Class','Makeup Class'], default:'Extra Class'},
@@ -726,8 +786,9 @@ const MODULES = {
     {key:'subjectCode', label:'Subject Code', type:'text', required:true},
     {key:'reason', label:'Reason', type:'text'},
     {key:'date', label:'Date', type:'date', required:true},
-    {key:'time', label:'Time', type:'text'},
-    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
+    {key:'fromTime', label:'From Time', type:'time'},
+    {key:'toTime', label:'To Time', type:'time'},
+    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'research-targets': { label:'Plans', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
     {key:'description', label:'Target Description', type:'textarea', required:true},
@@ -754,7 +815,9 @@ const MODULES = {
     {key:'eventName', label:'Event Name', type:'text', required:true},
     {key:'role', label:'Role', type:'select', options:['Organized','Participated','Chaired Session','Keynote'], default:'Participated'},
     {key:'date', label:'Date', type:'date'},
-    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
+    {key:'fromTime', label:'From Time', type:'time'},
+    {key:'toTime', label:'To Time', type:'time'},
+    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'peer-reviews': { label:'Peer review / editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
     {key:'venue', label:'Journal / Conference', type:'text', required:true},
@@ -814,10 +877,13 @@ const MODULES = {
     {key:'relatedModule', label:'Related To — Menu', type:'moduleRef'},
     {key:'relatedRecordId', label:'Related To — Specific Record (e.g. a student, project, committee…)', type:'recordRef', dependsOn:'relatedModule'},
     {key:'date', label:'Date', type:'date', required:true},
+    {key:'fromTime', label:'From Time', type:'time'},
+    {key:'toTime', label:'To Time', type:'time'},
+    {key:'venue', label:'Venue', type:'text'},
     {key:'attendees', label:'Attendees', type:'textarea'},
     {key:'minutes', label:'Minutes', type:'textarea'},
     {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'},
-    {key:'durationHours', label:'Duration (hours) — optional, counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'action-items': { label:'Action items', menu:'action-items', icon:'☑️', titleField:'action', dateField:'dueDate', fields:[
     {key:'meetingId', label:'Meeting', type:'reference', ref:'meetings'},
@@ -865,10 +931,51 @@ const MODULES = {
     {key:'label', label:'Menu Name', type:'text', required:true},
     {key:'icon', label:'Icon (one emoji)', type:'text', default:'🗂️'},
     {key:'category', label:'Category (which tab it appears under)', type:'categoryRef', default:'tools'},
-    {key:'fieldsSpec', label:'Fields — one per line: Label|type|options|required (type: text, textarea, number, date, select, email, tel — options comma-separated, only for select — write "required" as the 4th part to make it mandatory)', type:'textarea', required:true, default:'Details|textarea'}
+    {key:'fieldsSpec', label:'Fields — one per line: Label|type|options|required (type: text, textarea, number, date, select, email, tel, subtable — options comma-separated, only for select — write "required" as the 4th part to make it mandatory. For a "subtable" field — a repeating mini-table inside each record — put its sub-columns in the options part, comma-separated, e.g. "Semester Marks|subtable|Marks,Status:select:Pass;Fail" (a sub-column can be a dropdown with Label:select:Opt A;Opt B). Add a 4th part that\'s a semicolon list instead of "required" to make the rows FIXED and pre-named — one guaranteed slot each, no +Add/✕Remove — e.g. "Semester Marks|subtable|Marks,Status:select:Pass;Fail|Sem-1;Sem-2;Sem-3;Sem-4;Sem-5;Sem-6" gives every record exactly one Marks entry per semester, always', type:'textarea', required:true, default:'Details|textarea'},
+    {key:'groupByLabel', label:'Group the list by (optional — type the exact field Label above, e.g. "Batch" — every record sharing that value is shown together under one heading, with the value shown once at the top of the group instead of repeated on every row; the group heading also gets a quick "+ Add to this group" button, a "Export this group" button, and — if one of your fields is a Status-style dropdown — a "Set status for whole group" control)', type:'text'}
   ]}
 };
 let MODULE_KEYS = Object.keys(MODULES);
+// Snapshot of every BUILT-IN module's original label, captured before any
+// custom modules are registered and before any saved rename is applied —
+// this is what Admin & Settings → Menu Names shows as each menu's "default"
+// and what a "Reset" restores, and it's also how that list knows which
+// modules are built-in (custom menus are already renamed via their own
+// Custom Menus editor, so they're deliberately left out of this list).
+const DEFAULT_MODULE_LABELS = {};
+MODULE_KEYS.forEach(k=>{ DEFAULT_MODULE_LABELS[k] = MODULES[k].label; });
+/** Applies one saved rename (Admin & Settings → Menu Names) everywhere that
+ *  module's name can show up: the module itself (its page header, form
+ *  titles, list-view labels — anything that reads MODULES[key].label);
+ *  when it's the ONLY module in its nav group (e.g. Meetings — single-
+ *  module groups whose dropdown nav entry displays the MAIN_MENUS group
+ *  label instead of the module's own), that MAIN_MENUS entry too; and, for
+ *  Work Diary/Calendar/Reports-style modules with their OWN always-visible
+ *  top-level nav button, the matching STANDALONE_NAV_SCREENS entry. Callers
+ *  still need a full render() (not just renderRoute()) afterwards for the
+ *  change to reach the top nav — see wireAdmin's Save Menu Names handler —
+ *  since the nav shell itself is only built once at boot. */
+function applyModuleLabelOverride(key, newLabel){
+  const mod = MODULES[key];
+  if(!mod || !newLabel) return;
+  mod.label = newLabel;
+  const menuEntry = MAIN_MENUS.find(m=>m.key === mod.menu);
+  if(menuEntry){
+    const modsInGroup = MODULE_KEYS.filter(k=>MODULES[k].menu === mod.menu);
+    if(modsInGroup.length === 1 && modsInGroup[0] === key) menuEntry.label = newLabel;
+  }
+  const standaloneEntry = STANDALONE_NAV_SCREENS.find(s=>s.key === key);
+  if(standaloneEntry) standaloneEntry.label = newLabel;
+}
+/** Re-applies every saved rename from STATE.config.moduleLabelOverrides —
+ *  called once after config loads, and again immediately after Admin &
+ *  Settings → Menu Names is saved so the change is visible without a
+ *  reload. Silently skips any key that no longer exists (e.g. leftover
+ *  from a module that isn't registered in this build). */
+function applyModuleLabelOverrides(){
+  const overrides = (STATE.config && STATE.config.moduleLabelOverrides) || {};
+  Object.keys(overrides).forEach(key=>{ if(MODULES[key]) applyModuleLabelOverride(key, overrides[key]); });
+}
 
 /* ============================================================
    ADMIN-DEFINABLE CUSTOM MENUS — lets the Admin control add a
@@ -891,8 +998,28 @@ function customModuleKeyFor(rec){
   const base = slugifyKey(rec.id || '') || Math.random().toString(36).slice(2, 10);
   return 'cm_' + base.slice(0, 20);
 }
+/** Parses the sub-columns of a custom "subtable" field — a repeating mini-
+ *  table embedded in one record (e.g. one row per semester's marks), the
+ *  same mechanism In-charges' "Members" and Class Log's "Students" already
+ *  use, just made available to admin-defined custom menus too. Comma-
+ *  separated sub-column tokens, each "Label" (plain text cell) or
+ *  "Label:select:Option A;Option B;Option C" (dropdown cell). */
+function parseCustomSubfieldsSpec(text){
+  return String(text || '').split(',').map(s=>s.trim()).filter(Boolean).map(tok=>{
+    const parts = tok.split(':');
+    const label = parts[0].trim();
+    const type = (parts[1] || '').trim().toLowerCase();
+    const sf = { key: slugifyKey(label) || 'field', label: label };
+    if(type === 'select'){
+      sf.type = 'select';
+      sf.options = (parts[2] || '').split(';').map(o=>o.trim()).filter(Boolean);
+      if(!sf.options.length) sf.options = ['Option 1'];
+    }
+    return sf;
+  });
+}
 function parseCustomFieldsSpec(text){
-  const allowedTypes = ['text','textarea','number','date','datetime','select','email','tel'];
+  const allowedTypes = ['text','textarea','number','date','datetime','select','email','tel','subtable'];
   const lines = String(text || '').split('\n').map(l=>l.trim()).filter(Boolean);
   const fields = [];
   const seen = {};
@@ -908,6 +1035,22 @@ function parseCustomFieldsSpec(text){
     if(seen[key]){ seen[key]++; key = key + '_' + seen[key]; } else { seen[key] = 1; }
     const field = { key: key, label: label, type: type };
     if(type === 'select'){ field.options = optionsRaw.split(',').map(o=>o.trim()).filter(Boolean); if(!field.options.length) field.options=['Option 1']; }
+    else if(type === 'subtable'){
+      field.subfields = parseCustomSubfieldsSpec(optionsRaw);
+      if(!field.subfields.length) field.subfields = [{ key:'value', label:'Value' }];
+      field.rowLabel = label;
+      field.rowLabelPlural = label;
+      // A subtable's 4th part is normally "required" (unused for subtables
+      // anyway), but here it doubles as an optional FIXED ROW LIST —
+      // semicolon-separated row names that always exist, in that order, with
+      // no +Add/✕Remove (e.g. "Sem-1;Sem-2;Sem-3;Sem-4;Sem-5;Sem-6" so every
+      // record always has exactly one editable slot per semester, instead of
+      // someone having to type the semester name freely on a blank row).
+      const fixedRowsRaw = parts[3] || '';
+      if(fixedRowsRaw && fixedRowsRaw.toLowerCase() !== 'required'){
+        field.fixedRows = fixedRowsRaw.split(';').map(s=>s.trim()).filter(Boolean);
+      }
+    }
     if(required) field.required = true;
     fields.push(field);
   });
@@ -919,11 +1062,16 @@ function registerCustomModule(def){
   // effect immediately (registerAllCustomModules() is re-run right after
   // every save), not just on the next full page load.
   const dateFieldMatch = def.fields.find(f=>f.type === 'date' || f.type === 'datetime');
+  // "Group the list by" — admin types a field Label (e.g. "Batch") and any
+  // record sharing that value is clustered under one heading in the list
+  // view instead of repeating the value on every row (see moduleTableHtml).
+  const groupField = def.groupByKey ? def.fields.find(f=>f.key === def.groupByKey) : null;
   MODULES[def.key] = {
     label: def.label, menu: def.key, icon: def.icon || '🗂️',
     titleField: (def.fields[0] && def.fields[0].key) || 'id',
     dateField: dateFieldMatch ? dateFieldMatch.key : '',
     fields: def.fields,
+    groupByField: (groupField && groupField.type !== 'subtable') ? groupField.key : null,
     custom: true
   };
   MODULE_KEYS = Object.keys(MODULES);
@@ -947,7 +1095,8 @@ function registerAllCustomModules(){
       const key = customModuleKeyFor(rec);
       const fields = parseCustomFieldsSpec(rec.fieldsSpec);
       if(!fields.length) fields.push({ key:'details', label:'Details', type:'textarea' });
-      registerCustomModule({ key: key, label: rec.label || 'Custom Menu', icon: rec.icon || '🗂️', category: rec.category || 'tools', fields: fields });
+      const groupByKey = rec.groupByLabel ? slugifyKey(rec.groupByLabel) : null;
+      registerCustomModule({ key: key, label: rec.label || 'Custom Menu', icon: rec.icon || '🗂️', category: rec.category || 'tools', fields: fields, groupByKey: groupByKey });
     }catch(e){ console.error('[FAMS+] failed to register custom module', rec, e); }
   });
 }
@@ -999,7 +1148,7 @@ function getActive(key){ return getCollection(key).filter(r=>!r.deleted); }
 function getRecord(key, id){ return getCollection(key).find(r=>r.id===id) || null; }
 
 function defaultConfig(){
-  return { academicYear:'', semester:'', termStartDate:'', termEndDate:'', digestHour:7, backupHour:23, migratedLegacyMembers:false, migratedMentoringIntoIncharges:false, academicTermHistory:[] };
+  return { academicYear:'', semester:'', termStartDate:'', termEndDate:'', digestHour:7, backupHour:23, migratedLegacyMembers:false, migratedMentoringIntoIncharges:false, academicTermHistory:[], moduleLabelOverrides:{} };
 }
 
 /** Once Academic Year / Semester is set (Admin & Settings → Academic Term),
@@ -1171,6 +1320,7 @@ async function loadAllData(){
       await saveConfig();
     }
   }
+  applyModuleLabelOverrides();
   STATE.loaded = true;
 }
 
@@ -1186,6 +1336,7 @@ async function createRecord(moduleKey, data){
   const rec = Object.assign({ id: uid(), createdAt: nowIso(), updatedAt: nowIso(), notes: [], deleted:false }, data);
   arr.push(rec);
   await saveCollection(moduleKey, arr);
+  if(AUTO_WORK_DIARY_SOURCES[moduleKey]) await syncAutoWorkDiaryEntry(moduleKey, rec);
   return rec;
 }
 async function updateRecord(moduleKey, id, patch){
@@ -1194,6 +1345,7 @@ async function updateRecord(moduleKey, id, patch){
   if(idx===-1) throw new Error('Record not found');
   arr[idx] = Object.assign({}, arr[idx], patch, { updatedAt: nowIso() });
   await saveCollection(moduleKey, arr);
+  if(AUTO_WORK_DIARY_SOURCES[moduleKey]) await syncAutoWorkDiaryEntry(moduleKey, arr[idx]);
   return arr[idx];
 }
 async function softDeleteRecord(moduleKey, id){ return updateRecord(moduleKey, id, { deleted:true }); }
@@ -1201,6 +1353,87 @@ async function restoreRecord(moduleKey, id){ return updateRecord(moduleKey, id, 
 async function purgeRecord(moduleKey, id){
   const arr = getCollection(moduleKey).filter(r=>r.id!==id);
   await saveCollection(moduleKey, arr);
+  // Purging (permanently deleting) a source record shouldn't leave its
+  // auto-logged Work Diary entry orphaned behind it.
+  if(AUTO_WORK_DIARY_SOURCES[moduleKey]){
+    const tag = moduleKey + ':' + id;
+    const existing = getCollection('work-diary').find(w=>w.autoSource === tag);
+    if(existing) await purgeRecord('work-diary', existing.id);
+  }
+}
+
+/* ============================================================
+   AUTO WORK DIARY — Timetable-derived Class Log entries, Meetings,
+   Invigilation Duty, Extra/Additional Classes, Lab Exams and Research
+   Events all already carry (or can derive) a real duration for a real
+   date; rather than making the faculty member re-type the same day's
+   work a second time into the Work Diary, a linked entry is kept in
+   sync there automatically. See AUTO_WORK_DIARY_SOURCES / syncAutoWorkDiaryEntry.
+   ============================================================ */
+const AUTO_WORK_DIARY_SOURCES = {
+  'class-log': {
+    category: 'Teaching',
+    hours: (rec)=>{
+      if(rec.status !== 'Held') return 0;
+      let hrs = parseFloat(rec.durationHours) || 0;
+      if(!hrs && rec.date){
+        const dow = DOW_NAMES3[new Date(rec.date + 'T00:00:00').getDay()];
+        const t = getActive('timetable').find(t=>t.subject===rec.subject && t.subjectCode===rec.subjectCode && t.day===dow);
+        if(t) hrs = timeRangeHours(t.startTime, t.endTime);
+      }
+      return hrs;
+    },
+    summary: (rec)=>'Class held: ' + (rec.subject||'') + (rec.subjectCode?(' ('+rec.subjectCode+')'):'') + (rec.topic?(' — '+rec.topic):'')
+  },
+  'meetings': {
+    category: 'Committee/Meeting',
+    hours: (rec)=>computedDurationHours(rec),
+    summary: (rec)=>'Meeting: ' + (rec.title||'')
+  },
+  'invigilation-duties': {
+    category: 'Admin/In-Charge',
+    hours: (rec)=>computedDurationHours(rec),
+    summary: (rec)=>'Invigilation duty: ' + (rec.examName||'')
+  },
+  'extra-classes': {
+    category: 'Teaching',
+    hours: (rec)=>computedDurationHours(rec),
+    summary: (rec)=>(rec.type||'Extra Class') + ': ' + (rec.subject||'') + (rec.subjectCode?(' ('+rec.subjectCode+')'):'')
+  },
+  'lab-exams': {
+    category: 'Teaching',
+    hours: (rec)=>computedDurationHours(rec),
+    summary: (rec)=>'Lab exam: ' + (rec.labCourse||'')
+  },
+  'research-events': {
+    category: 'Research',
+    hours: (rec)=>computedDurationHours(rec),
+    summary: (rec)=>'Research event: ' + (rec.eventName||'')
+  }
+};
+/** Creates, updates, or removes the auto-logged Work Diary entry linked to
+ *  one source record. Matches an existing auto entry by its hidden
+ *  `autoSource` tag ('<moduleKey>:<id>') rather than by date/summary, so
+ *  editing the record (even changing its date) updates that SAME Work
+ *  Diary row instead of leaving a stale one behind. A deleted source
+ *  record, one with no computable hours yet (e.g. a Class Log row not yet
+ *  marked Held, or an empty Duration field), or one with no date, is
+ *  treated as "nothing to log" and any existing auto entry is removed. */
+async function syncAutoWorkDiaryEntry(moduleKey, rec){
+  const src = AUTO_WORK_DIARY_SOURCES[moduleKey];
+  if(!src || !rec) return;
+  const mod = MODULES[moduleKey];
+  const date = mod.dateField ? rec[mod.dateField] : '';
+  const hrs = rec.deleted ? 0 : (parseFloat(src.hours(rec)) || 0);
+  const tag = moduleKey + ':' + rec.id;
+  const existing = getCollection('work-diary').find(w=>w.autoSource === tag);
+  if(!date || !hrs){
+    if(existing) await purgeRecord('work-diary', existing.id);
+    return;
+  }
+  const patch = { date: date, category: src.category, summary: src.summary(rec), hoursSpent: Math.round(hrs*100)/100, autoSource: tag };
+  if(existing) await updateRecord('work-diary', existing.id, patch);
+  else await createRecord('work-diary', patch);
 }
 
 /* ============================================================
@@ -1346,12 +1579,11 @@ const AREA_COLORS = {
    Dashboard, Work Diary, and Calendar are deliberately NOT in any of these
    dropdown categories — they're promoted to their own standalone top-level
    buttons (see topNavCatsHtml()) since they're used every day and don't
-   belong behind a dropdown click. Leave & Holidays is likewise pulled out
-   into its own top-level dropdown rather than sitting inside Academics.
-   Meetings, Action Items, Reminders, and Office Follow-ups are also pulled
-   out of Roles & Responsibilities into their own standalone buttons. */
+   belong behind a dropdown click. Leave & Holidays, Meetings, Action Items,
+   Reminders, and Office Follow-ups are likewise absent from the top nav
+   entirely — reached only via the Dashboard's quick-add buttons and deep
+   links (see STANDALONE_NAV_SCREENS' comment / DASH_QUICKADD_MODULE_KEYS). */
 const NAV_CATEGORIES = [
-  { key:'leave-holidays', label:'Leave & Holidays', icon:'🗓️', groups:['leave-holidays'] },
   { key:'academics', label:'Academics', icon:'📘', groups:['teaching','exams','laboratory','extra-classes'] },
   { key:'research', label:'Research', icon:'🔬', groups:['research','projects'] },
   // Students + Administrative Duties combined into one "Responsibilities" category.
@@ -1369,15 +1601,17 @@ const NAV_CATEGORIES = [
    destination). `kind:'module'` links straight to that module's own screen
    (#/module/<key>); `kind:'screen'` links to a special, non-module screen
    (#/<key>).
-   Meetings, Action Items, Reminders, and Office Follow-ups are deliberately
-   NOT in the top nav at all (they used to be their own standalone buttons,
-   which pushed the nav row onto two lines) — they're reached instead via
-   the "quick add" buttons on the Dashboard's hero banner (same place as
-   Log Work Diary / Add Class), plus deep links from the Dashboard's
-   Overdue/Today/Upcoming/Recent Activity rows once a record exists. */
+   Meetings, Action Items, Reminders, Office Follow-ups, and Leave/OD +
+   Holidays are deliberately NOT in the top nav at all (Leave & Holidays
+   used to be its own dropdown category; Meetings etc. used to be their own
+   standalone buttons, which pushed the nav row onto two lines) — all of
+   them are reached instead via the "quick add" buttons on the Dashboard's
+   hero banner (same place as Log Work Diary / Add Class), plus deep links
+   from the Dashboard's stat cards / Overdue / Today / Upcoming rows once a
+   record exists. */
 const STANDALONE_NAV_SCREENS = [
   { key:'dashboard', label:'Dashboard', icon:'🏠', kind:'screen' },
-  { key:'work-diary', label:'Work Diary', icon:'📔', kind:'module' },
+  { key:'work-diary', label:'Work diary', icon:'📔', kind:'module' },
   { key:'calendar', label:'Calendar', icon:'🗓️', kind:'screen' },
   { key:'reports', label:'Reports', icon:'📤', kind:'screen' }
 ];
@@ -1388,13 +1622,12 @@ const STANDALONE_NAV_SCREENS = [
    rendered separately, anchored to the far right of the row (see
    topNavCatsHtml()), since it's an admin-control button rather than an
    everyday-use menu item. Kept short and single-line on purpose — see the
-   STANDALONE_NAV_SCREENS comment above for why Meetings/Action
-   Items/Reminders/Office Follow-ups aren't here. */
+   STANDALONE_NAV_SCREENS comment above for why Leave & Holidays / Meetings/
+   Action Items/Reminders/Office Follow-ups aren't here. */
 const NAV_MAIN_ORDER = [
   { type:'standalone', key:'dashboard' },
   { type:'standalone', key:'work-diary' },
   { type:'standalone', key:'calendar' },
-  { type:'category', key:'leave-holidays' },
   { type:'category', key:'academics' },
   { type:'category', key:'research' },
   { type:'category', key:'admin-duties' },
@@ -1795,11 +2028,16 @@ function moduleDisplayColumns(mod){
   // view, so a slot for it is reserved UP FRONT (before the general fields
   // loop below fills the cap with other fields and leaves no room for it).
   const hasSubtable = mod.fields.some(f=>f.type === 'subtable');
-  const cap = hasSubtable ? 3 : 4;
+  const cap = hasSubtable ? 5 : 7;
   mod.fields.forEach(f=>{
     if(cols.length >= cap) return;
     if(cols.indexOf(f) !== -1) return;
     if(f.type === 'textarea' || f.type === 'subtable') return;
+    // When the list is grouped by this field, its value is shown once at
+    // the top of each group instead of repeated on every row — so it's
+    // left out of the per-row columns (unless it doubles as the title/date
+    // column already pinned above, which stays put either way).
+    if(mod.groupByField && f.key === mod.groupByField) return;
     cols.push(f);
   });
   mod.fields.forEach(f=>{
@@ -1829,8 +2067,20 @@ function fieldDisplayValue(mod, field, rec){
   }
   if(field.type === 'date') return v ? escapeHtml(fmtDate(v)) : '<span style="color:var(--text-faint)">—</span>';
   if(field.type === 'datetime') return v ? escapeHtml(fmtDateTime(v)) : '<span style="color:var(--text-faint)">—</span>';
+  if(field.type === 'time') return v ? escapeHtml(fmtTime12(v)) : '<span style="color:var(--text-faint)">—</span>';
   if(field.type === 'subtable'){
     const rows = Array.isArray(v) ? v : [];
+    if(field.fixedRows){
+      // Fixed-row mode (e.g. Sem-1..Sem-6): every slot always exists in
+      // storage even before its mark is entered, so "rows.length" alone
+      // would always just say the total — the useful number here is how
+      // many slots actually have something filled in yet.
+      const filledRows = rows.filter(r=>field.subfields.some(sf=>r[sf.key]));
+      if(filledRows.length === 0) return '<span style="color:var(--text-faint)">—</span>';
+      const preview = filledRows.map(r=>r._rowLabel).filter(Boolean).slice(0,4).join(', ');
+      return '<span class="badge badge-ok">' + filledRows.length + ' / ' + field.fixedRows.length + ' ' + escapeHtml(field.rowLabelPlural || field.rowLabel || 'entries') + '</span>'
+        + (preview ? '<div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;">' + escapeHtml(preview) + (filledRows.length>4?'…':'') + '</div>' : '');
+    }
     if(rows.length === 0) return '<span style="color:var(--text-faint)">—</span>';
     const firstKey = field.subfields[0].key;
     const names = rows.map(r=>r[firstKey]).filter(Boolean).slice(0,3).join(', ');
@@ -1866,6 +2116,64 @@ function renderModuleList(moduleKey){
     + '<div class="table-wrap" id="module-table-wrap"></div>';
 }
 
+/** The value a record groups under, for modules that cluster their list
+ *  view instead of showing one flat table — either an exact field value
+ *  (mod.groupByField, e.g. admin-defined "Batch") or the calendar month of
+ *  its dateField (mod.groupByMonth, e.g. Work Diary: "one month's entries
+ *  together, then the next month starts"). Returns null for modules that
+ *  don't group at all. */
+function rowGroupKey(mod, r){
+  if(mod.groupByField) return (r[mod.groupByField] || '').trim() || '(no ' + (fieldByKey(mod, mod.groupByField) || {label:'value'}).label.toLowerCase() + ')';
+  if(mod.groupByMonth && mod.dateField){
+    const d = r[mod.dateField];
+    return d ? String(d).slice(0, 7) : '(no date)';
+  }
+  return null;
+}
+function rowGroupLabel(mod, key){
+  if(mod.groupByMonth && /^\d{4}-\d{2}$/.test(key)){
+    const parts = key.split('-');
+    return MONTH_LONG[Number(parts[1]) - 1] + ' ' + parts[0];
+  }
+  return key;
+}
+function moduleRowHtml(mod, cols, r, selectable, moduleKey){
+  let html = '<tr data-id="' + r.id + '"' + (r.deleted ? ' style="opacity:.5;"' : '') + '>';
+  if(selectable) html += '<td style="padding:10px 6px;border-bottom:1px solid var(--border);"><input type="checkbox" class="row-select" data-id="' + r.id + '"' + (LIST_SELECTION.has(r.id) ? ' checked' : '') + '></td>';
+  cols.forEach((c, ci)=>{
+    // The first (title) column on an auto-logged Work Diary entry gets a
+    // small badge so it reads clearly as "captured automatically from
+    // somewhere else" rather than looking like a duplicate manual entry.
+    const badge = (ci === 0 && r.autoSource) ? ' <span style="font-size:10px;font-weight:700;color:var(--gold);background:#fbf3e2;padding:2px 6px;border-radius:8px;white-space:nowrap;" title="Auto-logged from ' + escapeHtml(r.autoSource.split(':')[0]) + '">🔗 Auto</span>' : '';
+    html += '<td style="padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + fieldDisplayValue(mod, c, r) + badge + '</td>';
+  });
+  if(selectable){
+    html += '<td style="padding:8px 12px;border-bottom:1px solid var(--border);"><div class="row-actions">';
+    if(!r.deleted){
+      html += '<button class="btn btn-ghost btn-sm" data-action="edit">Edit</button>';
+      html += '<button class="btn btn-ghost btn-sm" data-action="notes">Notes' + ((r.notes && r.notes.length) ? ' (' + r.notes.length + ')' : '') + '</button>';
+      // A "Minutes" quick-edit button shows up on ANY module that happens to
+      // have a "minutes" field (today that's just Meetings) — same
+      // presence-based pattern as the Email/WhatsApp buttons below, so it's
+      // not hardcoded to one module.
+      if(mod.fields.some(f=>f.key==='minutes')) html += '<button class="btn btn-ghost btn-sm" data-action="minutes">📝 Minutes</button>';
+      // "Action Required" is specific to Meetings — it raises a new Action
+      // Item already linked back to this meeting (Action Items' own
+      // "Meeting" reference field), a one-click shortcut for the very
+      // common "this meeting needs a follow-up task" step.
+      if(moduleKey === 'meetings') html += '<button class="btn btn-ghost btn-sm" data-action="raise-action">☑️ Action Required</button>';
+      if(mod.fields.some(f=>f.key==='email')) html += '<button class="btn btn-ghost btn-sm" data-action="email" title="Email">✉️</button>';
+      if(mod.fields.some(f=>f.key==='phone')) html += '<button class="btn btn-ghost btn-sm" data-action="whatsapp" title="WhatsApp">💬</button>';
+      html += '<button class="btn btn-ghost btn-sm" data-action="delete">Delete</button>';
+    }else{
+      html += '<button class="btn btn-ghost btn-sm" data-action="restore">Restore</button>';
+      html += '<button class="btn btn-danger btn-sm" data-action="purge">Purge</button>';
+    }
+    html += '</div></td>';
+  }
+  html += '</tr>';
+  return html;
+}
 function moduleTableHtml(moduleKey, cols, search, showDeleted){
   const mod = MODULES[moduleKey];
   const selectable = !mod.readOnly;
@@ -1879,6 +2187,12 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
     return String(b.createdAt||'').localeCompare(String(a.createdAt||''));
   });
   if(rows.length === 0) return '<div class="empty">' + (mod.readOnly ? 'No activity recorded yet.' : ('No records yet. Click "Add ' + escapeHtml(mod.label) + '" to create the first one.')) + '</div>';
+  const grouping = !!(mod.groupByField || mod.groupByMonth);
+  const colspan = cols.length + (selectable ? 2 : 1);
+  // A "Status"-style dropdown on a grouped module (e.g. UG Research's
+  // "Present Status") gets a bulk "apply to whole group" control right in
+  // the group header, alongside the group's own quick-add and export.
+  const groupStatusField = (grouping && mod.groupByField) ? mod.fields.find(f=>f.type==='select' && /status/i.test(f.key)) : null;
   let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>';
   if(selectable){
     const visibleIds = rows.map(r=>r.id);
@@ -1888,26 +2202,34 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
   cols.forEach(c=>{ html += '<th style="text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);border-bottom:1px solid var(--border);">' + escapeHtml(c.label) + '</th>'; });
   if(selectable) html += '<th style="border-bottom:1px solid var(--border);"></th>';
   html += '</tr></thead><tbody>';
-  rows.forEach(r=>{
-    html += '<tr data-id="' + r.id + '"' + (r.deleted ? ' style="opacity:.5;"' : '') + '>';
-    if(selectable) html += '<td style="padding:10px 6px;border-bottom:1px solid var(--border);"><input type="checkbox" class="row-select" data-id="' + r.id + '"' + (LIST_SELECTION.has(r.id) ? ' checked' : '') + '></td>';
-    cols.forEach(c=>{ html += '<td style="padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + fieldDisplayValue(mod, c, r) + '</td>'; });
-    if(selectable){
-      html += '<td style="padding:8px 12px;border-bottom:1px solid var(--border);"><div class="row-actions">';
-      if(!r.deleted){
-        html += '<button class="btn btn-ghost btn-sm" data-action="edit">Edit</button>';
-        html += '<button class="btn btn-ghost btn-sm" data-action="notes">Notes' + ((r.notes && r.notes.length) ? ' (' + r.notes.length + ')' : '') + '</button>';
-        if(mod.fields.some(f=>f.key==='email')) html += '<button class="btn btn-ghost btn-sm" data-action="email" title="Email">✉️</button>';
-        if(mod.fields.some(f=>f.key==='phone')) html += '<button class="btn btn-ghost btn-sm" data-action="whatsapp" title="WhatsApp">💬</button>';
-        html += '<button class="btn btn-ghost btn-sm" data-action="delete">Delete</button>';
-      }else{
-        html += '<button class="btn btn-ghost btn-sm" data-action="restore">Restore</button>';
-        html += '<button class="btn btn-danger btn-sm" data-action="purge">Purge</button>';
-      }
-      html += '</div></td>';
-    }
-    html += '</tr>';
-  });
+  if(!grouping){
+    rows.forEach(r=>{ html += moduleRowHtml(mod, cols, r, selectable, moduleKey); });
+  }else{
+    const groupOrder = [];
+    const groups = {};
+    rows.forEach(r=>{
+      const key = rowGroupKey(mod, r);
+      if(!groups[key]){ groups[key] = []; groupOrder.push(key); }
+      groups[key].push(r);
+    });
+    groupOrder.forEach(key=>{
+      const groupRows = groups[key];
+      const safeKey = escapeHtml(key);
+      html += '<tr class="group-header-row"><td colspan="' + colspan + '" style="padding:10px 12px;background:#f4f6fb;border-bottom:1px solid var(--border);border-top:2px solid var(--border);">'
+        + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+        + '<strong style="font-size:13px;">' + escapeHtml(rowGroupLabel(mod, key)) + '</strong>'
+        + '<span class="badge badge-neutral">' + groupRows.length + '</span>'
+        + (mod.groupByField ? '<button class="btn btn-ghost btn-sm" data-action="group-add" data-group-value="' + safeKey + '">+ Add to this group</button>' : '')
+        + '<button class="btn btn-ghost btn-sm" data-action="group-export" data-group-value="' + safeKey + '">📤 Export this group</button>'
+        + (groupStatusField ? ('<span style="display:flex;align-items:center;gap:6px;margin-left:auto;">'
+            + '<select class="input input-sm" style="width:auto;padding:4px 8px;" data-group-status-select data-group-value="' + safeKey + '"><option value="">Set ' + escapeHtml(groupStatusField.label) + ' for whole group…</option>'
+            + (groupStatusField.options||[]).map(o=>'<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>').join('') + '</select>'
+            + '<button class="btn btn-ghost btn-sm" data-action="group-status-apply" data-group-value="' + safeKey + '" data-status-field="' + groupStatusField.key + '">Apply</button>'
+            + '</span>') : '')
+        + '</div></td></tr>';
+      groupRows.forEach(r=>{ html += moduleRowHtml(mod, cols, r, selectable, moduleKey); });
+    });
+  }
   html += '</tbody></table>';
   return html;
 }
@@ -1986,13 +2308,66 @@ function wireModuleList(moduleKey){
     }
     const btn = e.target.closest('[data-action]');
     if(!btn) return;
-    const tr = e.target.closest('tr[data-id]');
-    const id = tr.dataset.id;
     const action = btn.dataset.action;
+    // Group-header actions (only present when the module is grouped —
+    // mod.groupByField/groupByMonth) act on a whole group at once, so they
+    // live outside any single tr[data-id] and are handled first.
+    if(action === 'group-add'){
+      const groupValue = btn.dataset.groupValue;
+      const presets = (mod.groupByField && groupValue && groupValue.charAt(0) !== '(') ? { [mod.groupByField]: groupValue } : null;
+      openModuleForm(moduleKey, null, presets);
+      return;
+    }
+    if(action === 'group-export'){
+      const groupValue = btn.dataset.groupValue;
+      const groupRecords = getActive(moduleKey).filter(r=>rowGroupKey(mod, r) === groupValue);
+      downloadText('fams-plus-' + moduleKey + '-' + groupValue.replace(/[^a-z0-9]+/gi,'-') + '-' + todayStr() + '.csv', recordsToCsv(mod, groupRecords), 'text/csv');
+      toast('Exported ' + groupRecords.length + ' record(s)', 'ok');
+      return;
+    }
+    if(action === 'group-status-apply'){
+      const groupValue = btn.dataset.groupValue;
+      const statusField = btn.dataset.statusField;
+      const select = wrap.querySelector('[data-group-status-select][data-group-value="' + CSS.escape(groupValue) + '"]');
+      const newStatus = select ? select.value : '';
+      if(!newStatus){ toast('Choose a status to apply first', 'danger'); return; }
+      const groupRecords = getActive(moduleKey).filter(r=>rowGroupKey(mod, r) === groupValue);
+      if(!confirm('Set ' + statusField + ' to "' + newStatus + '" for all ' + groupRecords.length + ' record(s) in this group?')) return;
+      btn.disabled = true;
+      try{
+        for(const r of groupRecords){
+          await updateRecord(moduleKey, r.id, { [statusField]: newStatus });
+        }
+        logAudit(moduleKey, 'Bulk status update', '', groupValue + ' → ' + newStatus + ' (' + groupRecords.length + ' records)');
+        toast('Updated ' + groupRecords.length + ' record(s)', 'ok');
+        refreshTable();
+      }finally{ btn.disabled = false; }
+      return;
+    }
+    const tr = e.target.closest('tr[data-id]');
+    if(!tr) return;
+    const id = tr.dataset.id;
     const rec = getRecord(moduleKey, id);
     if(!rec) return;
     if(action === 'edit') openModuleForm(moduleKey, id);
     else if(action === 'notes') openNotesDrawer(moduleKey, id);
+    else if(action === 'minutes'){
+      openModal('<h3 style="margin:0 0 10px;">📝 Minutes — ' + escapeHtml(rec[mod.titleField] || '') + '</h3>'
+        + '<div class="field"><textarea class="input" id="minutes-quick-edit" rows="8">' + escapeHtml(rec.minutes || '') + '</textarea></div>'
+        + '<div style="display:flex;gap:8px;"><button class="btn btn-primary" id="minutes-quick-save">Save</button><button class="btn btn-ghost" id="minutes-quick-cancel">Cancel</button></div>');
+      document.getElementById('minutes-quick-cancel').addEventListener('click', closeModal);
+      document.getElementById('minutes-quick-save').addEventListener('click', async ()=>{
+        const text = document.getElementById('minutes-quick-edit').value;
+        await updateRecord(moduleKey, id, { minutes: text });
+        logAudit(moduleKey, 'Updated minutes', id, rec[mod.titleField] || '');
+        toast('Minutes saved', 'ok');
+        closeModal();
+        refreshTable();
+      });
+    }
+    else if(action === 'raise-action'){
+      openModuleForm('action-items', null, { meetingId: id, action: 'Follow up: ' + (rec[mod.titleField] || 'meeting') });
+    }
     else if(action === 'email') openEmailComposeDrawer(moduleKey, [rec], refreshTable);
     else if(action === 'whatsapp') window.open(waLink(rec.phone), '_blank');
     else if(action === 'delete'){
@@ -2041,6 +2416,25 @@ function fieldInputHtml(mod, field, value, rec){
       + '<option value="">' + (curModKey ? '— Select a record —' : '— Select a menu first —') + '</option>' + opts + '</select>';
   }
   if(field.type === 'subtable') return subtableFieldHtml(field, Array.isArray(v) ? v : []);
+  // Subject / Subject Code: Timetable is the single source of truth for
+  // which subjects exist, so any OTHER module that re-asks for a Subject
+  // and/or Subject Code (Class Log, Question Bank, Internal Marks (CIA),
+  // Extra Classes, and Timetable itself) gets the same names offered as
+  // suggestions here via a <datalist> — typing/picking a match for one
+  // side auto-fills the other at save time if it's still blank (see
+  // applySubjectAutoFill()) so the same subject/code always maps the same
+  // way everywhere instead of risking a mismatched spelling or code.
+  if(field.type === 'text' && (field.key === 'subject' || field.key === 'subjectCode')){
+    const catalog = subjectCatalog();
+    if(catalog.length){
+      const listId = field.key === 'subject' ? 'subject-catalog-datalist' : 'subjectcode-catalog-datalist';
+      const opts = field.key === 'subject'
+        ? catalog.map(c=>c.subject)
+        : Array.from(new Set(catalog.map(c=>c.subjectCode).filter(Boolean)));
+      const dl = '<datalist id="' + listId + '">' + Array.from(new Set(opts)).map(o=>'<option value="' + escapeHtml(o) + '">').join('') + '</datalist>';
+      return '<input class="input" id="' + id + '" type="text" list="' + listId + '" value="' + escapeHtml(v) + '">' + dl;
+    }
+  }
   const typeMap = { text:'text', email:'email', phone:'tel', tel:'tel', number:'number', date:'date', time:'time', datetime:'datetime-local' };
   // step="any" on number inputs: without it, HTML5's default step (1) makes
   // the browser silently block form submission for any decimal value (e.g.
@@ -2048,6 +2442,42 @@ function fieldInputHtml(mod, field, value, rec){
   // nothing. Every hours/marks/amount field in the app is decimal-capable.
   const extraAttrs = field.type === 'number' ? ' step="any"' : '';
   return '<input class="input" id="' + id + '" type="' + (typeMap[field.type] || 'text') + '"' + extraAttrs + ' value="' + escapeHtml(v) + '">';
+}
+/** Canonical {subject, subjectCode} pairs, sourced from Timetable — see the
+ *  comment on fieldInputHtml's Subject/Subject Code handling above. */
+function subjectCatalog(){
+  const seen = {};
+  const list = [];
+  getActive('timetable').forEach(t=>{
+    if(!t.subject) return;
+    const key = t.subject + '||' + (t.subjectCode || '');
+    if(seen[key]) return;
+    seen[key] = true;
+    list.push({ subject: t.subject, subjectCode: t.subjectCode || '' });
+  });
+  return list;
+}
+/** Fills in a still-blank Subject or Subject Code from the Timetable
+ *  catalog, given whichever of the pair the user DID fill in — called once
+ *  at save time (see wireModuleForm's submit handler) rather than live
+ *  while the form is open. Deliberately not wired to live 'input'/'change'
+ *  events on the fields themselves: mutating one field's value as a
+ *  side-effect of typing in the other is a race against whatever set the
+ *  value in the first place (an external fill, a paste, a browser
+ *  autofill), and only needs to be correct once, at submit — not
+ *  continuously while the user is still typing. Never overwrites a value
+ *  the user already typed on the other side. */
+function applySubjectAutoFill(mod, data){
+  if(!mod.fields.some(f=>f.key==='subject') || !mod.fields.some(f=>f.key==='subjectCode')) return;
+  const subject = (data.subject || '').trim();
+  const code = (data.subjectCode || '').trim();
+  if(subject && !code){
+    const match = subjectCatalog().find(c=>c.subject.toLowerCase() === subject.toLowerCase());
+    if(match && match.subjectCode) data.subjectCode = match.subjectCode;
+  }else if(code && !subject){
+    const match = subjectCatalog().find(c=>c.subjectCode.toLowerCase() === code.toLowerCase());
+    if(match && match.subject) data.subject = match.subject;
+  }
 }
 
 /* ============================================================
@@ -2062,8 +2492,11 @@ function fieldInputHtml(mod, field, value, rec){
    collectSubtableValue() for how a field's rows are read back out of
    the DOM on form submit.
    ============================================================ */
-function subtableRowHtml(field, rowData){
+function subtableRowHtml(field, rowData, fixedLabel){
   rowData = rowData || {};
+  const labelCell = fixedLabel != null
+    ? '<td style="padding:8px;font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;">' + escapeHtml(fixedLabel) + '</td>'
+    : '';
   const cells = field.subfields.map(sf=>{
     const val = rowData[sf.key] != null ? rowData[sf.key] : '';
     if(sf.type === 'select'){
@@ -2072,20 +2505,35 @@ function subtableRowHtml(field, rowData){
     }
     return '<td style="padding:4px;"><input class="input subtable-cell" data-subkey="' + sf.key + '" type="text" value="' + escapeHtml(val) + '" placeholder="' + escapeHtml(sf.label) + '" style="min-width:110px;padding:6px 8px;font-size:12.5px;"></td>';
   }).join('');
-  return '<tr class="subtable-row">' + cells + '<td style="padding:4px;text-align:center;"><button type="button" class="btn btn-ghost btn-sm subtable-remove-row" title="Remove row" style="padding:4px 8px;">✕</button></td></tr>';
+  // A fixed row (part of a pre-defined list like Sem-1..Sem-6) can't be
+  // removed — that slot always exists — so it gets a blank trailing cell
+  // instead of the ✕ button, keeping column alignment with the header.
+  const trailingCell = fixedLabel != null
+    ? '<td></td>'
+    : '<td style="padding:4px;text-align:center;"><button type="button" class="btn btn-ghost btn-sm subtable-remove-row" title="Remove row" style="padding:4px 8px;">✕</button></td>';
+  return '<tr class="subtable-row"' + (fixedLabel != null ? ' data-fixed-label="' + escapeHtml(fixedLabel) + '"' : '') + '>'
+    + labelCell + cells + trailingCell + '</tr>';
 }
 function subtableFieldHtml(field, rows){
-  const headerCells = field.subfields.map(sf=>'<th style="text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-dim);padding:4px 8px;">' + escapeHtml(sf.label) + '</th>').join('') + '<th></th>';
-  const bodyRows = rows.map(r=>subtableRowHtml(field, r)).join('');
+  const labelHeader = field.fixedRows ? '<th style="text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-dim);padding:4px 8px;">' + escapeHtml(field.rowLabel || 'Row') + '</th>' : '';
+  const headerCells = labelHeader + field.subfields.map(sf=>'<th style="text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-dim);padding:4px 8px;">' + escapeHtml(sf.label) + '</th>').join('') + '<th></th>';
+  // Fixed-row mode: always render exactly one row per entry in field.fixedRows,
+  // in that order, matching each to any previously-saved data by its stored
+  // _rowLabel — so "Sem-3"'s marks land back in the "Sem-3" row on reopen
+  // regardless of what order rows happen to be stored in.
+  const bodyRows = field.fixedRows
+    ? field.fixedRows.map(label=>subtableRowHtml(field, rows.find(r=>r._rowLabel === label) || {}, label)).join('')
+    : rows.map(r=>subtableRowHtml(field, r)).join('');
   return '<div class="subtable-field" id="f_' + field.key + '">'
     + '<div style="overflow-x:auto;"><table class="subtable-table" style="width:100%;border-collapse:collapse;"><thead><tr>' + headerCells + '</tr></thead>'
     + '<tbody class="subtable-body">' + bodyRows + '</tbody></table></div>'
-    + '<button type="button" class="btn btn-ghost btn-sm subtable-add-row" style="margin-top:8px;">+ Add ' + escapeHtml(field.rowLabel || 'Row') + '</button>'
+    + (field.fixedRows ? '' : '<button type="button" class="btn btn-ghost btn-sm subtable-add-row" style="margin-top:8px;">+ Add ' + escapeHtml(field.rowLabel || 'Row') + '</button>')
     + '</div>';
 }
 /** Wires the +Add/✕Remove buttons for every subtable field in a just-opened
  *  record form. Called once from wireModuleForm() alongside the existing
- *  moduleRef/recordRef cascading-picker wiring. */
+ *  moduleRef/recordRef cascading-picker wiring. A fixed-row subtable has
+ *  neither button rendered, so this is simply a no-op for those fields. */
 function wireSubtableFields(mod){
   mod.fields.filter(f=>f.type === 'subtable').forEach(f=>{
     const container = document.getElementById('f_' + f.key);
@@ -2100,14 +2548,18 @@ function wireSubtableFields(mod){
   });
 }
 /** Reads a subtable field's current rows back out of the DOM (called from
- *  the record-form submit handler in place of the usual `el.value` read) —
- *  rows where every cell is blank are dropped so an untouched blank "+ Add
- *  Row" doesn't get saved as an empty member. */
+ *  the record-form submit handler in place of the usual `el.value` read).
+ *  Free-form rows where every cell is blank are dropped so an untouched
+ *  blank "+ Add Row" doesn't get saved as an empty member. Fixed rows are
+ *  always kept (blank or not) — the slot for "Sem-4" should still exist
+ *  next time the form opens even before that semester's mark is entered —
+ *  tagged with _rowLabel so subtableFieldHtml can match it back up. */
 function collectSubtableValue(field){
   const container = document.getElementById('f_' + field.key);
   if(!container) return [];
   const result = [];
   container.querySelectorAll('.subtable-row').forEach(tr=>{
+    const fixedLabel = tr.dataset.fixedLabel;
     const obj = {};
     let hasAny = false;
     field.subfields.forEach(sf=>{
@@ -2116,7 +2568,8 @@ function collectSubtableValue(field){
       if(val) hasAny = true;
       obj[sf.key] = val;
     });
-    if(hasAny) result.push(obj);
+    if(fixedLabel != null){ obj._rowLabel = fixedLabel; result.push(obj); }
+    else if(hasAny) result.push(obj);
   });
   return result;
 }
@@ -2132,13 +2585,16 @@ function notesTabHtml(rec){
   return html;
 }
 
-function openModuleForm(moduleKey, id){
+function openModuleForm(moduleKey, id, presets){
   const mod = MODULES[moduleKey];
   const rec = id ? getRecord(moduleKey, id) : null;
   let html = '<h3 style="margin:0 0 4px;padding-right:26px;">' + (rec ? 'Edit ' : 'Add ') + escapeHtml(mod.label) + '</h3>';
   if(rec) html += '<div class="drawer-tabs"><div class="drawer-tab active" data-tab="details">Details</div><div class="drawer-tab" data-tab="notes">Notes (' + ((rec.notes || []).length) + ')</div></div>';
   html += '<div id="tab-details"><form id="record-form">';
-  mod.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : undefined, rec) + '</div>'; });
+  // presets: only used when adding a brand-new record (e.g. clicking
+  // "+ Add to this group" from a grouped list view) to pre-fill one field —
+  // like the group's own value — so the new record lands in that same group.
+  mod.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec) + '</div>'; });
   html += '<div class="error-box" id="form-error"></div>';
   html += '<div style="display:flex;gap:8px;margin-top:6px;"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" id="form-cancel">Cancel</button></div>';
   html += '</form></div>';
@@ -2195,6 +2651,13 @@ function wireModuleForm(moduleKey, id){
       if(btn.disabled) return;
       const errEl = document.getElementById('form-error');
       errEl.textContent = '';
+      // Collected in TWO passes: first every field's raw value with no
+      // required-ness check yet, then applySubjectAutoFill() gets a chance
+      // to fill in a still-blank Subject/Subject Code from the Timetable
+      // catalog, and only THEN is "is this required field actually filled
+      // in" checked — otherwise a Subject Code left blank on purpose
+      // (relying on the auto-fill) would wrongly be rejected as missing
+      // before the auto-fill ever got to run.
       const data = {};
       for(let i=0;i<mod.fields.length;i++){
         const f = mod.fields[i];
@@ -2202,8 +2665,19 @@ function wireModuleForm(moduleKey, id){
         const el = document.getElementById('f_' + f.key);
         let v = el.value;
         if(f.type === 'number') v = v === '' ? '' : Number(v);
-        if(f.required && (v === '' || v == null)){ errEl.textContent = f.label + ' is required.'; el.focus(); return; }
         data[f.key] = v;
+      }
+      applySubjectAutoFill(mod, data);
+      for(let i=0;i<mod.fields.length;i++){
+        const f = mod.fields[i];
+        if(f.type === 'subtable') continue;
+        const v = data[f.key];
+        if(f.required && (v === '' || v == null)){
+          errEl.textContent = f.label + ' is required.';
+          const el = document.getElementById('f_' + f.key);
+          if(el) el.focus();
+          return;
+        }
       }
       btn.disabled = true; btn.textContent = 'Saving…';
       try{
@@ -2490,6 +2964,21 @@ function timeRangeHours(start, end){
   const mins = b - a;
   return mins > 0 ? Math.round((mins/60)*100)/100 : 0;
 }
+/** Preferred duration for any record with From Time/To Time fields (Meetings,
+ *  Invigilation Duty, Extra/Additional Classes, Lab Exams, Research Events):
+ *  the real elapsed time between them when both are filled in, falling back
+ *  to that record's own manual "Duration (hours)" number field otherwise
+ *  (older records, or ones where only a total was typed without a specific
+ *  from/to) — used everywhere those hours are counted (Time Spent, the
+ *  auto-logged Work Diary entry) so a real From/To always wins over a
+ *  possibly-stale manual number. */
+function computedDurationHours(rec){
+  if(rec.fromTime && rec.toTime){
+    const hrs = timeRangeHours(rec.fromTime, rec.toTime);
+    if(hrs) return hrs;
+  }
+  return parseFloat(rec.durationHours) || 0;
+}
 
 function upcomingItems(days){
   const today = todayStr();
@@ -2618,101 +3107,35 @@ function weekdayClassCounts(){
 }
 /** Sources of actual logged hours besides the Work Diary — anywhere else in
  *  the app that has (or can derive) a real duration for something you did.
- *  Each entry's `label` becomes its own bucket in the Time Spent chart. */
-const TIME_SPENT_EXTRA_SOURCES = [
-  { key:'meetings', label:'Meetings' },
-  { key:'invigilation-duties', label:'Invigilation Duty' },
-  { key:'extra-classes', label:'Extra Classes' },
-  { key:'lab-exams', label:'Lab Exams' },
-  { key:'research-events', label:'Research Events' }
-];
+ *  Every one of them (Class Log rows marked "Held", Meetings, Invigilation
+ *  Duty, Extra/Additional Classes, Lab Exams, Research Events) is
+ *  auto-logged into the Work Diary as it's saved — see
+ *  AUTO_WORK_DIARY_SOURCES/syncAutoWorkDiaryEntry — so the Work Diary
+ *  itself is already the single combined source of real hours; nothing
+ *  else needs to be re-scanned here (and doing so would double-count it). */
 /** Total hours spent, aggregated for the current month (falling back to
  *  all-time totals — flagged via `fallback` — before this month has
- *  anything logged) from EVERY place in the app that records real time, not
- *  just the Work Diary:
- *   - Work Diary's own hoursSpent, grouped by its own category.
- *   - Classes actually held (Class Log rows marked "Held"): duration is
- *     computed automatically from the matching Timetable slot's Start/End
- *     Time (same subject + subject code + weekday); a Class Log row's own
- *     optional Duration field is used instead when no Timetable slot
- *     matches (e.g. an ad-hoc class never added to the Timetable).
- *   - The optional "Duration (hours)" field on Meetings, Invigilation Duty,
- *     Extra/Additional Classes, Lab Exams and Research Events — opt-in per
- *     record (left blank = 0 = not counted), so nothing here is guessed. */
+ *  anything logged), bucketed by Work Diary Category. */
 function timeSpentBreakdown(){
   const monthPrefix = todayStr().slice(0,7);
   const inMonth = (d)=>String(d||'').startsWith(monthPrefix);
-  const anyThisMonth = getActive('work-diary').some(w=>inMonth(w.date))
-    || getActive('class-log').some(c=>c.status==='Held' && inMonth(c.date))
-    || TIME_SPENT_EXTRA_SOURCES.some(src=>{
-      const dateField = MODULES[src.key].dateField;
-      return getActive(src.key).some(r=>inMonth(dateField ? r[dateField] : null) && (parseFloat(r.durationHours) || 0) > 0);
-    });
-  const fallback = !anyThisMonth;
+  const wd = getActive('work-diary');
+  const fallback = !wd.some(w=>inMonth(w.date));
   const byCat = {};
   const add = (cat, hrs)=>{ if(!hrs) return; byCat[cat] = (byCat[cat] || 0) + hrs; };
-
-  getActive('work-diary').forEach(w=>{
+  wd.forEach(w=>{
     if(!fallback && !inMonth(w.date)) return;
     add(w.category || '(Uncategorized)', parseFloat(w.hoursSpent) || 0);
   });
-
-  const timetableByKey = {};
-  getActive('timetable').forEach(t=>{
-    const key = (t.subject||'') + '|' + (t.subjectCode||'') + '|' + (t.day||'');
-    if(!timetableByKey[key]) timetableByKey[key] = t;
-  });
-  getActive('class-log').filter(c=>c.status==='Held').forEach(c=>{
-    if(!fallback && !inMonth(c.date)) return;
-    let hrs = parseFloat(c.durationHours) || 0;
-    if(!hrs && c.date){
-      const dow = DOW_NAMES3[new Date(c.date + 'T00:00:00').getDay()];
-      const t = timetableByKey[(c.subject||'') + '|' + (c.subjectCode||'') + '|' + dow];
-      if(t) hrs = timeRangeHours(t.startTime, t.endTime);
-    }
-    add('Teaching (Classes Held)', hrs);
-  });
-
-  TIME_SPENT_EXTRA_SOURCES.forEach(src=>{
-    const dateField = MODULES[src.key].dateField;
-    getActive(src.key).forEach(r=>{
-      const d = dateField ? r[dateField] : null;
-      if(!fallback && !inMonth(d)) return;
-      add(src.label, parseFloat(r.durationHours) || 0);
-    });
-  });
-
   return { byCat: byCat, fallback: fallback };
 }
-/** Same combined sources as timeSpentBreakdown(), but summed to a single
+/** Same combined source as timeSpentBreakdown(), but summed to a single
  *  number over an explicit [start,end] date range (inclusive, 'YYYY-MM-DD')
- *  with no fallback — used for "Hours Logged This Week" on the Dashboard,
- *  so that stat reflects real work from everywhere too, not just Work Diary. */
+ *  with no fallback — used for "Hours Logged This Week" on the Dashboard. */
 function totalHoursInRange(start, end){
   const inRange = (d)=>d && d >= start && d <= end;
   let total = 0;
   getActive('work-diary').forEach(w=>{ if(inRange(w.date)) total += parseFloat(w.hoursSpent) || 0; });
-  const timetableByKey = {};
-  getActive('timetable').forEach(t=>{
-    const key = (t.subject||'') + '|' + (t.subjectCode||'') + '|' + (t.day||'');
-    if(!timetableByKey[key]) timetableByKey[key] = t;
-  });
-  getActive('class-log').filter(c=>c.status==='Held').forEach(c=>{
-    if(!inRange(c.date)) return;
-    let hrs = parseFloat(c.durationHours) || 0;
-    if(!hrs){
-      const dow = DOW_NAMES3[new Date(c.date + 'T00:00:00').getDay()];
-      const t = timetableByKey[(c.subject||'') + '|' + (c.subjectCode||'') + '|' + dow];
-      if(t) hrs = timeRangeHours(t.startTime, t.endTime);
-    }
-    total += hrs;
-  });
-  TIME_SPENT_EXTRA_SOURCES.forEach(src=>{
-    const dateField = MODULES[src.key].dateField;
-    getActive(src.key).forEach(r=>{
-      if(inRange(dateField ? r[dateField] : null)) total += parseFloat(r.durationHours) || 0;
-    });
-  });
   return total;
 }
 function relativeTime(iso){
@@ -2758,30 +3181,33 @@ function animateCount(el, target, duration, suffix){
   }
   requestAnimationFrame(tick);
 }
-function statCardHtml(icon, num, label, color, trend, compact){
-  return '<div class="stat-card' + (compact ? ' compact' : '') + '"><div class="stat-icon" style="background:' + color + '22;color:' + color + ';">' + icon + '</div>'
+function statCardHtml(icon, num, label, color, trend, compact, href){
+  const tag = href ? 'a' : 'div';
+  return '<' + tag + (href ? ' href="' + href + '"' : '') + ' class="stat-card' + (compact ? ' compact' : '') + '"><div class="stat-icon" style="background:' + color + '22;color:' + color + ';">' + icon + '</div>'
     + '<div><div class="stat-num" data-count="' + num + '">0</div><div class="stat-label">' + escapeHtml(label) + '</div>'
-    + (trend ? '<div class="stat-trend ' + trend.cls + '">' + escapeHtml(trend.text) + '</div>' : '') + '</div></div>';
+    + (trend ? '<div class="stat-trend ' + trend.cls + '">' + escapeHtml(trend.text) + '</div>' : '') + '</div></' + tag + '>';
 }
-function progressRingHtml(percent, color, label, sub){
+function progressRingHtml(percent, color, label, sub, href){
   const p = Math.max(0, Math.min(100, Math.round(percent)));
   const deg = p * 3.6;
   const style = 'background:conic-gradient(' + color + ' ' + deg + 'deg, var(--border) ' + deg + 'deg 360deg);';
-  return '<div class="ring-wrap"><div class="ring" style="' + style + '">'
+  const tag = href ? 'a' : 'div';
+  return '<' + tag + (href ? ' href="' + href + '"' : '') + ' class="ring-wrap"><div class="ring" style="' + style + '">'
     + '<div style="width:56px;height:56px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;"><span class="ring-num" data-count="' + p + '">0%</span></div></div>'
-    + '<div><div class="ring-label">' + escapeHtml(label) + '</div><div class="ring-sub">' + escapeHtml(sub) + '</div></div></div>';
+    + '<div><div class="ring-label">' + escapeHtml(label) + '</div><div class="ring-sub">' + escapeHtml(sub) + '</div></div></' + tag + '>';
 }
 function renderDashboard(){
   const q = quoteOfTheDay();
   const classes = todaysClasses();
   const dayStatus = todayDayStatus();
-  const upcoming = upcomingItems(7);
+  const upcoming = upcomingItems(30);
   const overdue = overdueItems();
   const openActions = getActive('action-items').filter(a=>a.status!=='Done').length;
   const totalActions = getActive('action-items').length;
   const doneActions = totalActions - openActions;
   const openReminders = getActive('reminders').filter(r=>r.status!=='Done').length;
   const pendingLeave = getActive('leave-records').filter(l=>l.status==='Applied').length;
+  const openFollowups = getActive('office-followups').filter(o=>o.status!=='Resolved').length;
 
   const weekStart = startOfWeekStr();
   const weekEnd = endOfWeekStr();
@@ -2818,18 +3244,21 @@ function renderDashboard(){
     + '<button class="qa-btn" data-qa="action-items">☑️ Add Action Item</button>'
     + '<button class="qa-btn" data-qa="reminders">🔔 Add Reminder</button>'
     + '<button class="qa-btn" data-qa="office-followups">📮 Add Office Follow-up</button>'
+    + '<button class="qa-btn" data-qa="leave-records">🗓️ Apply Leave/OD</button>'
+    + '<button class="qa-btn" data-qa="holidays">🏖️ Add Holiday</button>'
     + '</div></div>';
 
   // One consolidated stat strip — merges the old "today" row and the old
   // separate "this week at a glance" row into a single set of compact cards,
   // so the same numbers aren't shown twice in two different sections.
-  html += '<div class="grid grid-6" style="margin:14px 0;">'
-    + statCardHtml('📘', classes.length, "Today's Classes", AREA_COLORS.teaching, { cls:'flat', text: timetableSlots + ' this week' }, true)
-    + statCardHtml('☑️', openActions, 'Open Action Items', AREA_COLORS.meetings, totalActions ? { cls:'flat', text: doneActions + ' of ' + totalActions + ' done' } : null, true)
-    + statCardHtml('🔔', openReminders, 'Open Reminders', AREA_COLORS.reminders, null, true)
-    + statCardHtml('🗓️', pendingLeave, 'Pending Leave/OD', AREA_COLORS.incharge, null, true)
-    + statCardHtml('📅', meetingsThisWeek, 'Meetings This Week', AREA_COLORS.meetings, null, true)
-    + statCardHtml('📔', Math.round(hoursThisWeek * 10) / 10, 'Hours Spent This Week', AREA_COLORS['work-diary'], null, true)
+  html += '<div class="grid grid-4" style="margin:14px 0;">'
+    + statCardHtml('📘', classes.length, "Today's Classes", AREA_COLORS.teaching, { cls:'flat', text: timetableSlots + ' this week' }, true, '#/module/timetable')
+    + statCardHtml('📅', meetingsThisWeek, 'Meetings This Week', AREA_COLORS.meetings, null, true, '#/module/meetings')
+    + statCardHtml('☑️', openActions, 'Open Action Items', AREA_COLORS.meetings, totalActions ? { cls:'flat', text: doneActions + ' of ' + totalActions + ' done' } : null, true, '#/module/action-items')
+    + statCardHtml('🔔', openReminders, 'Open Reminders', AREA_COLORS.reminders, null, true, '#/module/reminders')
+    + statCardHtml('📮', openFollowups, 'Open Office Follow-ups', AREA_COLORS['office-followups'], null, true, '#/module/office-followups')
+    + statCardHtml('🗓️', pendingLeave, 'Pending Leave/OD', AREA_COLORS.incharge, null, true, '#/module/leave-records')
+    + statCardHtml('📔', Math.round(hoursThisWeek * 10) / 10, 'Hours Spent This Week', AREA_COLORS['work-diary'], null, true, '#/module/work-diary')
     + '</div>';
 
   if(overdue.length > 0){
@@ -2847,43 +3276,55 @@ function renderDashboard(){
     html += '<div class="activity-item urgency-today" style="padding-left:8px;background:#fff7ec;border-radius:6px;margin-bottom:8px;">🗓️ <b>You are on approved ' + escapeHtml(dayStatus.leave.type || 'Leave') + ' today.</b> Classes below may need rescheduling. <i>(auto-detected from Leave / OD)</i></div>';
   }
   html += (classes.length
-    ? classes.map(c=>'<a href="#/module/timetable" class="dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + (dayStatus.holiday || dayStatus.leave ? 'var(--warn,#d97706)' : AREA_COLORS.teaching) + ';font-size:13px;' + (dayStatus.holiday ? 'opacity:.55;text-decoration:line-through;' : '') + '"><b>' + escapeHtml(c.startTime||'') + '–' + escapeHtml(c.endTime||'') + '</b>&nbsp; ' + escapeHtml(c.subject||'') + ' <span style="color:var(--text-dim);">(' + escapeHtml(c.section||'') + ', ' + escapeHtml(c.venue||'') + ')</span></a>').join('')
+    ? classes.map(c=>'<a href="#/module/timetable" class="dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + (dayStatus.holiday || dayStatus.leave ? 'var(--warn,#d97706)' : AREA_COLORS.teaching) + ';font-size:13px;' + (dayStatus.holiday ? 'opacity:.55;text-decoration:line-through;' : '') + '"><b>' + escapeHtml(fmtTime12(c.startTime)) + '–' + escapeHtml(fmtTime12(c.endTime)) + '</b>&nbsp; ' + escapeHtml(c.subject||'') + ' <span style="color:var(--text-dim);">(' + escapeHtml(c.section||'') + ', ' + escapeHtml(c.venue||'') + ')</span></a>').join('')
     : '<div class="empty">No classes today. Enjoy the breathing room.</div>') + '</div>';
-  html += '<div class="card"><h3>⏰ Upcoming (next 7 days)</h3>' + (upcoming.length
+  html += '<div class="card"><h3>⏰ Upcoming (next 30 days)</h3>' + (upcoming.length
     ? upcoming.slice(0,10).map(it=>'<a href="#/module/' + it.moduleKey + '" class="' + urgencyClass(it.date) + ' dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;gap:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span><span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></a>').join('')
-    : '<div class="empty">Nothing due in the next 7 days.</div>') + '</div>';
+    : '<div class="empty">Nothing due in the next 30 days.</div>') + '</div>';
   html += '</div>';
 
   html += '<div class="grid grid-2" style="margin-top:16px;">';
   html += '<div class="card"><h3>📈 Progress</h3><div style="display:flex;flex-direction:column;gap:16px;">'
-    + progressRingHtml(actionPct, AREA_COLORS.meetings, 'Action Items Closed', doneActions + ' of ' + totalActions + ' total')
-    + progressRingHtml(weekPct, AREA_COLORS.teaching, 'Classes Logged This Week', classLogThisWeek + ' of ' + timetableSlots + ' weekly slots')
+    + progressRingHtml(actionPct, AREA_COLORS.meetings, 'Action Items Closed', doneActions + ' of ' + totalActions + ' total', '#/module/action-items')
+    + progressRingHtml(weekPct, AREA_COLORS.teaching, 'Classes Logged This Week', classLogThisWeek + ' of ' + timetableSlots + ' weekly slots', '#/module/class-log')
     + '</div></div>';
-  const activity = recentActivity(8);
-  html += '<div class="card"><h3>🕒 Recent Activity</h3><div class="activity-feed">' + (activity.length
-    ? activity.map(a=>'<div class="activity-item"><span class="activity-dot" style="background:' + a.color + ';"></span>'
-      + '<span style="flex:1;">' + a.icon + ' <a href="#/module/' + a.moduleKey + '">' + escapeHtml(a.label) + '</a>: ' + escapeHtml(a.title) + (a.isNew ? ' <span class="badge badge-ok" style="padding:1px 6px;">new</span>' : '') + '</span>'
-      + '<span class="activity-time">' + relativeTime(a.at) + '</span></div>').join('')
-    : '<div class="empty">No activity yet — start by adding a record in any module.</div>') + '</div></div>';
+  html += '<div class="card"><h3>🧭 Deadlines by Area <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(overdue + next 30 days)</span></h3>'
+    + (areaChips.length > 0
+      ? '<div class="area-chip-row">' + areaChips.map(a=>{
+          const linkKey = MODULE_KEYS.find(k=>MODULES[k].menu===a.menu);
+          const tag = linkKey ? 'a' : 'span';
+          return '<' + tag + (linkKey ? ' href="#/module/' + linkKey + '"' : '') + ' class="area-chip"><span class="dot" style="background:' + a.color + ';"></span>' + escapeHtml(a.label) + ' <span class="n">' + a.count + '</span></' + tag + '>';
+        }).join('') + '</div>'
+      : '<div class="empty">Nothing overdue or due in the next 30 days.</div>') + '</div>';
   html += '</div>';
 
-  if(areaChips.length > 0){
-    html += '<div class="card" style="margin-top:16px;"><h3>🧭 Deadlines by Area <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(overdue + next 30 days)</span></h3>'
-      + '<div class="area-chip-row">' + areaChips.map(a=>'<span class="area-chip"><span class="dot" style="background:' + a.color + ';"></span>' + escapeHtml(a.label) + ' <span class="n">' + a.count + '</span></span>').join('')
-      + '</div></div>';
-  }
-
   html += '<div class="grid grid-2" style="margin-top:16px;">';
-  html += '<div class="card"><h3>📘 This Week\'s Teaching Load</h3>' + (chartsAvailable
+  html += '<div class="card"><h3>📘 This Week\'s Teaching Load<a href="#/module/timetable" class="dash-link" style="display:inline;margin-left:auto;font-size:11.5px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View Timetable →</a></h3>' + (chartsAvailable
     ? '<canvas id="dash-chart-week" height="140"></canvas>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>') + '</div>';
-  html += '<div class="card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + ' <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(Work Diary + classes held + logged durations)</span></h3>' + (chartsAvailable
+  html += '<div class="card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + ' <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(Work Diary + classes held + logged durations)</span><a href="#/module/work-diary" class="dash-link" style="display:inline;margin-left:auto;font-size:11.5px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View Work Diary →</a></h3>' + (chartsAvailable
     ? '<canvas id="dash-chart-time" height="140"></canvas>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>')
     + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:14px 0 0;">Nothing logged yet — add Work Diary entries, mark classes Held in Class Log, or fill in an optional Duration on Meetings/Invigilation Duty/Extra Classes/Lab Exams/Research Events.</div>' : '') + '</div>';
   html += '</div>';
 
-  return html;
+  return '<div class="dash-layout"><div class="dash-main">' + html + '</div>' + dashboardTickerHtml() + '</div>';
+}
+/** A small auto-scrolling "latest updates" ticker for the right side of the
+ *  Dashboard — up to 10 of the most recently added/changed records across
+ *  every module (reusing recentActivity's own cross-module feed), each shown
+ *  as just an icon + title that links straight to its module. The list is
+ *  rendered twice back-to-back and looped with a plain CSS keyframe
+ *  animation (translateY 0 → -50%) so it scrolls continuously bottom-to-top
+ *  with no JS timer; hovering pauses it so a title can actually be clicked. */
+function dashboardTickerHtml(){
+  const items = recentActivity(10);
+  if(items.length === 0){
+    return '<div class="news-ticker"><h3>📰 Latest Updates</h3><div class="empty">Nothing yet — add a record in any module to see updates here.</div></div>';
+  }
+  const itemHtml = items.map(a=>'<a href="#/module/' + a.moduleKey + '" class="ticker-item" title="' + escapeHtml(a.label) + ': ' + escapeHtml(a.title) + '">' + a.icon + ' ' + escapeHtml(a.title) + '</a>').join('');
+  return '<div class="news-ticker"><h3>📰 Latest Updates</h3>'
+    + '<div class="news-ticker-viewport"><div class="news-ticker-track">' + itemHtml + itemHtml + '</div></div></div>';
 }
 let DASHBOARD_CHARTS = [];
 function destroyDashboardCharts(){ DASHBOARD_CHARTS.forEach(c=>{ try{ c.destroy(); }catch(e){} }); DASHBOARD_CHARTS = []; }
@@ -2929,25 +3370,49 @@ function wireDashboard(){
    generic table, since a Mon–Sat x time grid reads far better
    than a flat list for a recurring weekly schedule).
    ============================================================ */
-/** Per-subject teaching-hours tracker: weekly recurring slot count (from
- *  Timetable), hours actually taken so far (Held entries in Class Log up to
- *  today), and hours remaining — weekly slots × remaining teaching weeks
+/** Per-subject teaching-hours tracker: weekly recurring hours (from
+ *  Timetable's actual Start/End Time on each slot — NOT a flat "1 hour per
+ *  entry" count, since a slot can span more or less than an hour), hours
+ *  actually taken so far (Held entries in Class Log up to today, again
+ *  using the real duration — the matching Timetable slot's Start/End Time,
+ *  or that Class Log row's own optional Duration field when no slot
+ *  matches), and hours remaining — weekly hours × remaining teaching weeks
  *  until the current term's End Date (Admin & Settings → Academic Term).
  *  hoursRemaining is null (shown as "—") until an End Date is set, since
- *  there's nothing to compute it from. Subjects are matched by Subject +
- *  Subject Code together so two different courses that happen to share a
- *  plain-text subject name aren't merged into one row. */
+ *  there's nothing to compute it from. Rows are matched by Subject + Subject
+ *  Code + Section + Batch Number together, so two different sections or lab
+ *  batches of the very same subject/code are always kept as their own
+ *  separate row rather than being merged into one. */
 function subjectHoursSummary(){
   const bySubject = {};
   getActive('timetable').filter(t=>t.status !== 'Cancelled').forEach(t=>{
-    const key = (t.subjectCode || '') + '||' + (t.subject || '');
-    if(!bySubject[key]) bySubject[key] = { subject: t.subject || '(blank)', subjectCode: t.subjectCode || '', weeklySlots: 0, hoursTaken: 0 };
+    const key = (t.subjectCode || '') + '||' + (t.subject || '') + '||' + (t.section || '') + '||' + (t.batchNumber || '');
+    if(!bySubject[key]) bySubject[key] = { subject: t.subject || '(blank)', subjectCode: t.subjectCode || '', section: t.section || '', batchNumber: t.batchNumber || '', weeklySlots: 0, weeklyHours: 0, hoursTaken: 0 };
     bySubject[key].weeklySlots++;
+    bySubject[key].weeklyHours += (timeRangeHours(t.startTime, t.endTime) || 1);
+  });
+  const timetableByKey = {};
+  getActive('timetable').forEach(t=>{
+    const key = (t.subject||'') + '|' + (t.subjectCode||'') + '|' + (t.day||'') + '|' + (t.section||'') + '|' + (t.batchNumber||'');
+    if(!timetableByKey[key]) timetableByKey[key] = t;
   });
   const today = todayStr();
   getActive('class-log').filter(c=>c.status === 'Held' && c.date && c.date <= today).forEach(c=>{
-    const key = (c.subjectCode || '') + '||' + (c.subject || '');
-    if(bySubject[key]) bySubject[key].hoursTaken++;
+    // A Class Log row doesn't have its own Section/Batch fields, so it's
+    // matched to whichever of that subject/code's Timetable rows exists —
+    // if the subject/code is split across multiple sections/batches, its
+    // hours land on the first matching row (still far more accurate than
+    // the old flat "+1" per class held).
+    const matchKey = Object.keys(bySubject).find(k=>k.indexOf((c.subjectCode || '') + '||' + (c.subject || '') + '||') === 0);
+    if(!matchKey) return;
+    let hrs = parseFloat(c.durationHours) || 0;
+    if(!hrs && c.date){
+      const dow = DOW_NAMES3[new Date(c.date + 'T00:00:00').getDay()];
+      const s = bySubject[matchKey];
+      const t = timetableByKey[(c.subject||'') + '|' + (c.subjectCode||'') + '|' + dow + '|' + s.section + '|' + s.batchNumber];
+      hrs = t ? (timeRangeHours(t.startTime, t.endTime) || 1) : 1;
+    }
+    bySubject[matchKey].hoursTaken += hrs;
   });
   const endDate = (STATE.config || {}).termEndDate || '';
   let remainingWeeks = null;
@@ -2959,9 +3424,12 @@ function subjectHoursSummary(){
   }
   return Object.keys(bySubject).map(key=>{
     const s = bySubject[key];
-    return { subject: s.subject, subjectCode: s.subjectCode, weeklySlots: s.weeklySlots, hoursTaken: s.hoursTaken,
-      hoursRemaining: remainingWeeks == null ? null : s.weeklySlots * remainingWeeks };
-  }).sort((a,b)=> a.subject.localeCompare(b.subject));
+    const weeklyHours = Math.round(s.weeklyHours * 100) / 100;
+    const hoursTaken = Math.round(s.hoursTaken * 100) / 100;
+    return { subject: s.subject, subjectCode: s.subjectCode, section: s.section, batchNumber: s.batchNumber,
+      weeklySlots: s.weeklySlots, weeklyHours: weeklyHours, hoursTaken: hoursTaken,
+      hoursRemaining: remainingWeeks == null ? null : Math.round(weeklyHours * remainingWeeks * 100) / 100 };
+  }).sort((a,b)=> a.subject.localeCompare(b.subject) || a.section.localeCompare(b.section) || a.batchNumber.localeCompare(b.batchNumber));
 }
 function subjectHoursSummaryHtml(){
   const rows = subjectHoursSummary();
@@ -2977,6 +3445,8 @@ function subjectHoursSummaryHtml(){
   html += '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;"><thead><tr>'
     + '<th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Subject</th>'
     + '<th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Code</th>'
+    + '<th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Section</th>'
+    + '<th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Batch</th>'
     + '<th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Weekly Hrs</th>'
     + '<th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Hours Taken</th>'
     + '<th style="text-align:right;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Hours Remaining</th>'
@@ -2984,7 +3454,9 @@ function subjectHoursSummaryHtml(){
   rows.forEach(r=>{
     html += '<tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + escapeHtml(r.subject) + '</td>'
       + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;" class="mono">' + escapeHtml(r.subjectCode || '—') + '</td>'
-      + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right;">' + r.weeklySlots + '</td>'
+      + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + escapeHtml(r.section || '—') + '</td>'
+      + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;">' + escapeHtml(r.batchNumber || '—') + '</td>'
+      + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right;">' + r.weeklyHours + '</td>'
       + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right;">' + r.hoursTaken + '</td>'
       + '<td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right;">' + (r.hoursRemaining == null ? '<span style="color:var(--text-faint);">—</span>' : r.hoursRemaining) + '</td>'
       + '</tr>';
@@ -3013,13 +3485,20 @@ function renderTimetableScreen(){
       + days.map(d=>'<th style="padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:11px;color:var(--text-dim);">' + d + '</th>').join('')
       + '</tr></thead><tbody>';
     slots.forEach(slot=>{
-      html += '<tr><td class="mono" style="padding:10px;border-bottom:1px solid var(--border);font-size:12px;white-space:nowrap;">' + escapeHtml(slot) + '</td>';
+      const slotParts = slot.split('–');
+      const slotLabel = fmtTime12(slotParts[0]) + '–' + fmtTime12(slotParts[1]);
+      html += '<tr><td class="mono" style="padding:10px;border-bottom:1px solid var(--border);font-size:12px;white-space:nowrap;">' + escapeHtml(slotLabel) + '</td>';
       days.forEach(d=>{
         const cell = rows.find(r=>(r.startTime||'')+'–'+(r.endTime||'') === slot && r.day === d);
         if(cell){
+          // Subject Code is shown right under the subject name so two
+          // different courses that happen to share a subject name are still
+          // told apart at a glance; Batch Number (only set on Laboratory
+          // sessions) is appended to the section/venue line when present.
           html += '<td data-id="' + cell.id + '" data-action="edit-cell" style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;vertical-align:top;font-size:12px;'
             + (cell.status==='Cancelled' ? 'opacity:.5;text-decoration:line-through;' : '') + '">'
-            + '<b>' + escapeHtml(cell.subject||'') + '</b><br><span style="color:var(--text-dim);">' + escapeHtml(cell.section||'') + (cell.venue?(' · '+escapeHtml(cell.venue)):'') + '</span></td>';
+            + '<b>' + escapeHtml(cell.subject||'') + '</b>' + (cell.subjectCode ? (' <span class="mono" style="color:var(--text-dim);font-size:10.5px;">' + escapeHtml(cell.subjectCode) + '</span>') : '')
+            + '<br><span style="color:var(--text-dim);">' + escapeHtml(cell.section||'') + (cell.batchNumber ? (' · Batch ' + escapeHtml(cell.batchNumber)) : '') + (cell.venue?(' · '+escapeHtml(cell.venue)):'') + '</span></td>';
         }else{
           html += '<td style="padding:8px;border-bottom:1px solid var(--border);"></td>';
         }
@@ -3140,32 +3619,14 @@ function wireAnalytics(){
   }));
 
   // All-time version of the same combined breakdown the Dashboard shows for
-  // "this month" — Work Diary + classes held + logged durations elsewhere —
-  // so Analytics gives the full-history picture rather than just Work Diary.
+  // "this month" — classes held, meetings, invigilation duty, extra classes,
+  // lab exams and research events (anywhere with a real, computable
+  // duration) are all auto-logged into the Work Diary as they're saved (see
+  // AUTO_WORK_DIARY_SOURCES), so reading Work Diary's own categories here
+  // already gives the full combined picture — no need to re-scan each of
+  // those modules separately (and doing so would double-count them).
   const hoursByCategory = {};
   getActive('work-diary').forEach(r=>{ const cat = r.category || '(blank)'; hoursByCategory[cat] = (hoursByCategory[cat] || 0) + (parseFloat(r.hoursSpent) || 0); });
-  (function(){
-    const timetableByKey = {};
-    getActive('timetable').forEach(t=>{
-      const key = (t.subject||'') + '|' + (t.subjectCode||'') + '|' + (t.day||'');
-      if(!timetableByKey[key]) timetableByKey[key] = t;
-    });
-    getActive('class-log').filter(c=>c.status==='Held').forEach(c=>{
-      let hrs = parseFloat(c.durationHours) || 0;
-      if(!hrs && c.date){
-        const dow = DOW_NAMES3[new Date(c.date + 'T00:00:00').getDay()];
-        const t = timetableByKey[(c.subject||'') + '|' + (c.subjectCode||'') + '|' + dow];
-        if(t) hrs = timeRangeHours(t.startTime, t.endTime);
-      }
-      if(hrs) hoursByCategory['Teaching (Classes Held)'] = (hoursByCategory['Teaching (Classes Held)'] || 0) + hrs;
-    });
-  })();
-  TIME_SPENT_EXTRA_SOURCES.forEach(src=>{
-    getActive(src.key).forEach(r=>{
-      const hrs = parseFloat(r.durationHours) || 0;
-      if(hrs) hoursByCategory[src.label] = (hoursByCategory[src.label] || 0) + hrs;
-    });
-  });
   ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-time'), {
     type:'bar',
     data:{ labels:Object.keys(hoursByCategory), datasets:[{ label:'Hours logged', data:Object.values(hoursByCategory), backgroundColor:'#4b2e83' }] },
@@ -3229,7 +3690,11 @@ function allAcademicTerms(){
  *  range (or null for "whole data" / a term with no dates recorded yet —
  *  in the no-dates case, exporting falls back to unfiltered rather than
  *  silently returning zero rows). */
-function periodDateRange(periodValue){
+/** custom: {month:'YYYY-MM', from:'YYYY-MM-DD', to:'YYYY-MM-DD'} — only
+ *  read for the 'cmonth' (a specific month, not just the current one) and
+ *  'custom' (an arbitrary from/to range) period values, both driven by the
+ *  extra date inputs the Reports screen shows once one of those is picked. */
+function periodDateRange(periodValue, custom){
   if(!periodValue || periodValue === 'all') return null;
   if(periodValue === 'week') return { from: startOfWeekStr(), to: endOfWeekStr() };
   if(periodValue === 'month'){
@@ -3238,6 +3703,18 @@ function periodDateRange(periodValue){
     const lastDay = new Date(Date.UTC(p.y, p.mo+1, 0)).getUTCDate();
     const to = p.y + '-' + String(p.mo+1).padStart(2,'0') + '-' + String(lastDay).padStart(2,'0');
     return { from, to };
+  }
+  if(periodValue === 'cmonth'){
+    const ym = custom && custom.month;
+    if(!ym || !/^\d{4}-\d{2}$/.test(ym)) return null;
+    const parts = ym.split('-');
+    const y = Number(parts[0]), m = Number(parts[1]);
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    return { from: ym + '-01', to: ym + '-' + String(lastDay).padStart(2,'0') };
+  }
+  if(periodValue === 'custom'){
+    if(!custom || !custom.from || !custom.to) return null;
+    return { from: custom.from, to: custom.to };
   }
   if(periodValue.indexOf('term:') === 0){
     const t = allAcademicTerms()[Number(periodValue.slice(5))];
@@ -3257,6 +3734,8 @@ function periodRangeLabel(periodValue, range){
   if(!periodValue || periodValue === 'all') return '';
   if(periodValue === 'week') return 'This week (' + fmtDate(range.from) + ' – ' + fmtDate(range.to) + ')';
   if(periodValue === 'month') return 'This month (' + fmtDate(range.from) + ' – ' + fmtDate(range.to) + ')';
+  if(periodValue === 'cmonth') return range ? ('Month: ' + fmtDate(range.from) + ' – ' + fmtDate(range.to)) : 'Pick a month above';
+  if(periodValue === 'custom') return range ? ('Custom range (' + fmtDate(range.from) + ' – ' + fmtDate(range.to) + ')') : 'Pick a from/to date above';
   if(periodValue.indexOf('term:') === 0){
     const t = allAcademicTerms()[Number(periodValue.slice(5))];
     if(!t) return '';
@@ -3269,19 +3748,22 @@ function periodRangeLabel(periodValue, range){
   return '';
 }
 /** Builds the Reports screen's period-picker <option>s: Whole data, This
- *  week, This month, one "Semester: …" entry per known academic term, then
- *  one "Academic Year: …" entry per distinct year among those terms. */
+ *  week, This month, Pick a month, one "Semester: …" entry per known
+ *  academic term, one "Academic Year: …" entry per distinct year among
+ *  those terms, then Custom date range. */
 function reportPeriodOptionsHtml(){
   const terms = allAcademicTerms();
   let html = '<option value="all">Whole data</option>'
     + '<option value="week">This week</option>'
-    + '<option value="month">This month</option>';
+    + '<option value="month">This month</option>'
+    + '<option value="cmonth">Pick a month…</option>';
   terms.forEach((t, i)=>{
     html += '<option value="term:' + i + '">Semester: ' + escapeHtml((t.academicYear||'—') + ' · ' + (t.semester||'—')) + (t.current ? ' (current)' : '') + '</option>';
   });
   const years = [];
   terms.forEach(t=>{ if(t.academicYear && years.indexOf(t.academicYear) === -1) years.push(t.academicYear); });
   years.forEach(y=>{ html += '<option value="year:' + y + '">Academic Year: ' + escapeHtml(y) + '</option>'; });
+  html += '<option value="custom">Custom date range…</option>';
   return html;
 }
 /** All of a module's records, narrowed to a period range by its dateField
@@ -3304,16 +3786,22 @@ function toCsvValue(v){
   const s = v == null ? '' : String(v);
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
 }
-function collectionToCsv(moduleKey, range){
-  const mod = MODULES[moduleKey];
+/** Builds CSV text for an explicit list of records (rather than a whole
+ *  module filtered by date range) — the shared engine behind both the
+ *  Reports screen's per-module export and a grouped list view's per-group
+ *  "Export this group" button. */
+function recordsToCsv(mod, records){
   const cols = mod.fields.map(f=>f.key);
   const header = ['id'].concat(cols).concat(['createdAt','updatedAt','deleted']);
   const lines = [header.join(',')];
-  filterByPeriod(moduleKey, range).forEach(r=>{
+  records.forEach(r=>{
     const row = [r.id].concat(cols.map(c=>toCsvValue(r[c]))).concat([r.createdAt||'', r.updatedAt||'', r.deleted?'1':'0']);
     lines.push(row.join(','));
   });
   return lines.join('\n');
+}
+function collectionToCsv(moduleKey, range){
+  return recordsToCsv(MODULES[moduleKey], filterByPeriod(moduleKey, range));
 }
 /** Delivers a Blob to the user as a download. In a plain browser this is a
  *  standard object-URL <a download> click. Inside the FAMS+ Android app,
@@ -3358,9 +3846,11 @@ function fieldPlainValue(mod, field, rec){
   if(field.type === 'categoryRef'){ const c = NAV_CATEGORIES.find(c=>c.key===v); return c ? c.label : ''; }
   if(field.type === 'recordRef'){ const depModKey = rec[field.dependsOn]; return (depModKey && v) ? refLabel(depModKey, v) : ''; }
   if(field.type === 'date') return v ? fmtDate(v) : '';
+  if(field.type === 'time') return v ? fmtTime12(v) : '';
   if(field.type === 'subtable'){
     const rows = Array.isArray(v) ? v : [];
-    return rows.map(r => field.subfields.map(sf => r[sf.key]).filter(Boolean).join(' - ')).join('; ');
+    const nonBlank = field.fixedRows ? rows.filter(r=>field.subfields.some(sf=>r[sf.key])) : rows;
+    return nonBlank.map(r => (r._rowLabel ? r._rowLabel + ': ' : '') + field.subfields.map(sf => r[sf.key]).filter(Boolean).join(' - ')).join('; ');
   }
   return v == null ? '' : String(v);
 }
@@ -3521,7 +4011,12 @@ function renderReports(){
   let html = '<div class="page-head"><div><h2>📤 Reports</h2><p>Export any module in CSV, Excel, Word, PDF, or plain text — everywhere your data goes, it goes with you</p></div></div>';
   html += '<div class="card"><h3>Period</h3>'
     + '<p style="font-size:12.5px;color:var(--text-dim);">Scopes every export below to a date range — records with no date on the relevant field are only included under "Whole data".</p>'
-    + '<div class="field" style="max-width:360px;"><select class="input" id="report-period">' + reportPeriodOptionsHtml() + '</select></div></div>';
+    + '<div class="field" style="max-width:360px;"><select class="input" id="report-period">' + reportPeriodOptionsHtml() + '</select></div>'
+    + '<div class="field" id="report-cmonth-field" style="max-width:220px;display:none;"><label>Month</label><input type="month" class="input" id="report-custom-month" value="' + todayStr().slice(0,7) + '"></div>'
+    + '<div class="field" id="report-custom-field" style="display:none;"><label>From – To</label><div style="display:flex;gap:8px;max-width:360px;">'
+    + '<input type="date" class="input" id="report-custom-from" value="' + todayStr() + '">'
+    + '<input type="date" class="input" id="report-custom-to" value="' + todayStr() + '"></div></div>'
+    + '</div>';
   html += '<div class="card" style="margin-top:16px;"><h3>Export a single module</h3><div class="table-wrap"><table style="width:100%;border-collapse:collapse;">'
     + '<thead><tr><th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--text-dim);border-bottom:1px solid var(--border);">Module</th>'
     + '<th style="border-bottom:1px solid var(--border);width:370px;"></th></tr></thead><tbody id="report-rows">';
@@ -3550,8 +4045,23 @@ function renderReports(){
 }
 function wireReports(){
   const periodSelect = document.getElementById('report-period');
+  const cmonthField = document.getElementById('report-cmonth-field');
+  const customField = document.getElementById('report-custom-field');
   const currentPeriod = ()=> periodSelect ? periodSelect.value : 'all';
-  const currentRange = ()=> periodDateRange(currentPeriod());
+  function currentCustom(){
+    const monthEl = document.getElementById('report-custom-month');
+    const fromEl = document.getElementById('report-custom-from');
+    const toEl = document.getElementById('report-custom-to');
+    return { month: monthEl ? monthEl.value : '', from: fromEl ? fromEl.value : '', to: toEl ? toEl.value : '' };
+  }
+  const currentRange = ()=> periodDateRange(currentPeriod(), currentCustom());
+  function togglePeriodInputs(){
+    const p = currentPeriod();
+    if(cmonthField) cmonthField.style.display = (p === 'cmonth') ? '' : 'none';
+    if(customField) customField.style.display = (p === 'custom') ? '' : 'none';
+  }
+  if(periodSelect) periodSelect.addEventListener('change', togglePeriodInputs);
+  togglePeriodInputs();
   document.getElementById('report-rows').addEventListener('click', (e)=>{
     const btn = e.target.closest('[data-export]');
     if(!btn) return;
@@ -3601,7 +4111,13 @@ function wireReports(){
    field into one place.
    ============================================================ */
 let CAL_CURSOR = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-function calendarEventsForMonth(year, month){
+/** Day/Week/Month/Year — which granularity the Calendar screen is showing.
+ *  Prev/Today/Next below all act relative to whichever of these is active. */
+let CAL_VIEW = 'month';
+/** Every dated item across every module (except the internal Activity Log),
+ *  keyed by plain YYYY-MM-DD date string — the one shared data source
+ *  behind all four calendar views. */
+function calendarEventsInRange(fromStr, toStr){
   const events = {};
   MODULE_KEYS.forEach(k=>{
     if(k === 'audit-log') return; // internal audit trail, not a calendar-worthy event
@@ -3610,16 +4126,34 @@ function calendarEventsForMonth(year, month){
     getActive(k).forEach(r=>{
       const d = r[mod.dateField];
       if(!d) return;
-      const dt = new Date(d + (d.length<=10 ? 'T00:00:00' : ''));
-      if(isNaN(dt)) return;
-      if(dt.getFullYear() !== year || dt.getMonth() !== month) return;
-      const day = dt.getDate();
-      (events[day] = events[day] || []).push({ moduleKey:k, label: mod.label, icon: mod.icon, title: r[mod.titleField] || '(untitled)' });
+      const dateKey = String(d).slice(0, 10);
+      if(dateKey < fromStr || dateKey > toStr) return;
+      (events[dateKey] = events[dateKey] || []).push({ moduleKey:k, label: mod.label, icon: mod.icon, title: r[mod.titleField] || '(untitled)' });
     });
   });
   return events;
 }
-function renderCalendar(){
+function calendarEventsForMonth(year, month){
+  const from = year + '-' + String(month+1).padStart(2,'0') + '-01';
+  const lastDay = new Date(year, month+1, 0).getDate();
+  const to = year + '-' + String(month+1).padStart(2,'0') + '-' + String(lastDay).padStart(2,'0');
+  const byDate = calendarEventsInRange(from, to);
+  const events = {};
+  Object.keys(byDate).forEach(dateKey=>{ events[Number(dateKey.slice(8,10))] = byDate[dateKey]; });
+  return events;
+}
+function calendarViewHeadHtml(title, sub){
+  return '<div class="page-head"><div><h2>🗓️ Calendar — ' + escapeHtml(title) + '</h2><p>' + escapeHtml(sub) + '</p></div>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+    + '<div class="cal-view-toggle">' + ['day','week','month','year'].map(v=>'<button class="btn btn-ghost btn-sm' + (CAL_VIEW===v?' active':'') + '" data-cal-view="' + v + '">' + v.charAt(0).toUpperCase()+v.slice(1) + '</button>').join('') + '</div>'
+    + '<button class="btn btn-ghost btn-sm" id="cal-prev">‹ Prev</button><button class="btn btn-ghost btn-sm" id="cal-today">Today</button><button class="btn btn-ghost btn-sm" id="cal-next">Next ›</button></div></div>';
+}
+function dayEventsListHtml(dayEvents){
+  if(!dayEvents || !dayEvents.length) return '<div class="empty">Nothing scheduled.</div>';
+  return dayEvents.map(ev=>'<a href="#/module/' + ev.moduleKey + '" class="dash-link" style="display:flex;gap:8px;padding:7px 8px;border-bottom:1px solid var(--border);font-size:12.5px;">'
+    + '<span>' + ev.icon + '</span><span><b>' + escapeHtml(ev.label) + ':</b> ' + escapeHtml(ev.title) + '</span></a>').join('');
+}
+function renderCalendarMonth(){
   const year = CAL_CURSOR.getFullYear(), month = CAL_CURSOR.getMonth();
   const monthName = CAL_CURSOR.toLocaleDateString('en-US', { month:'long', year:'numeric' });
   const firstDow = new Date(year, month, 1).getDay();
@@ -3627,8 +4161,7 @@ function renderCalendar(){
   const events = calendarEventsForMonth(year, month);
   const todayKey = todayStr();
 
-  let html = '<div class="page-head"><div><h2>🗓️ Calendar — ' + escapeHtml(monthName) + '</h2><p>Every module\'s dated items in one view</p></div>'
-    + '<div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm" id="cal-prev">‹ Prev</button><button class="btn btn-ghost btn-sm" id="cal-today">Today</button><button class="btn btn-ghost btn-sm" id="cal-next">Next ›</button></div></div>';
+  let html = calendarViewHeadHtml(monthName, "Every module's dated items in one view");
   html += '<div class="table-wrap"><table style="width:100%;border-collapse:collapse;table-layout:fixed;">';
   html += '<thead><tr>' + ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<th style="padding:8px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-dim);">'+d+'</th>').join('') + '</tr></thead><tbody><tr>';
   for(let i=0;i<firstDow;i++) html += '<td style="border:1px solid var(--border);height:90px;background:#fafbfd;"></td>';
@@ -3636,7 +4169,7 @@ function renderCalendar(){
   for(let day=1; day<=daysInMonth; day++){
     const dateKey = year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
     const dayEvents = events[day] || [];
-    html += '<td style="border:1px solid var(--border);height:90px;vertical-align:top;padding:4px;font-size:11px;' + (dateKey===todayKey?'background:#eef3fc;':'') + '">'
+    html += '<td class="cal-day-cell" data-date="' + dateKey + '" style="border:1px solid var(--border);height:90px;vertical-align:top;padding:4px;font-size:11px;cursor:pointer;' + (dateKey===todayKey?'background:#eef3fc;':'') + '">'
       + '<div style="font-weight:700;margin-bottom:3px;">' + day + '</div>'
       + dayEvents.slice(0,3).map(ev=>'<div style="background:#eef0f3;border-radius:4px;padding:1px 4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + escapeHtml(ev.label+': '+ev.title) + '">' + ev.icon + ' ' + escapeHtml(ev.title) + '</div>').join('')
       + (dayEvents.length>3 ? '<div style="color:var(--text-faint);">+' + (dayEvents.length-3) + ' more</div>' : '')
@@ -3646,15 +4179,93 @@ function renderCalendar(){
   }
   if(col !== 0){ for(let i=col;i<7;i++) html += '<td style="border:1px solid var(--border);background:#fafbfd;"></td>'; html += '</tr>'; }
   html += '</tbody></table></div>';
+  return html;
+}
+function renderCalendarWeek(){
+  const dow = CAL_CURSOR.getDay();
+  const weekStart = new Date(CAL_CURSOR.getFullYear(), CAL_CURSOR.getMonth(), CAL_CURSOR.getDate() - dow);
+  const days = Array.from({length:7}, (_,i)=> new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+i));
+  const from = fmtIsoDate(days[0]), to = fmtIsoDate(days[6]);
+  const events = calendarEventsInRange(from, to);
+  const todayKey = todayStr();
+  let html = calendarViewHeadHtml(fmtDate(from) + ' – ' + fmtDate(to), 'Week view');
+  html += '<div class="grid grid-2" style="grid-template-columns:repeat(7,1fr);gap:10px;">';
+  days.forEach(d=>{
+    const dateKey = fmtIsoDate(d);
+    const dayEvents = events[dateKey] || [];
+    html += '<div class="card cal-day-cell" data-date="' + dateKey + '" style="padding:10px;cursor:pointer;' + (dateKey===todayKey?'border-color:var(--gold,#c99a3c);' : '') + '">'
+      + '<div style="font-size:11px;color:var(--text-dim);">' + WEEKDAY_LONG[d.getDay()].slice(0,3) + '</div>'
+      + '<div style="font-weight:700;margin-bottom:6px;">' + d.getDate() + '</div>'
+      + dayEvents.slice(0,4).map(ev=>'<div style="background:#eef0f3;border-radius:4px;padding:1px 4px;margin-bottom:2px;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + escapeHtml(ev.label+': '+ev.title) + '">' + ev.icon + ' ' + escapeHtml(ev.title) + '</div>').join('')
+      + (dayEvents.length>4 ? '<div style="color:var(--text-faint);font-size:10.5px;">+' + (dayEvents.length-4) + ' more</div>' : '')
+      + '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+function renderCalendarDay(){
+  const dateKey = fmtIsoDate(CAL_CURSOR);
+  const events = calendarEventsInRange(dateKey, dateKey)[dateKey] || [];
+  let html = calendarViewHeadHtml(fmtDate(dateKey) + (dateKey===todayStr() ? ' (Today)' : ''), WEEKDAY_LONG[CAL_CURSOR.getDay()]);
+  html += '<div class="card">' + dayEventsListHtml(events) + '</div>';
+  return html;
+}
+function renderCalendarYear(){
+  const year = CAL_CURSOR.getFullYear();
+  const events = calendarEventsInRange(year + '-01-01', year + '-12-31');
+  let html = calendarViewHeadHtml(String(year), 'Click a month to open it');
+  html += '<div class="grid grid-4" style="gap:12px;">';
+  for(let m=0; m<12; m++){
+    const count = Object.keys(events).filter(k=>k.slice(5,7) === String(m+1).padStart(2,'0')).reduce((s,k)=>s+events[k].length, 0);
+    html += '<div class="card cal-month-cell" data-year-month="' + year + '-' + String(m+1).padStart(2,'0') + '" style="padding:14px;cursor:pointer;text-align:center;">'
+      + '<div style="font-weight:700;font-size:14px;">' + MONTH_LONG[m] + '</div>'
+      + '<div style="font-size:12px;color:var(--text-dim);margin-top:4px;">' + count + ' item' + (count===1?'':'s') + '</div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+function renderCalendar(){
+  let html;
+  if(CAL_VIEW === 'week') html = renderCalendarWeek();
+  else if(CAL_VIEW === 'day') html = renderCalendarDay();
+  else if(CAL_VIEW === 'year') html = renderCalendarYear();
+  else html = renderCalendarMonth();
   setTimeout(wireCalendar, 0);
   return html;
 }
 function wireCalendar(){
   const prev = document.getElementById('cal-prev'), next = document.getElementById('cal-next'), today = document.getElementById('cal-today');
   if(!prev) return;
-  prev.addEventListener('click', ()=>{ CAL_CURSOR = new Date(CAL_CURSOR.getFullYear(), CAL_CURSOR.getMonth()-1, 1); renderRoute(); });
-  next.addEventListener('click', ()=>{ CAL_CURSOR = new Date(CAL_CURSOR.getFullYear(), CAL_CURSOR.getMonth()+1, 1); renderRoute(); });
-  today.addEventListener('click', ()=>{ CAL_CURSOR = new Date(new Date().getFullYear(), new Date().getMonth(), 1); renderRoute(); });
+  function shift(dir){
+    if(CAL_VIEW === 'day') CAL_CURSOR = new Date(CAL_CURSOR.getFullYear(), CAL_CURSOR.getMonth(), CAL_CURSOR.getDate()+dir);
+    else if(CAL_VIEW === 'week') CAL_CURSOR = new Date(CAL_CURSOR.getFullYear(), CAL_CURSOR.getMonth(), CAL_CURSOR.getDate()+(dir*7));
+    else if(CAL_VIEW === 'year') CAL_CURSOR = new Date(CAL_CURSOR.getFullYear()+dir, CAL_CURSOR.getMonth(), 1);
+    else CAL_CURSOR = new Date(CAL_CURSOR.getFullYear(), CAL_CURSOR.getMonth()+dir, 1);
+    renderRoute();
+  }
+  prev.addEventListener('click', ()=>shift(-1));
+  next.addEventListener('click', ()=>shift(1));
+  today.addEventListener('click', ()=>{ CAL_CURSOR = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()); renderRoute(); });
+  document.querySelectorAll('[data-cal-view]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ CAL_VIEW = btn.dataset.calView; renderRoute(); });
+  });
+  document.querySelectorAll('.cal-day-cell[data-date]').forEach(cell=>{
+    cell.addEventListener('click', (e)=>{
+      if(e.target.closest('a')) return; // let an event link navigate normally
+      const d = cell.dataset.date.split('-').map(Number);
+      CAL_CURSOR = new Date(d[0], d[1]-1, d[2]);
+      CAL_VIEW = 'day';
+      renderRoute();
+    });
+  });
+  document.querySelectorAll('.cal-month-cell[data-year-month]').forEach(cell=>{
+    cell.addEventListener('click', ()=>{
+      const ym = cell.dataset.yearMonth.split('-').map(Number);
+      CAL_CURSOR = new Date(ym[0], ym[1]-1, 1);
+      CAL_VIEW = 'month';
+      renderRoute();
+    });
+  });
 }
 
 /* ============================================================
@@ -3717,6 +4328,24 @@ function renderAdmin(){
     + '<p style="font-size:12.5px;color:var(--text-dim);">Need a whole new menu that isn\'t built in — a departmental register, a grants tracker, anything? Add it yourself, no coding required: give it a name, an icon, which tab it should live under, and a list of fields (one per line). It appears in the navigation immediately and behaves exactly like every other menu — search, add, edit, bulk import, bulk email, bulk delete, notes, activity log and every report format all work on it automatically. Each custom menu keeps its own separate storage, so adding one never touches any other menu\'s data or code.</p>'
     + '<button class="btn btn-primary btn-sm" id="adm-open-custom-modules">🧩 Manage Custom Menus</button></div>';
 
+  // Standard (built-in) menus can be renamed here — e.g. call "Timetable"
+  // something else — without touching any code. Custom menus already have
+  // their own rename path (editing the menu's own Label in Custom Menus &
+  // Fields above), so they're deliberately not repeated in this list.
+  const renamableModules = Object.keys(DEFAULT_MODULE_LABELS).filter(k=>!MODULES[k].readOnly && k !== 'custom-modules').sort((a,b)=>MODULES[a].label.localeCompare(MODULES[b].label));
+  html += '<div class="card" style="margin-top:16px;"><h3>🏷️ Menu Names</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);">Rename any of the app\'s built-in menus to whatever you prefer — the new name shows up everywhere that menu appears (navigation, page header, forms). Leave a box as-is (or clear it) to keep the default name.</p>'
+    + '<div style="max-height:340px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-bottom:10px;">'
+    + renamableModules.map(k=>{
+        const cur = MODULES[k].label;
+        const isRenamed = cur !== DEFAULT_MODULE_LABELS[k];
+        return '<div class="field" style="margin-bottom:0;"><label>' + MODULES[k].icon + ' ' + escapeHtml(DEFAULT_MODULE_LABELS[k]) + (isRenamed ? ' <span style="font-weight:400;color:var(--text-dim);">(now "' + escapeHtml(cur) + '")</span>' : '') + '</label>'
+          + '<input class="input" data-rename-key="' + k + '" placeholder="' + escapeHtml(DEFAULT_MODULE_LABELS[k]) + '" value="' + escapeHtml(isRenamed ? cur : '') + '"></div>';
+      }).join('')
+    + '</div>'
+    + '<button class="btn btn-primary btn-sm" id="adm-save-menu-names">Save Menu Names</button>'
+    + '<div class="error-box info" id="adm-menu-names-result"></div></div>';
+
   const manageableModules = MODULE_KEYS.filter(k=>!MODULES[k].readOnly);
   html += '<div class="card" style="margin-top:16px;"><h3>🗑️ Data Management</h3>'
     + '<p style="font-size:12.5px;color:var(--text-dim);">Every menu already supports deleting (and later restoring) records right from its own list — the 🗑 action on each row, or select multiple rows and use "Delete Selected". Jump straight to any menu\'s records from here:</p>'
@@ -3740,6 +4369,34 @@ function wireAdmin(){
   if(jumpBtn) jumpBtn.addEventListener('click', ()=>{
     const key = document.getElementById('adm-jump-module').value;
     if(key) navigate('#/module/' + key);
+  });
+  const saveMenuNamesBtn = document.getElementById('adm-save-menu-names');
+  if(saveMenuNamesBtn) saveMenuNamesBtn.addEventListener('click', async (e)=>{
+    const btn = e.currentTarget;
+    if(btn.disabled) return;
+    btn.disabled = true;
+    try{
+      const overrides = {};
+      document.querySelectorAll('[data-rename-key]').forEach(inp=>{
+        const key = inp.dataset.renameKey;
+        const val = inp.value.trim();
+        if(val && val !== DEFAULT_MODULE_LABELS[key]) overrides[key] = val;
+      });
+      STATE.config.moduleLabelOverrides = overrides;
+      await saveConfig();
+      applyModuleLabelOverrides();
+      // Any built-in module NOT in the overrides object anymore needs its
+      // label reset back to the default (clearing a box, or leaving it
+      // blank, is how you undo a rename) — applyModuleLabelOverrides() only
+      // ever sets labels, it never clears ones no longer present.
+      Object.keys(DEFAULT_MODULE_LABELS).forEach(key=>{ if(!overrides[key] && MODULES[key]) applyModuleLabelOverride(key, DEFAULT_MODULE_LABELS[key]); });
+      toast('Menu names saved', 'ok');
+      // A full render() (not just renderRoute()) — the top nav shell (and
+      // any standalone top-level button like Work Diary/Calendar) is only
+      // built once at boot, so a rename needs the whole shell rebuilt to
+      // actually show up there, not just the Admin page's own content.
+      render();
+    }finally{ btn.disabled = false; }
   });
   const clearAuditBtn = document.getElementById('adm-clear-audit-log');
   if(clearAuditBtn) clearAuditBtn.addEventListener('click', async (e)=>{
