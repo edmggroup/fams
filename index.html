@@ -462,6 +462,19 @@ function todayStr(){
   const p = istParts(new Date());
   return p.y + '-' + String(p.mo+1).padStart(2,'0') + '-' + String(p.da).padStart(2,'0');
 }
+/** Best-effort "what's probably the next academic year" guess, used only to
+ *  pre-fill (never lock in) the year field on "🔁 Renew" — e.g. "2026-27" →
+ *  "2027-28". Recognises the app's own "YYYY-YY"/"YYYY-YYYY" convention;
+ *  anything else (blank, a free-text label, an unrecognised format) just
+ *  comes back blank so the admin types the real one instead of seeing a
+ *  wrong guess. */
+function nextAcademicYearGuess(cur){
+  const m = /^\s*(\d{4})\s*-\s*(\d{2,4})\s*$/.exec(String(cur || ''));
+  if(!m) return '';
+  const startY = parseInt(m[1], 10) + 1;
+  const endY = startY + 1;
+  return String(startY) + '-' + String(endY).slice(-m[2].length);
+}
 function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -673,9 +686,10 @@ const MAIN_MENUS = [
   { key:'leave-holidays', label:'Leave & holidays' },
   { key:'exams', label:'Exams' },
   { key:'mentoring', label:'Student mentoring' },
-  { key:'extra-classes', label:'Extra / additional classes' },
-  { key:'research', label:'Research' },
-  { key:'projects', label:'Projects & grants' },
+  { key:'extra-classes', label:'Extra / Additional Classes' },
+  { key:'research', label:'Research Plans' },
+  { key:'projects', label:'Projects & Grants' },
+  { key:'responsibility-areas', label:'Responsibility Areas' },
   { key:'incharge', label:'In-charge roles' },
   { key:'committees', label:'Committees & events' },
   { key:'meetings', label:'Meetings' },
@@ -761,6 +775,24 @@ const MODULES = {
       {key:'status', label:'Status', type:'select', options:['Present','Absent']}
     ]}
   ]},
+  // A class's student list, entered ONCE per (Subject, Section) — reached
+  // from Timetable's own "👥 Class Roster" row action, so it's born right
+  // where the class itself is defined, not as a separate thing to remember
+  // to set up. Every other place that needs "who's in this class" (Internal
+  // Marks' "👥 Import from Class Roster", Class Log's "📋 Load from Class
+  // Roster" next to its own attendance subtable) reads from here instead of
+  // asking the same names to be typed in again — see findClassRoster().
+  'class-rosters': { label:'Class Rosters', menu:'teaching', icon:'👥', titleField:'subject', dateField:null, fields:[
+    {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'subjectCode', label:'Subject Code', type:'text'},
+    {key:'section', label:'Section', type:'text'},
+    {key:'students', label:'Students', type:'subtable', rowLabel:'Student', rowLabelPlural:'students', subfields:[
+      {key:'name', label:'Name'},
+      {key:'regNo', label:'Reg. No.'},
+      {key:'email', label:'Email'},
+      {key:'phone', label:'Phone'}
+    ]}
+  ]},
   'invigilation-duties': { label:'Invigilation duty', menu:'exams', icon:'🖊️', titleField:'examName', dateField:'date', fields:[
     {key:'examName', label:'Exam Name', type:'text', required:true},
     {key:'date', label:'Date', type:'date', required:true},
@@ -820,7 +852,7 @@ const MODULES = {
     {key:'advice', label:'Advice Given', type:'textarea'},
     {key:'nextFollowUp', label:'Next Follow-up Date', type:'date'}
   ]},
-  'lab-timetable': { label:'Lab timetable', menu:'teaching', icon:'🧪', titleField:'labCourse', dateField:null, fields:[
+  'lab-timetable': { label:'Lab Timetable', menu:'teaching', icon:'🧪', titleField:'labCourse', dateField:null, fields:[
     {key:'day', label:'Day', type:'select', options:['Mon','Tue','Wed','Thu','Fri','Sat'], required:true},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
@@ -828,7 +860,7 @@ const MODULES = {
     {key:'batch', label:'Batch', type:'text'},
     {key:'venue', label:'Venue', type:'text'}
   ]},
-  'lab-exams': { label:'Lab exams', menu:'exams', icon:'🔬', titleField:'labCourse', dateField:'date', fields:[
+  'lab-exams': { label:'Lab Exams', menu:'exams', icon:'🔬', titleField:'labCourse', dateField:'date', fields:[
     {key:'labCourse', label:'Lab Course', type:'text', required:true},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'batch', label:'Batch', type:'text'},
@@ -837,7 +869,7 @@ const MODULES = {
     {key:'toTime', label:'To Time', type:'time'},
     {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
-  'extra-classes': { label:'Extra / additional classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
+  'extra-classes': { label:'Extra / Additional Classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
     {key:'type', label:'Type', type:'select', options:['Extra Class','Compensatory Class','Makeup Class'], default:'Extra Class'},
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'subjectCode', label:'Subject Code', type:'text', required:true},
@@ -868,7 +900,7 @@ const MODULES = {
     {key:'nature', label:'Nature of Collaboration', type:'textarea'},
     {key:'status', label:'Status', type:'select', options:['Proposed','Active','Completed'], default:'Proposed'}
   ]},
-  'research-events': { label:'Research events', menu:'research', icon:'🎤', titleField:'eventName', dateField:'date', fields:[
+  'research-events': { label:'Conferences, Workshops', menu:'research', icon:'🎤', titleField:'eventName', dateField:'date', fields:[
     {key:'eventName', label:'Event Name', type:'text', required:true},
     {key:'role', label:'Role', type:'select', options:['Organized','Participated','Chaired Session','Keynote'], default:'Participated'},
     {key:'date', label:'Date', type:'date'},
@@ -876,13 +908,13 @@ const MODULES = {
     {key:'toTime', label:'To Time', type:'time'},
     {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
-  'peer-reviews': { label:'Peer review / editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
+  'peer-reviews': { label:'Peer Review & Editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
     {key:'venue', label:'Journal / Conference', type:'text', required:true},
     {key:'role', label:'Role', type:'select', options:['Reviewer','Editorial Board','Guest Editor'], default:'Reviewer'},
     {key:'paperTitle', label:'Paper Title', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Assigned','In Progress','Completed'], default:'Assigned'}
   ]},
-  'research-contacts': { label:'Researcher Network', menu:'research', icon:'🌐', titleField:'name', dateField:null, recordNoun:'researcher', profileExport:true, fields:[
+  'research-contacts': { label:"Researcher's Database", menu:'research', icon:'🌐', titleField:'name', dateField:null, recordNoun:'researcher', profileExport:true, fields:[
     // 👤 Basic Information — name is the only required field; everything
     // else is "fill in what you know now, add more later". The first 7
     // fields here double as the list view's columns (see
@@ -935,7 +967,7 @@ const MODULES = {
       {key:'notes', label:'Notes', type:'textarea'}
     ], summary:(e)=>[e.fromDate?fmtDate(e.fromDate):'', e.toDate?('– '+fmtDate(e.toDate)):''].filter(Boolean).join(' ') + (e.purpose ? (' — ' + e.purpose) : ''), bodyKey:'notes' }
   ]},
-  'project-grants': { label:'Projects & grants', menu:'projects', icon:'💰', titleField:'title', dateField:'endDate', fields:[
+  'project-grants': { label:'Projects & Grants', menu:'projects', icon:'💰', titleField:'title', dateField:'endDate', fields:[
     {key:'title', label:'Title', type:'text', required:true},
     {key:'fundingAgency', label:'Funding Agency', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Planned','Applied','Ongoing','Completed','Closed'], default:'Planned'},
@@ -943,6 +975,26 @@ const MODULES = {
     {key:'startDate', label:'Start Date', type:'date'},
     {key:'endDate', label:'End Date', type:'date'},
     {key:'collaborators', label:'Collaborators', type:'text'}
+  ]},
+  // "Responsibility Areas" — the flexible container behind the Roles &
+  // Responsibilities redesign: each record here (UG Research, Science
+  // Forum, IQAC Criterion, …) is its own free-standing area of work, and
+  // any number of Custom Menus (below) can be attached to one via that
+  // menu's own "responsibilityAreaId" field — every menu attached to the
+  // SAME responsibility then groups together under its own nav section
+  // (see registerCustomModule()), so a responsibility that needs five
+  // different tracking sheets gets five menus grouped under one header,
+  // and one that needs a single simple log gets just one. Nothing here
+  // hardcodes what a responsibility "is" — that's the whole point.
+  'responsibility-areas': { label:'Responsibility Areas', menu:'responsibility-areas', icon:'📋', titleField:'name', dateField:null,
+    completionAction:{statusKey:'status', doneValue:'Completed', label:'✅ Mark Completed for this Year', promptLabel:'Wrap-up notes — outcomes, handover info, anything useful for next year'},
+    fields:[
+    {key:'name', label:'Responsibility Name (e.g. UG Research, Science Forum, IQAC Criterion 3)', type:'text', required:true},
+    {key:'icon', label:'Icon (one emoji, shown before the name in the nav)', type:'text', default:'📌'},
+    {key:'natureTag', label:'Nature of Work', type:'select', options:['Academic Programme','Event / Activity Coordination','Student Management','Committee / Team Work','Financial Tracking','Documentation','Mentoring','Project Management','Other'], default:'Other'},
+    {key:'academicYear', label:'Academic Year (e.g. 2026-27 — optional; use "🔁 Renew" each year instead of editing this in place, so past years stay on record)', type:'text'},
+    {key:'status', label:'Status', type:'select', options:['Active','On Hold','Completed'], default:'Active'},
+    {key:'description', label:'Description / Scope', type:'textarea'}
   ]},
   'incharge-roles': { label:'In-charges', menu:'incharge', icon:'🛡️', titleField:'roleName', dateField:'endDate', fields:[
     {key:'roleName', label:'Role Name', type:'text', required:true},
@@ -985,11 +1037,20 @@ const MODULES = {
     {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'},
     {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
+  // "Action" comes first now (not "Meeting") — an action item is most often
+  // typed out before its origin is picked, and it doesn't always have one.
+  // "Related To" is the same general moduleRef/recordRef pair Meetings and
+  // Reminders already use, so an action item can be raised against ANY
+  // menu's record (a project, a committee, a responsibility's own custom
+  // menu, …) — not only a meeting, the one thing it was hardcoded to
+  // before (see migrateActionItemMeetingRefs() for the one-time carry-over
+  // of any action item that already had the old single Meeting link).
   'action-items': { label:'Action items', menu:'action-items', icon:'☑️', titleField:'action', dateField:'dueDate', completionAction:{statusKey:'status', doneValue:'Done', label:'✅ Mark Complete', promptLabel:'Closing comment — how was this resolved?'}, fields:[
-    {key:'meetingId', label:'Meeting', type:'reference', ref:'meetings'},
     {key:'action', label:'Action', type:'text', required:true},
-    {key:'owner', label:'Owner', type:'text'},
+    {key:'owner', label:'Owner — who this is assigned to', type:'text'},
     {key:'dueDate', label:'Due Date', type:'date'},
+    {key:'relatedModule', label:'Related To — Menu (optional — the meeting, project, committee, responsibility, or any other record this action came out of)', type:'moduleRef'},
+    {key:'relatedRecordId', label:'Related To — Specific Record', type:'recordRef', dependsOn:'relatedModule'},
     {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
   ]},
   'reminders': { label:'Reminders', menu:'reminders', icon:'🔔', titleField:'title', dateField:'dueDate', completionAction:{statusKey:'status', doneValue:'Done', label:'✅ Mark Complete', promptLabel:'Closing comment — how was this resolved?'}, fields:[
@@ -1001,7 +1062,7 @@ const MODULES = {
     {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
   ]},
   'office-followups': { label:'Office follow-ups', menu:'office-followups', icon:'📮', titleField:'subject', dateField:'followUpDate', completionAction:{statusKey:'status', doneValue:'Resolved', label:'✅ Mark Resolved', promptLabel:'Closing comment — how was this resolved?'}, fields:[
-    {key:'subject', label:'Subject', type:'text', required:true},
+    {key:'subject', label:'Name of the Work', type:'text', required:true},
     {key:'office', label:'Office', type:'text'},
     {key:'submittedDate', label:'Submitted Date', type:'date'},
     {key:'followUpDate', label:'Follow-up Date', type:'date'},
@@ -1030,7 +1091,8 @@ const MODULES = {
   'custom-modules': { label:'Custom menus', menu:'custom-modules', icon:'🧩', titleField:'label', dateField:'', fields:[
     {key:'label', label:'Menu Name', type:'text', required:true},
     {key:'icon', label:'Icon (one emoji)', type:'text', default:'🗂️'},
-    {key:'category', label:'Category (which tab it appears under)', type:'categoryRef', default:'tools'},
+    {key:'category', label:'Category (which tab it appears under — ignored if this menu is attached to a Responsibility Area below, since attached menus always live under Roles & Responsibilities, grouped with that responsibility\'s other menus)', type:'categoryRef', default:'tools'},
+    {key:'responsibilityAreaId', label:'Attach to a Responsibility Area (optional — every custom menu attached to the SAME responsibility groups together under that responsibility\'s own section in Roles & Responsibilities, instead of each showing up as its own separate top-level menu)', type:'reference', ref:'responsibility-areas'},
     {key:'fieldsSpec', label:'Fields — one per line: Label|type|options|required (type: text, textarea, number, date, select, email, tel, subtable — options comma-separated, only for select — write "required" as the 4th part to make it mandatory. For a "subtable" field — a repeating mini-table inside each record — put its sub-columns in the options part, comma-separated, e.g. "Semester Marks|subtable|Marks,Status:select:Pass;Fail" (a sub-column can be a dropdown with Label:select:Opt A;Opt B). Add a 4th part that\'s a semicolon list instead of "required" to make the rows FIXED and pre-named — one guaranteed slot each, no +Add/✕Remove — e.g. "Semester Marks|subtable|Marks,Status:select:Pass;Fail|Sem-1;Sem-2;Sem-3;Sem-4;Sem-5;Sem-6" gives every record exactly one Marks entry per semester, always', type:'textarea', required:true, default:'Details|textarea'},
     {key:'groupByLabel', label:'Group the list by (optional — type the exact field Label above, e.g. "Batch" — every record sharing that value is shown together under one heading, with the value shown once at the top of the group instead of repeated on every row; the group heading also gets a quick "+ Add to this group" button, a "Export this group" button, and — if one of your fields is a Status-style dropdown — a "Set status for whole group" control)', type:'text'}
   ]}
@@ -1189,6 +1251,27 @@ function parseCustomFieldsSpec(text){
   });
   return fields;
 }
+/** Deterministic, distinct-looking accent color for a Responsibility Area's
+ *  own dynamic nav group — picked from a fixed palette by hashing the
+ *  responsibility's id, so the SAME responsibility always gets the SAME
+ *  color across reloads (no admin ever has to pick one by hand), and
+ *  AREA_COLORS being keyed by mod.menu everywhere already means every
+ *  screen, timeline dot, and calendar entry under that one responsibility
+ *  automatically shares its color as a side effect. */
+const RESPONSIBILITY_COLOR_PALETTE = ['#0d9488','#7c3aed','#c2410c','#0891b2','#be185d','#4d7c0f','#b45309','#4338ca','#0e7490','#9333ea'];
+function responsibilityAreaColor(id){
+  let h = 0;
+  const s = String(id || '');
+  for(let i = 0; i < s.length; i++){ h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+  return RESPONSIBILITY_COLOR_PALETTE[h % RESPONSIBILITY_COLOR_PALETTE.length];
+}
+/** Nav-category group keys that the custom-module system itself has added —
+ *  either a standalone custom menu's own key, or a shared 'ra_<id>' group
+ *  for menus attached to a Responsibility Area — tracked so
+ *  registerAllCustomModules() can cleanly remove exactly what IT added
+ *  before re-adding the current set on every re-run, without ever touching
+ *  the app's own built-in nav groups (incharge, committees, research, …). */
+let DYNAMIC_NAV_GROUP_KEYS = new Set();
 function registerCustomModule(def){
   // Deliberately NOT an "already registered, skip" early-return — editing an
   // existing custom menu's name/icon/category/fields must actually take
@@ -1199,37 +1282,87 @@ function registerCustomModule(def){
   // record sharing that value is clustered under one heading in the list
   // view instead of repeating the value on every row (see moduleTableHtml).
   const groupField = def.groupByKey ? def.fields.find(f=>f.key === def.groupByKey) : null;
+  // A custom menu attached to a Responsibility Area (def.responsibilityAreaId)
+  // gets a SHARED dynamic menu key instead of its own unique one — every
+  // OTHER custom menu attached to that SAME responsibility shares it too.
+  // That's the entire mechanism behind "each responsibility becomes its own
+  // section, and I can attach as many custom menus to it as it needs": it
+  // reuses the EXISTING navGroupHtml() rule that a menu key shared by 2+
+  // modules renders as a `<div class="nav-section">` header followed by each
+  // module's own nav item — navGroupHtml itself needed no changes at all.
+  const groupKey = def.responsibilityAreaId ? ('ra_' + def.responsibilityAreaId) : def.key;
   MODULES[def.key] = {
-    label: def.label, menu: def.key, icon: def.icon || '🗂️',
+    label: def.label, menu: groupKey, icon: def.icon || '🗂️',
     titleField: (def.fields[0] && def.fields[0].key) || 'id',
     dateField: dateFieldMatch ? dateFieldMatch.key : '',
     fields: def.fields,
     groupByField: (groupField && groupField.type !== 'subtable') ? groupField.key : null,
-    custom: true
+    custom: true,
+    responsibilityAreaId: def.responsibilityAreaId || null
   };
   MODULE_KEYS = Object.keys(MODULES);
-  const menuEntry = MAIN_MENUS.find(m=>m.key === def.key);
-  if(menuEntry) menuEntry.label = def.label; else MAIN_MENUS.push({ key: def.key, label: def.label });
-  if(def.color) AREA_COLORS[def.key] = def.color;
-  else if(!AREA_COLORS[def.key]) AREA_COLORS[def.key] = '#6d4aa8';
-  // Drop this module's nav entry from every category first, then add it to
-  // its (possibly newly-chosen) one — so editing which tab a custom menu
-  // lives under actually moves it instead of leaving a stale copy behind.
-  NAV_CATEGORIES.forEach(c=>{
-    const idx = c.groups.indexOf(def.key);
-    if(idx !== -1) c.groups.splice(idx, 1);
-  });
-  const cat = NAV_CATEGORIES.find(c=>c.key === def.category) || NAV_CATEGORIES.find(c=>c.key === 'tools');
-  if(cat) cat.groups.push(def.key);
+  if(def.responsibilityAreaId){
+    // Attached menus always live under Roles & Responsibilities, grouped
+    // under a header named after the responsibility itself — the admin's
+    // "category" choice on this particular custom-menu record is ignored
+    // (it only matters for a standalone menu, see below): a menu that
+    // belongs to a responsibility wouldn't make sense floating in Tools or
+    // Research instead of next to the rest of that responsibility's menus.
+    const menuEntry = MAIN_MENUS.find(m=>m.key === groupKey);
+    const groupLabel = def.responsibilityAreaLabel || 'Responsibility';
+    if(menuEntry) menuEntry.label = groupLabel; else MAIN_MENUS.push({ key: groupKey, label: groupLabel });
+    if(!AREA_COLORS[groupKey]) AREA_COLORS[groupKey] = responsibilityAreaColor(def.responsibilityAreaId);
+    // A responsibility marked "Completed" is deliberately kept OUT of the
+    // nav from here on (decluttering day-to-day use) while every record and
+    // menu under it stays fully intact and reachable — via Reports, via
+    // Admin & Settings ▸ Data Management's "Jump to menu", or by simply
+    // switching the responsibility's own Status back to Active/On Hold.
+    if(def.showInNav !== false){
+      const cat = NAV_CATEGORIES.find(c=>c.key === 'admin-duties');
+      if(cat && cat.groups.indexOf(groupKey) === -1) cat.groups.push(groupKey);
+    }
+    DYNAMIC_NAV_GROUP_KEYS.add(groupKey);
+  }else{
+    // Standalone custom menu (not attached to any responsibility) —
+    // unchanged behaviour: its own MAIN_MENUS entry, its own nav slot under
+    // whichever category the admin chose.
+    const menuEntry = MAIN_MENUS.find(m=>m.key === def.key);
+    if(menuEntry) menuEntry.label = def.label; else MAIN_MENUS.push({ key: def.key, label: def.label });
+    if(def.color) AREA_COLORS[def.key] = def.color;
+    else if(!AREA_COLORS[def.key]) AREA_COLORS[def.key] = '#6d4aa8';
+    const cat = NAV_CATEGORIES.find(c=>c.key === def.category) || NAV_CATEGORIES.find(c=>c.key === 'tools');
+    if(cat && cat.groups.indexOf(def.key) === -1) cat.groups.push(def.key);
+    DYNAMIC_NAV_GROUP_KEYS.add(def.key);
+  }
 }
 function registerAllCustomModules(){
+  // Clean slate for every nav-group entry this system previously added
+  // (standalone custom-menu keys AND shared 'ra_<id>' Responsibility Area
+  // groups) before re-adding the CURRENT set below — otherwise changing a
+  // custom menu's category, attaching/detaching it from a responsibility,
+  // or completing a responsibility would leave a stale duplicate nav entry
+  // behind instead of actually moving or removing it.
+  NAV_CATEGORIES.forEach(c=>{ c.groups = c.groups.filter(g => !DYNAMIC_NAV_GROUP_KEYS.has(g)); });
+  DYNAMIC_NAV_GROUP_KEYS = new Set();
   getActive('custom-modules').forEach(rec=>{
     try{
       const key = customModuleKeyFor(rec);
       const fields = parseCustomFieldsSpec(rec.fieldsSpec);
       if(!fields.length) fields.push({ key:'details', label:'Details', type:'textarea' });
       const groupByKey = rec.groupByLabel ? slugifyKey(rec.groupByLabel) : null;
-      registerCustomModule({ key: key, label: rec.label || 'Custom Menu', icon: rec.icon || '🗂️', category: rec.category || 'tools', fields: fields, groupByKey: groupByKey });
+      let responsibilityAreaId = null, responsibilityAreaLabel = null, showInNav = true;
+      if(rec.responsibilityAreaId){
+        const area = getRecord('responsibility-areas', rec.responsibilityAreaId);
+        // If the responsibility this menu was attached to has since been
+        // deleted, fall back to treating it as a standalone menu (under its
+        // own record's "category" choice) instead of silently vanishing.
+        if(area && !area.deleted){
+          responsibilityAreaId = area.id;
+          responsibilityAreaLabel = (area.icon ? area.icon + ' ' : '') + (area.name || 'Responsibility');
+          showInNav = area.status !== 'Completed';
+        }
+      }
+      registerCustomModule({ key: key, label: rec.label || 'Custom Menu', icon: rec.icon || '🗂️', category: rec.category || 'tools', fields: fields, groupByKey: groupByKey, responsibilityAreaId: responsibilityAreaId, responsibilityAreaLabel: responsibilityAreaLabel, showInNav: showInNav });
     }catch(e){ console.error('[FAMS+] failed to register custom module', rec, e); }
   });
 }
@@ -1401,6 +1534,30 @@ async function migrateMentoringAndResponsibilitiesIntoIncharges(){
   if(activeMentees.length) await apiSetRaw('mentees', JSON.stringify([]));
 }
 
+/** One-time data migration: Action Items used to only ever link to a
+ *  Meeting (a single "Meeting" reference field, always shown as the very
+ *  first question on the Add form) — it's now the same general "Related
+ *  To — Menu / Related To — Specific Record" pair Meetings and Reminders
+ *  already use, so an action item can be raised against anything (a
+ *  project, a committee, a responsibility's own custom menu, …), not just
+ *  a meeting. Any action item that already had the old meetingId set gets
+ *  it carried over into the new fields so existing links aren't silently
+ *  dropped; the old meetingId property itself is left alone in storage
+ *  (harmless — nothing reads it anymore) rather than deleted. Guarded by
+ *  STATE.config.migratedActionItemMeetingRefs so it only ever runs once. */
+async function migrateActionItemMeetingRefs(){
+  const arr = (STATE.data['action-items'] || []).slice();
+  let changed = false;
+  const migrated = arr.map(r=>{
+    if(r.meetingId && !r.relatedModule){
+      changed = true;
+      return Object.assign({}, r, { relatedModule: 'meetings', relatedRecordId: r.meetingId });
+    }
+    return r;
+  });
+  if(changed) await saveCollection('action-items', migrated);
+}
+
 async function loadAllData(){
   const keys = MODULE_KEYS.concat(['app-meta','app-config']);
   let values = await apiGetAll(keys);
@@ -1410,6 +1567,13 @@ async function loadAllData(){
   // newly-discovered keys in one extra round trip (only when any exist).
   try{ STATE.data['custom-modules'] = values['custom-modules'] ? JSON.parse(values['custom-modules']) : []; }
   catch(e){ STATE.data['custom-modules'] = []; }
+  // 'responsibility-areas' is also parsed here, ahead of the general
+  // MODULE_KEYS loop below — registerAllCustomModules() (next line) needs
+  // to look up each responsibility's name/status to label and place its
+  // attached custom menus in the nav, so that data has to already be in
+  // STATE.data by the time it runs, not just in the raw `values` map.
+  try{ STATE.data['responsibility-areas'] = values['responsibility-areas'] ? JSON.parse(values['responsibility-areas']) : []; }
+  catch(e){ STATE.data['responsibility-areas'] = []; }
   registerAllCustomModules();
   const customKeys = MODULE_KEYS.filter(k => MODULES[k].custom && values[k] === undefined);
   if(customKeys.length){
@@ -1432,6 +1596,11 @@ async function loadAllData(){
   if(STATE.meta && !STATE.config.migratedMentoringIntoIncharges){
     await migrateMentoringAndResponsibilitiesIntoIncharges();
     STATE.config.migratedMentoringIntoIncharges = true;
+    await saveConfig();
+  }
+  if(STATE.meta && !STATE.config.migratedActionItemMeetingRefs){
+    await migrateActionItemMeetingRefs();
+    STATE.config.migratedActionItemMeetingRefs = true;
     await saveConfig();
   }
   // "Start New Term" used to re-archive the same term every time it was
@@ -1617,21 +1786,19 @@ function refLabel(moduleKey, id){
 }
 
 /** Modules that shouldn't appear as link targets in the "Related To" menu
- *  picker (internal registries, not day-to-day records). */
+ *  picker — internal registries, not day-to-day records (Custom Menus is
+ *  the admin-facing DEFINITION list, not actual data; the Activity Log is a
+ *  read-only history trail, not a menu of things to attach a follow-up to). */
 const POLYREF_EXCLUDED_MODULES = { 'custom-modules':1, 'audit-log':1 };
-/** "Related To — Menu" only ever makes sense pointed at something that's
- *  actually a specific record to attach a Meeting/Reminder to — a student, a
- *  committee, a role, a project — not at every menu in the app (nobody
- *  relates a meeting to "a Reminder" or "a Holiday"). So the picker is
- *  limited to: whatever lives under the Roles & Responsibilities menu
- *  (In-charges, Committees — read from NAV_CATEGORIES itself so a future
- *  addition there is picked up automatically, not hardcoded here), plus any
- *  admin-created custom menu (UG Research, PG Research, Grants, … — each its
- *  own "other menu name", registered wherever the admin chose to put it). */
+/** "Related To — Menu" picks WHICH menu a Meeting/Reminder/Action Item is
+ *  about; "Related To — Specific Record" then picks which record in it.
+ *  Deliberately as broad as the app itself — a follow-up can come out of
+ *  literally anything (a class, an exam, a project, a committee, a
+ *  responsibility's own custom menu, even another meeting) — so this is
+ *  every real module except the two internal registries above, rather than
+ *  a curated subset. */
 function polyrefTargetModules(){
-  const rolesGroups = (NAV_CATEGORIES.find(c => c.key === 'admin-duties') || { groups: [] }).groups;
-  return MODULE_KEYS.filter(k => !POLYREF_EXCLUDED_MODULES[k]
-    && (rolesGroups.indexOf(MODULES[k].menu) !== -1 || MODULES[k].custom));
+  return MODULE_KEYS.filter(k => !POLYREF_EXCLUDED_MODULES[k]);
 }
 /** `<option>`s listing a module's active records, for a 'recordRef' field's
  *  cascading dropdown (populated once a 'moduleRef' sibling field is chosen). */
@@ -1716,7 +1883,7 @@ const AREA_COLORS = {
   dashboard:'#c99a3c', 'work-diary':'#7c5cbf', teaching:'#2a63c9', 'leave-holidays':'#0d9488', exams:'#7c3aed',
   mentoring:'#0891b2', 'extra-classes':'#d97706', research:'#059669',
   projects:'#c99a3c', incharge:'#dc2626', committees:'#ea580c', meetings:'#4f46e5', 'action-items':'#6d5bd0',
-  reminders:'#db2777', 'office-followups':'#a8386d', responsibilities:'#0f766e', analytics:'#6fa3f5', reports:'#8a92a6',
+  reminders:'#db2777', 'office-followups':'#a8386d', responsibilities:'#0f766e', 'responsibility-areas':'#6d28d9', analytics:'#6fa3f5', reports:'#8a92a6',
   calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b', 'custom-modules':'#6d4aa8', 'mail-merge':'#c2410c'
 };
 
@@ -1741,7 +1908,7 @@ const NAV_CATEGORIES = [
   // Teacher) are deliberately absent — In-Charges already covers "a role
   // with a roster of people attached" (see migrateMentoringAndResponsibilitiesIntoIncharges()),
   // so adding a role there is now the single place for what these used to be.
-  { key:'admin-duties', label:'Roles & Responsibilities', icon:'📋', groups:['incharge','committees'] },
+  { key:'admin-duties', label:'Roles & Responsibilities', icon:'📋', groups:['responsibility-areas','incharge','committees'] },
   { key:'tools', label:'Administrator', icon:'⚙️', groups:['analytics','audit-log','custom-modules','mail-merge','admin'] }
 ];
 
@@ -2273,9 +2440,16 @@ function renderModuleList(moduleKey){
       + '<div class="search-bar"><input class="input" id="module-search" placeholder="Search…"></div>'
       + '<div class="table-wrap" id="module-table-wrap"></div>';
   }
+  // Internal Marks is the one place that most benefits from pulling a
+  // whole class's names in at once from a Timetable-born roster (see
+  // openClassRosterFor()) instead of typing/bulk-importing them separately
+  // a second time — one click per class instead of a spreadsheet per class.
+  const rosterImportBtn = moduleKey === 'internal-marks'
+    ? '<button class="btn btn-ghost" id="roster-import-btn">👥 Import from Class Roster</button>' : '';
   return '<div class="page-head"><div><h2>' + mod.icon + ' ' + escapeHtml(mod.label) + '</h2>'
     + '<p>' + getActive(moduleKey).length + ' active record(s)</p></div>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+    + rosterImportBtn
     + '<button class="btn btn-ghost" id="bulk-import-btn">⬆ Bulk Import</button>'
     + '<button class="btn btn-primary" id="add-record-btn">+ Add ' + escapeHtml(mod.label) + '</button>'
     + '</div></div>'
@@ -2346,6 +2520,19 @@ function moduleRowHtml(mod, cols, r, selectable, moduleKey){
         const isDone = curStatus === ca.doneValue || (ca.excludeValues || []).indexOf(curStatus) !== -1;
         if(!isDone) html += '<button class="btn btn-ghost btn-sm" data-action="complete">' + escapeHtml(ca.label || '✅ Mark Complete') + '</button>';
       }
+      // Responsibility Areas get two extra quick-actions of their own: one
+      // to attach a brand-new custom menu straight to this responsibility
+      // (skips having to open Custom Menus and pick it from a dropdown),
+      // and one to roll the whole responsibility over into a new academic
+      // year without losing this year's records (see the 'renew' handler).
+      if(moduleKey === 'responsibility-areas'){
+        html += '<button class="btn btn-ghost btn-sm" data-action="add-submodule" title="Create a new custom menu attached to this responsibility">➕ Add a Menu</button>';
+        html += '<button class="btn btn-ghost btn-sm" data-action="renew" title="Start a fresh copy of this responsibility for a new academic year">🔁 Renew</button>';
+      }
+      // Timetable rows get a one-click way to the class's own student list —
+      // create it once here, then Internal Marks/Class Log pull from it
+      // instead of the same names being typed in a second (or third) time.
+      if(moduleKey === 'timetable') html += '<button class="btn btn-ghost btn-sm" data-action="class-roster" title="Add/edit this class\'s student list">👥 Class Roster</button>';
       if(mod.fields.some(f=>f.key==='email')) html += '<button class="btn btn-ghost btn-sm" data-action="email" title="Email">✉️</button>';
       if(mod.fields.some(f=>f.key==='phone')) html += '<button class="btn btn-ghost btn-sm" data-action="whatsapp" title="WhatsApp">💬</button>';
       html += '<button class="btn btn-ghost btn-sm" data-action="delete">Delete</button>';
@@ -2497,6 +2684,8 @@ function wireModuleList(moduleKey){
   if(addBtn) addBtn.addEventListener('click', ()=>openModuleForm(moduleKey, null));
   const bulkImportBtn = document.getElementById('bulk-import-btn');
   if(bulkImportBtn) bulkImportBtn.addEventListener('click', ()=>openBulkImportDrawer(moduleKey, refreshTable));
+  const rosterImportBtn = document.getElementById('roster-import-btn');
+  if(rosterImportBtn) rosterImportBtn.addEventListener('click', ()=>openRosterImportModal(refreshTable));
   // "Filter by <Batch/month/…>" dropdown (see moduleTableHtml) — re-renders
   // the table showing only that one group (picking "— All —" goes back to
   // everyone, grouped). A plain 'change' listener on the wrap survives
@@ -2584,7 +2773,7 @@ function wireModuleList(moduleKey){
       });
     }
     else if(action === 'raise-action'){
-      openModuleForm('action-items', null, { meetingId: id, action: 'Follow up: ' + (rec[mod.titleField] || 'meeting') });
+      openModuleForm('action-items', null, { relatedModule: 'meetings', relatedRecordId: id, action: 'Follow up: ' + (rec[mod.titleField] || 'meeting') });
     }
     else if(action === 'complete'){
       const ca = mod.completionAction;
@@ -2605,8 +2794,49 @@ function wireModuleList(moduleKey){
           logAudit(moduleKey, 'Completed', id, rec[mod.titleField] || '', comment);
           toast('Marked complete', 'ok');
           closeModal();
-          refreshTable();
+          // A completed Responsibility Area's attached custom menus need to
+          // drop out of the nav right away (see registerCustomModule's
+          // showInNav logic) — a plain refreshTable() only redraws this
+          // list, not the nav shell, so a full render() is needed here too.
+          if(moduleKey === 'responsibility-areas'){ registerAllCustomModules(); render(); } else refreshTable();
         }catch(err){ errEl.textContent = 'Failed to save.'; btn.disabled = false; }
+      });
+    }
+    else if(action === 'add-submodule'){
+      // Reuses the exact same generic "presets" mechanism as every other
+      // "+ Add to this group" shortcut in the app (see openModuleForm) —
+      // just pre-filling Custom Menus' own responsibilityAreaId field this
+      // time, so the new custom menu is born already attached to this
+      // responsibility instead of the admin having to remember to pick it
+      // from a dropdown themselves.
+      openModuleForm('custom-modules', null, { responsibilityAreaId: id, category: 'admin-duties' });
+    }
+    else if(action === 'renew'){
+      const suggestedYear = nextAcademicYearGuess(rec.academicYear);
+      openModal('<h3 style="margin:0 0 10px;">🔁 Renew "' + escapeHtml(rec.name || '') + '" for a New Year</h3>'
+        + '<p style="font-size:12.5px;color:var(--text-dim);margin:0 0 10px;">Creates a fresh copy of this responsibility (same name, nature, and description) with the academic year below, and marks this one Completed. Every menu and record already attached to it stays exactly as it is — nothing is deleted or moved.</p>'
+        + '<div class="field"><label>New Academic Year</label><input class="input" id="renew-year" value="' + escapeHtml(suggestedYear) + '"></div>'
+        + '<div class="error-box" id="renew-error"></div>'
+        + '<div style="display:flex;gap:8px;"><button class="btn btn-primary" id="renew-save">🔁 Renew</button><button class="btn btn-ghost" id="renew-cancel">Cancel</button></div>');
+      document.getElementById('renew-cancel').addEventListener('click', closeModal);
+      document.getElementById('renew-save').addEventListener('click', async ()=>{
+        const newYear = document.getElementById('renew-year').value.trim();
+        const errEl = document.getElementById('renew-error');
+        if(!newYear){ errEl.textContent = 'Enter an academic year (e.g. 2027-28).'; return; }
+        const saveBtn = document.getElementById('renew-save');
+        saveBtn.disabled = true;
+        try{
+          const renewed = await createRecord('responsibility-areas', { name: rec.name, icon: rec.icon, natureTag: rec.natureTag, academicYear: newYear, status: 'Active', description: rec.description });
+          logAudit('responsibility-areas', 'Renewed', renewed.id, renewed.name || '', 'Renewed from ' + (rec.academicYear || 'previous year'));
+          if(rec.status !== 'Completed'){
+            await updateRecord('responsibility-areas', id, { status: 'Completed' });
+            logAudit('responsibility-areas', 'Completed', id, rec.name || '', 'Superseded by the renewed ' + newYear + ' record');
+          }
+          toast('Renewed for ' + newYear, 'ok');
+          closeModal();
+          registerAllCustomModules();
+          render();
+        }catch(err){ errEl.textContent = 'Failed to renew.'; saveBtn.disabled = false; }
       });
     }
     else if(action === 'email') openEmailComposeDrawer(moduleKey, [rec], refreshTable);
@@ -2626,7 +2856,7 @@ function wireModuleList(moduleKey){
   });
 }
 
-function fieldInputHtml(mod, field, value, rec, idPrefix){
+function fieldInputHtml(mod, field, value, rec, idPrefix, presets){
   const id = (idPrefix || 'f_') + field.key;
   let v = value;
   if(v === undefined || v === null) v = (field.default === '__today__' ? todayStr() : (field.default != null ? field.default : ''));
@@ -2661,7 +2891,13 @@ function fieldInputHtml(mod, field, value, rec, idPrefix){
     return '<select class="input" id="' + id + '">' + opts + '</select>';
   }
   if(field.type === 'recordRef'){
-    const curModKey = rec ? rec[field.dependsOn] : '';
+    // On a brand-new record (rec is null), the sibling moduleRef field's
+    // value can only come from `presets` (e.g. "Action Required" pre-fills
+    // BOTH relatedModule and relatedRecordId at once) — falling back to
+    // just `rec` here would silently drop that preset, leaving this
+    // dropdown on "— Select a menu first —" even though the moduleRef
+    // field above it renders as already-selected.
+    const curModKey = rec ? rec[field.dependsOn] : (presets ? presets[field.dependsOn] : '');
     const opts = curModKey ? recordOptionsHtml(curModKey, v) : '';
     return '<select class="input" id="' + id + '" data-poly-record-picker="1" data-depends-on="f_' + field.dependsOn + '">'
       + '<option value="">' + (curModKey ? '— Select a record —' : '— Select a menu first —') + '</option>' + opts + '</select>';
@@ -2670,12 +2906,17 @@ function fieldInputHtml(mod, field, value, rec, idPrefix){
   // Subject / Subject Code: Timetable is the single source of truth for
   // which subjects exist, so any OTHER module that re-asks for a Subject
   // and/or Subject Code (Class Log, Question Bank, Internal Marks (CIA),
-  // Extra Classes, and Timetable itself) gets the same names offered as
-  // suggestions here via a <datalist> — typing/picking a match for one
-  // side auto-fills the other at save time if it's still blank (see
-  // applySubjectAutoFill()) so the same subject/code always maps the same
-  // way everywhere instead of risking a mismatched spelling or code.
-  if(field.type === 'text' && (field.key === 'subject' || field.key === 'subjectCode')){
+  // Extra Classes) gets the same names offered as suggestions here via a
+  // <datalist> — typing/picking a match for one side auto-fills the other
+  // at save time if it's still blank (see applySubjectAutoFill()) so the
+  // same subject/code always maps the same way everywhere instead of
+  // risking a mismatched spelling or code. Timetable's OWN Subject/Subject
+  // Code fields are deliberately excluded from this (mod !== timetable
+  // below) — Timetable is where a subject is born, so its very first entry
+  // must stay a plain free-text field with nothing to pick from yet; a
+  // <datalist> there would only ever offer subjects that already exist,
+  // which is backwards for the one place new subjects get typed in.
+  if(field.type === 'text' && (field.key === 'subject' || field.key === 'subjectCode') && mod !== MODULES['timetable']){
     const catalog = subjectCatalog();
     if(catalog.length){
       const listId = field.key === 'subject' ? 'subject-catalog-datalist' : 'subjectcode-catalog-datalist';
@@ -2729,6 +2970,153 @@ function applySubjectAutoFill(mod, data){
     const match = subjectCatalog().find(c=>c.subjectCode.toLowerCase() === code.toLowerCase());
     if(match && match.subject) data.subject = match.subject;
   }
+}
+
+/* ============================================================
+   CLASS ROSTERS — a class's student list, entered once (from
+   Timetable's "👥 Class Roster" row action) and reused everywhere else
+   that needs "who's in this class" instead of retyping the same names.
+   Matched purely by (Subject, Section) text — same free-text matching
+   style as the Subject Catalog above, deliberately not a hard foreign
+   key, since Subject itself is never anything but free text anywhere in
+   this app.
+   ============================================================ */
+/** Finds the roster record for a given Subject+Section pair, or null if
+ *  none has been created yet. Case/whitespace-insensitive on both sides,
+ *  same as every other place this app matches free-typed Subject text. */
+function findClassRoster(subject, section){
+  const subjNorm = String(subject || '').trim().toLowerCase();
+  const secNorm = String(section || '').trim().toLowerCase();
+  if(!subjNorm) return null;
+  return getActive('class-rosters').find(r =>
+    String(r.subject || '').trim().toLowerCase() === subjNorm
+    && String(r.section || '').trim().toLowerCase() === secNorm
+  ) || null;
+}
+/** Opens the roster for a Subject+Section — editing the existing one if
+ *  Timetable (or anywhere else) already created it, or a pre-filled Add
+ *  form if this is the first time. Multiple Timetable slots for the same
+ *  class (e.g. Mon and Wed sessions) deliberately land on the SAME roster
+ *  record, since they're the same class meeting twice, not two classes. */
+function openClassRosterFor(subject, subjectCode, section){
+  const existing = findClassRoster(subject, section);
+  if(existing) openModuleForm('class-rosters', existing.id);
+  else openModuleForm('class-rosters', null, { subject: subject, subjectCode: subjectCode, section: section });
+}
+/** True for a subtable field that's shaped like a per-student list (has
+ *  both a Name-ish and a Reg No-ish sub-column) on a module that ALSO has
+ *  its own Subject field — the exact shape Class Log's "Students"
+ *  (attendance) subtable has, and the reason its Add/Edit form gets a
+ *  "📋 Load from Class Roster" button next to it (see wireLoadRosterButtons).
+ *  Capability-based on purpose, not a hardcoded moduleKey, so any future
+ *  module shaped the same way gets this for free — e.g. In-charges'
+ *  "Members" subtable is skipped only because incharge-roles has no Subject
+ *  field of its own to look a roster up by. */
+function isStudentRosterSubtable(mod, f){
+  if(f.type !== 'subtable') return false;
+  if(!mod.fields.some(mf => mf.key === 'subject')) return false;
+  const keys = f.subfields.map(sf => sf.key.toLowerCase());
+  const hasName = keys.indexOf('name') !== -1 || keys.indexOf('studentname') !== -1;
+  const hasRegNo = keys.indexOf('regno') !== -1;
+  return hasName && hasRegNo;
+}
+/** Wires each "📋 Load from Class Roster" button rendered next to a
+ *  qualifying subtable field (see isStudentRosterSubtable). Reads the
+ *  form's CURRENT Subject/Section values (not the saved record's — so it
+ *  still works while adding a brand-new record, before anything is saved),
+ *  looks up that class's roster, and appends any student not already in
+ *  the subtable by Reg No — existing rows (already filled in, possibly by
+ *  hand) are left untouched rather than being wiped and replaced. */
+function wireLoadRosterButtons(mod){
+  mod.fields.filter(f => isStudentRosterSubtable(mod, f)).forEach(f=>{
+    const btn = document.querySelector('[data-load-roster-field="' + f.key + '"]');
+    if(!btn) return;
+    btn.addEventListener('click', ()=>{
+      const subjectEl = document.getElementById('f_subject');
+      const sectionEl = document.getElementById('f_section');
+      const subject = subjectEl ? subjectEl.value : '';
+      const section = sectionEl ? sectionEl.value : '';
+      const roster = findClassRoster(subject, section);
+      if(!roster){
+        toast('No class roster found for "' + subject + (section ? (' — ' + section) : '') + '" yet — add one from Timetable\'s "👥 Class Roster" first.', 'err');
+        return;
+      }
+      const container = document.getElementById('f_' + f.key);
+      const tbody = container.querySelector('.subtable-body');
+      const existingRegNos = new Set(Array.from(tbody.querySelectorAll('.subtable-row')).map(tr=>{
+        const cell = tr.querySelector('[data-subkey="regNo"]');
+        return cell ? cell.value.trim().toLowerCase() : '';
+      }).filter(Boolean));
+      let added = 0;
+      (roster.students || []).forEach(student=>{
+        const regNo = String(student.regNo || '').trim();
+        if(regNo && existingRegNos.has(regNo.toLowerCase())) return;
+        const row = {};
+        f.subfields.forEach(sf=>{ if(student[sf.key] !== undefined) row[sf.key] = student[sf.key]; });
+        tbody.insertAdjacentHTML('beforeend', subtableRowHtml(f, row));
+        if(regNo) existingRegNos.add(regNo.toLowerCase());
+        added++;
+      });
+      toast(added ? (added + ' student(s) loaded from the class roster') : 'Everyone from that roster is already listed', added ? 'ok' : undefined);
+    });
+  });
+}
+/** Internal Marks' "👥 Import from Class Roster" — pick a roster (built
+ *  once from Timetable), one Internal Marks row is created per student
+ *  (Reg No + Name + Subject/Subject Code/Section pre-filled, marks left
+ *  blank to fill in). Already-imported students (same Reg No + Subject +
+ *  Section already present and active) are skipped rather than duplicated,
+ *  so re-running this after adding new names to a roster only brings in
+ *  the new ones. */
+function openRosterImportModal(onDone){
+  const rosters = getActive('class-rosters').filter(r => (r.students || []).length);
+  if(!rosters.length){
+    openModal('<h3 style="margin:0 0 10px;">👥 Import from Class Roster</h3>'
+      + '<p style="font-size:12.5px;color:var(--text-dim);">No class rosters with students yet — add one from a class\'s '
+      + '"👥 Class Roster" button on the Timetable screen first.</p>'
+      + '<button class="btn btn-ghost" id="roster-import-cancel">Close</button>');
+    document.getElementById('roster-import-cancel').addEventListener('click', closeModal);
+    return;
+  }
+  const opts = rosters.map(r=>'<option value="' + r.id + '">' + escapeHtml(r.subject) + (r.section ? (' — ' + r.section) : '') + ' (' + (r.students||[]).length + ' student' + ((r.students||[]).length===1?'':'s') + ')</option>').join('');
+  openModal('<h3 style="margin:0 0 10px;">👥 Import from Class Roster</h3>'
+    + '<div class="field"><label>Class Roster</label><select class="input" id="roster-import-select">' + opts + '</select></div>'
+    + '<div class="field"><label>Academic Year (optional — stamped on every imported row)</label><input class="input" id="roster-import-year" placeholder="e.g. 2026-27"></div>'
+    + '<div class="error-box" id="roster-import-error"></div>'
+    + '<div style="display:flex;gap:8px;"><button class="btn btn-primary" id="roster-import-save">Import</button><button class="btn btn-ghost" id="roster-import-cancel">Cancel</button></div>');
+  document.getElementById('roster-import-cancel').addEventListener('click', closeModal);
+  document.getElementById('roster-import-save').addEventListener('click', async ()=>{
+    const rosterId = document.getElementById('roster-import-select').value;
+    const roster = getRecord('class-rosters', rosterId);
+    const academicYear = document.getElementById('roster-import-year').value.trim();
+    const errEl = document.getElementById('roster-import-error');
+    if(!roster){ errEl.textContent = 'Choose a class roster first.'; return; }
+    const btn = document.getElementById('roster-import-save');
+    btn.disabled = true;
+    try{
+      const subjNorm = String(roster.subject || '').trim().toLowerCase();
+      const secNorm = String(roster.section || '').trim().toLowerCase();
+      const existing = getActive('internal-marks').filter(r =>
+        String(r.subject || '').trim().toLowerCase() === subjNorm && String(r.section || '').trim().toLowerCase() === secNorm);
+      const existingRegNos = new Set(existing.map(r => String(r.regNo || '').trim().toLowerCase()).filter(Boolean));
+      let imported = 0, skipped = 0;
+      for(const student of (roster.students || [])){
+        const regNo = String(student.regNo || '').trim();
+        if(!regNo || !student.name){ skipped++; continue; }
+        if(existingRegNos.has(regNo.toLowerCase())){ skipped++; continue; }
+        await createRecord('internal-marks', {
+          regNo: regNo, studentName: student.name, subject: roster.subject,
+          subjectCode: roster.subjectCode || '', section: roster.section || '', academicYear: academicYear
+        });
+        existingRegNos.add(regNo.toLowerCase());
+        imported++;
+      }
+      logAudit('internal-marks', 'Imported from Class Roster', '', roster.subject || '', imported + ' student(s) imported, ' + skipped + ' skipped');
+      toast(imported + ' imported' + (skipped ? ', ' + skipped + ' skipped (already present or incomplete)' : ''), 'ok');
+      closeModal();
+      if(onDone) onDone();
+    }catch(err){ errEl.textContent = 'Import failed: ' + (err && err.message ? err.message : String(err)); btn.disabled = false; }
+  });
 }
 
 /* ============================================================
@@ -2960,7 +3348,10 @@ function openModuleForm(moduleKey, id, presets){
       currentSection = f.section;
       html += '<h4 class="form-section-heading">' + escapeHtml(currentSection) + '</h4>';
     }
-    html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec) + '</div>';
+    html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec, undefined, presets) + '</div>';
+    if(isStudentRosterSubtable(mod, f)){
+      html += '<div style="display:flex;margin:-6px 0 13px;"><button type="button" class="btn btn-ghost btn-sm" data-load-roster-field="' + f.key + '">📋 Load from Class Roster</button></div>';
+    }
   });
   html += '<div class="error-box" id="form-error"></div>';
   html += '<div style="display:flex;gap:8px;margin-top:6px;"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" id="form-cancel">Cancel</button></div>';
@@ -3008,6 +3399,7 @@ function wireModuleForm(moduleKey, id){
     });
   });
   wireSubtableFields(mod);
+  wireLoadRosterButtons(mod);
   const cancelBtn = document.getElementById('form-cancel');
   if(cancelBtn) cancelBtn.addEventListener('click', closeDrawer);
   const form = document.getElementById('record-form');
@@ -3057,10 +3449,12 @@ function wireModuleForm(moduleKey, id){
         else{ savedRec = await createRecord(moduleKey, data); logAudit(moduleKey, 'Created', savedRec.id, savedRec[mod.titleField] || ''); }
         toast('Saved', 'ok');
         closeDrawer();
-        if(moduleKey === 'custom-modules'){
-          // A new/edited custom menu definition — compile it into a real
-          // module and rebuild the whole shell so its nav entry shows up
-          // immediately, without needing a page reload.
+        if(moduleKey === 'custom-modules' || moduleKey === 'responsibility-areas'){
+          // A new/edited custom menu definition, OR a Responsibility Area
+          // whose name/status/icon just changed — either way, every
+          // attached custom menu's nav header (label, color, whether it
+          // shows at all) needs recompiling right away, not just on the
+          // next full page load.
           registerAllCustomModules();
           render();
         }else{
@@ -4066,6 +4460,7 @@ function wireTimetableScreen(){
     if(!rec) return;
     if(action === 'edit') openModuleForm('timetable', id);
     else if(action === 'notes') openNotesDrawer('timetable', id);
+    else if(action === 'class-roster') openClassRosterFor(rec.subject, rec.subjectCode, rec.section);
     else if(action === 'delete'){ if(!confirm('Delete this record?')) return; await softDeleteRecord('timetable', id); toast('Deleted','ok'); refreshTable(); }
     else if(action === 'restore'){ await restoreRecord('timetable', id); toast('Restored','ok'); refreshTable(); }
     else if(action === 'purge'){ if(!confirm('Permanently delete this record? This cannot be undone.')) return; await purgeRecord('timetable', id); toast('Purged','ok'); refreshTable(); }
