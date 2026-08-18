@@ -170,6 +170,8 @@ button{font-family:inherit;}
 .field{margin-bottom:13px;min-width:0;}
 .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-dim);margin-bottom:5px;}
 .field-hint{font-size:11px;color:var(--text-faint);margin-top:4px;line-height:1.4;}
+.help-btn{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--border);background:#f4f6fb;color:var(--text-dim);font-size:10px;font-weight:700;line-height:1;cursor:pointer;padding:0;margin-left:4px;vertical-align:middle;}
+.help-btn:hover{background:#e8ecf7;color:var(--navy);}
 .form-section-heading{font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 10px;padding-bottom:6px;border-bottom:1.5px solid var(--border);}
 .form-section-heading:first-child{margin-top:0;}
 /* Every add/edit form (the generic record-form used by every module, plus
@@ -198,13 +200,18 @@ th{text-align:left;padding:10px 12px;background:#f8f9fc;border-bottom:1.5px soli
   font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);white-space:nowrap;}
 td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
 tr:hover td{background:#fafbfd;}
-/* flex-wrap (not nowrap) is what actually stops a row with many action
-   buttons from forcing the whole table into horizontal scroll — the
-   buttons themselves still don't wrap their own label text mid-word. */
-.row-actions{display:flex;gap:6px;flex-wrap:wrap;max-width:340px;}
+/* flex-wrap (not nowrap) means a row's action buttons lay out on one line
+   whenever there's room for them — which, now that list rows carry far
+   fewer data columns (see moduleDisplayColumns' listHide), is almost
+   always — and only drop to a second line on a narrow window instead of
+   forcing the whole table into horizontal scroll. No artificial width cap
+   here: a cap would force wrapping even when a row has plenty of space. */
+.row-actions{display:flex;gap:6px;flex-wrap:wrap;}
 .row-actions .btn{white-space:nowrap;}
 .hub-menu-card{cursor:pointer;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);padding:14px 16px;min-width:160px;flex:1 1 200px;box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s;}
 .hub-menu-card:hover{box-shadow:0 6px 18px rgba(20,30,60,.12);transform:translateY(-1px);}
+.btn-grid-roster{position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;font-size:12px;padding:2px;line-height:1;opacity:.5;}
+.btn-grid-roster:hover{opacity:1;}
 
 .badge{display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:99px;font-size:11px;font-weight:700;}
 .badge-ok{background:var(--ok-wash);color:var(--ok);}
@@ -641,6 +648,18 @@ document.addEventListener('keydown', e=>{
     else if(!document.getElementById('modal-overlay').classList.contains('hidden')) closeModal();
   }
 });
+// Every field's "?" help button (see fieldHelpBtnHtml/fieldHintHtml) is
+// handled by this ONE delegated listener, registered once here at script
+// load — not re-wired every time a form/drawer/dialog renders — since it
+// only needs to find the button's own sibling .field-hint and toggle it,
+// which works the same no matter which form the button lives in right now.
+document.addEventListener('click', e=>{
+  const helpBtn = e.target.closest('.help-btn');
+  if(!helpBtn) return;
+  const fieldEl = helpBtn.closest('.field');
+  const hintEl = fieldEl && fieldEl.querySelector('.field-hint');
+  if(hintEl) hintEl.classList.toggle('hidden');
+});
 
 window.addEventListener('online', ()=>document.getElementById('offline-banner').classList.add('hidden'));
 window.addEventListener('offline', ()=>document.getElementById('offline-banner').classList.remove('hidden'));
@@ -723,9 +742,35 @@ const UN_COUNTRIES = ['Afghanistan','Albania','Algeria','Andorra','Angola','Anti
  *  field (a multiselect: any number can apply to the same contact). */
 const RESEARCHER_PURPOSE_OPTIONS = ['Collaboration / Joint Research','Invite for Talk / Seminar','MoU / Institutional Partnership','PhD / Postdoc Recruitment','Grant / Project Partner','Student Exchange / Internship','Consultation / Advisory','Conference / Networking Contact','Reviewer / Editorial Contact','Other'];
 
+/** Ready-made starting points for "➕ Add a Menu" — a Responsibility Area's
+ *  work is rarely just a student list; it also needs somewhere for minutes,
+ *  links, a work-done log, reports, status tracking, and its own people
+ *  (in-charges/volunteers). Rather than making everyone type a Fields spec
+ *  from scratch every time, these are just pre-written fieldsSpec strings —
+ *  picking one from the "Start from a template" dropdown (see openModuleForm)
+ *  fills in Menu Name/Icon/Fields, all still fully editable before saving.
+ *  Every field type used here already exists in parseCustomFieldsSpec — no
+ *  new engine, no backend change, just a faster starting point. */
+const CUSTOM_MENU_TEMPLATES = [
+  { key:'minutes', label:'Minutes / Meeting Notes', icon:'🗒️',
+    fieldsSpec:'Date|date||required\nAgenda|textarea|\nMinutes|textarea|\nAction Points|textarea|' },
+  { key:'links', label:'Links & Resources', icon:'🔗',
+    fieldsSpec:'Title|text||required\nLink|text|\nNotes|textarea|' },
+  { key:'work-log', label:'Work Done / Activity Log', icon:'📝',
+    fieldsSpec:'Date|date||required\nActivity|textarea||required\nStatus|select|Planned,In Progress,Completed\nRemarks|textarea|' },
+  { key:'reports', label:'Reports', icon:'📄',
+    fieldsSpec:'Title|text||required\nDate|date|\nReport Link|text|\nSummary|textarea|' },
+  { key:'status-tracker', label:'Status Tracker', icon:'✅',
+    fieldsSpec:'Item|text||required\nStatus|select|Pending,In Progress,Completed\nDue Date|date|\nRemarks|textarea|' },
+  { key:'student-incharges', label:'Student In-Charges', icon:'🎓',
+    fieldsSpec:'Name|text||required\nReg No|text|\nRole|text|\nEmail|email|\nPhone|tel|' },
+  { key:'volunteers', label:'Volunteers', icon:'🙋',
+    fieldsSpec:'Name|text||required\nReg No|text|\nBatch|text|\nRole|text|\nEmail|email|\nPhone|tel|' }
+];
+
 const MODULES = {
   'work-diary': { label:'Work diary', menu:'work-diary', icon:'📔', titleField:'summary', dateField:'date', groupByMonth:true, fields:[
-    {key:'date', label:'Date', type:'date', required:true, default:'__today__'},
+    {key:'date', label:'Date', hint:'Today or earlier — a diary logs work already done', type:'date', required:true, default:'__today__', maxToday:true},
     {key:'category', label:'Category', type:'select', options:['Teaching','Research','Mentoring','Admin/In-Charge','Committee/Meeting','Other'], default:'Teaching'},
     {key:'summary', label:'What did you work on', type:'textarea', required:true},
     {key:'hoursSpent', label:'Hours Spent', type:'number'}
@@ -737,7 +782,7 @@ const MODULES = {
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'subjectCode', label:'Subject Code', type:'text', required:true},
     {key:'sessionType', label:'Session Type', type:'select', options:['Theory','Laboratory'], default:'Theory'},
-    {key:'batchNumber', label:'Batch Number (for Laboratory sessions)', type:'text'},
+    {key:'batchNumber', label:'Batch Number', hint:'For Laboratory sessions', type:'text'},
     {key:'section', label:'Section', type:'text'},
     {key:'venue', label:'Venue', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Scheduled','Cancelled','Rescheduled'], default:'Scheduled'}
@@ -765,7 +810,7 @@ const MODULES = {
   // "Manage →" link.
   'new-updates': { label:'New Updates', menu:'new-updates', icon:'📰', titleField:'title', dateField:'date', fields:[
     {key:'title', label:'Title', type:'text', required:true},
-    {key:'link', label:'Link (URL) — optional', type:'text'},
+    {key:'link', label:'Link', hint:'URL — optional', type:'text'},
     {key:'date', label:'Date', type:'date', default:'__today__'}
   ]},
   'class-log': { label:'Class log', menu:'teaching', icon:'📝', titleField:'topic', dateField:'date', fields:[
@@ -775,8 +820,8 @@ const MODULES = {
     {key:'section', label:'Section', type:'text'},
     {key:'topic', label:'Topic Covered', type:'textarea', required:true},
     {key:'status', label:'Status', type:'select', options:['Held','Cancelled','Rescheduled'], default:'Held'},
-    {key:'durationHours', label:'Duration (hours)', hint:'Only needed if this class isn\'t already on the Timetable', type:'number'},
-    {key:'students', label:'Students (optional attendance)', type:'subtable', rowLabel:'Student', rowLabelPlural:'students', subfields:[
+    {key:'durationHours', label:'Duration', hint:'In hours — only needed if this class isn\'t already on the Timetable', type:'number'},
+    {key:'students', label:'Students', hint:'Optional attendance', type:'subtable', rowLabel:'Student', rowLabelPlural:'students', subfields:[
       {key:'name', label:'Name'},
       {key:'regNo', label:'Reg. No.'},
       {key:'status', label:'Status', type:'select', options:['Present','Absent']}
@@ -808,7 +853,7 @@ const MODULES = {
     {key:'role', label:'Role', type:'select', options:['Invigilator','Chief Superintendent','Squad Member'], default:'Invigilator'},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
-    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration', hint:'In hours — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'question-bank': { label:'Question bank', menu:'exams', icon:'❓', titleField:'question', dateField:null, fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
@@ -819,7 +864,7 @@ const MODULES = {
     {key:'difficulty', label:'Difficulty', type:'select', options:['Easy','Medium','Hard'], default:'Medium'},
     {key:'marks', label:'Marks', type:'number'}
   ]},
-  'evaluations': { label:'Evaluation', menu:'exams', icon:'✅', titleField:'examName', dateField:'deadline', fields:[
+  'evaluations': { label:'Evaluation', menu:'exams', icon:'✅', titleField:'examName', dateField:'deadline', completionAction:{statusKey:'status', doneValue:'Completed', label:'✅ Mark Complete', promptLabel:'Closing comment — evaluation outcome/remarks'}, fields:[
     {key:'examName', label:'Exam Name', type:'text', required:true},
     {key:'scriptsAssigned', label:'Scripts Assigned', type:'number'},
     {key:'scriptsEvaluated', label:'Scripts Evaluated', type:'number'},
@@ -838,7 +883,7 @@ const MODULES = {
     {key:'subjectCode', label:'Subject Code', type:'text'},
     {key:'section', label:'Section', type:'text'},
     {key:'cia1', label:'CIA-1', type:'number'},
-    {key:'midSem', label:'Mid Sem (CIA-II)', type:'number'},
+    {key:'midSem', label:'Mid Sem', hint:'CIA-II', type:'number'},
     {key:'cia3', label:'CIA-III', type:'number'},
     {key:'total', label:'Total', type:'number'},
     {key:'academicYear', label:'Academic Year', type:'text'}
@@ -874,7 +919,7 @@ const MODULES = {
     {key:'externalExaminer', label:'External Examiner', type:'text'},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
-    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration', hint:'In hours — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'extra-classes': { label:'Extra / Additional Classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
     {key:'type', label:'Type', type:'select', options:['Extra Class','Compensatory Class','Makeup Class'], default:'Extra Class'},
@@ -884,42 +929,72 @@ const MODULES = {
     {key:'date', label:'Date', type:'date', required:true},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
-    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration', hint:'In hours — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
-  'research-targets': { label:'Plans', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
+  'research-targets': { label:'Plans', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', completionAction:{statusKey:'status', doneValue:'Completed', label:'✅ Mark Complete', promptLabel:'Closing comment — outcome of this target'}, fields:[
     {key:'description', label:'Target Description', type:'textarea', required:true},
+    {key:'category', label:'Category', type:'select', options:['Publication','Grant / Project','Patent','Conference','Book','PhD Guidance','Certification','Other'], default:'Publication'},
     {key:'progressPercent', label:'Progress %', type:'number'},
     {key:'targetDate', label:'Target Date', type:'date'},
-    {key:'status', label:'Status', type:'select', options:['Not Started','In Progress','Completed'], default:'Not Started'}
+    {key:'status', label:'Status', type:'select', options:['Not Started','In Progress','Completed'], default:'Not Started'},
+    {key:'priority', label:'Priority', type:'select', options:['High','Medium','Low'], blankLabel:'— Not set —', listHide:true, section:'🔗 Details'},
+    {key:'linkedTo', label:'Linked To', hint:'e.g. a specific publication, project, or grant this target feeds into', type:'text', listHide:true},
+    {key:'expectedOutcome', label:'Expected Outcome', hint:'What success looks like for this target', type:'textarea'}
   ]},
-  'publications': { label:'Publications', menu:'research', icon:'📄', titleField:'title', dateField:null, fields:[
+  'publications': { label:'Publications', menu:'research', icon:'📄', titleField:'title', dateField:null, completionAction:{statusKey:'status', doneValue:'Published', label:'✅ Mark Published', promptLabel:'Closing comment — issue/volume/link or other publication details'}, fields:[
     {key:'title', label:'Title', type:'text', required:true},
     {key:'authors', label:'Authors', type:'text'},
     {key:'venue', label:'Journal / Conference', type:'text'},
     {key:'type', label:'Type', type:'select', options:['Journal','Conference','Book Chapter'], default:'Journal'},
     {key:'status', label:'Status', type:'select', options:['Planned','Submitted','Under Review','Accepted','Published'], default:'Planned'},
     {key:'doi', label:'DOI / Link', type:'text'},
-    {key:'collaborators', label:'Collaborators', type:'text'}
+    {key:'collaborators', label:'Collaborators', type:'text'},
+    {key:'publicationDate', label:'Publication Date', type:'date', listHide:true, section:'🔗 Details & Indexing'},
+    {key:'indexing', label:'Indexing', hint:'Scopus / SCI / UGC-CARE / Web of Science, etc.', type:'select', options:['Scopus','SCI/SCIE','Web of Science','UGC-CARE','ABDC','Other','Not Indexed'], listHide:true},
+    {key:'impactFactor', label:'Impact Factor', type:'text', listHide:true},
+    {key:'volumeIssue', label:'Volume / Issue', type:'text', listHide:true},
+    {key:'pages', label:'Pages', type:'text', listHide:true},
+    {key:'issn', label:'ISSN / ISBN', type:'text', listHide:true}
   ]},
-  'collaborations': { label:'Collaborations', menu:'research', icon:'🤝', titleField:'collaborator', dateField:null, fields:[
+  'collaborations': { label:'Collaborations', menu:'research', icon:'🤝', titleField:'collaborator', dateField:null, completionAction:{statusKey:'status', doneValue:'Completed', label:'✅ Mark Complete', promptLabel:'Closing comment — outcome of this collaboration'}, fields:[
     {key:'collaborator', label:'Collaborator', type:'text', required:true},
     {key:'institution', label:'Institution', type:'text'},
+    {key:'collaborationType', label:'Type', type:'select', options:['Joint Publication','Joint Project','Grant Partner','Student Exchange','MoU','Other'], default:'Joint Project'},
     {key:'nature', label:'Nature of Collaboration', type:'textarea'},
-    {key:'status', label:'Status', type:'select', options:['Proposed','Active','Completed'], default:'Proposed'}
+    {key:'status', label:'Status', type:'select', options:['Proposed','Active','Completed'], default:'Proposed'},
+    {key:'startDate', label:'Start Date', type:'date', listHide:true, section:'🔗 Details'},
+    {key:'website', label:'Website', hint:'Partner institution or project page', type:'url', listHide:true},
+    {key:'outputs', label:'Outputs', hint:'Papers, grants, or products resulting from this collaboration', type:'textarea', listHide:true}
   ]},
   'research-events': { label:'Conferences, Workshops', menu:'research', icon:'🎤', titleField:'eventName', dateField:'date', fields:[
+    // Core fields double as the list view's columns (eventName/date come
+    // from titleField/dateField automatically; eventType + role fill the
+    // rest of the cap) — everything below is listHide so the "connected
+    // features" (venue, deadlines, links, fee) enrich the dialog without
+    // widening the list back into horizontal scrolling.
     {key:'eventName', label:'Event Name', type:'text', required:true},
+    {key:'eventType', label:'Type', type:'select', options:['Conference','Workshop','Seminar','FDP','Symposium','Webinar','Other'], default:'Conference'},
     {key:'role', label:'Role', type:'select', options:['Organized','Participated','Chaired Session','Keynote'], default:'Participated'},
-    {key:'date', label:'Date', type:'date'},
-    {key:'fromTime', label:'From Time', type:'time'},
-    {key:'toTime', label:'To Time', type:'time'},
-    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'date', label:'Event Date', type:'date'},
+    {key:'venue', label:'Venue', hint:'City / institution — or "Online" for virtual events', type:'text', listHide:true, section:'📍 Venue & Timing'},
+    {key:'mode', label:'Mode', type:'select', options:['In-Person','Online','Hybrid'], default:'In-Person', listHide:true},
+    {key:'organizer', label:'Organized By', hint:'Host institution / society', type:'text', listHide:true},
+    {key:'fromTime', label:'From Time', type:'time', listHide:true},
+    {key:'toTime', label:'To Time', type:'time', listHide:true},
+    {key:'durationHours', label:'Duration', hint:'In hours — only used if From/To Time above are left blank; counts toward Time Spent', type:'number', listHide:true},
+    {key:'abstractDeadline', label:'Abstract Deadline', hint:'Last date to submit your abstract / paper', type:'date', listHide:true, section:'📝 Presentation & Registration'},
+    {key:'paperTitle', label:'Paper / Abstract Title', hint:'If you are presenting', type:'text', listHide:true},
+    {key:'website', label:'Website', hint:'Event or registration page link', type:'url', listHide:true},
+    {key:'registrationFee', label:'Registration Fee', hint:'₹ — leave blank if free', type:'text', listHide:true}
   ]},
-  'peer-reviews': { label:'Peer Review & Editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
+  'peer-reviews': { label:'Peer Review & Editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, completionAction:{statusKey:'status', doneValue:'Completed', label:'✅ Mark Complete', promptLabel:'Closing comment — review outcome'}, fields:[
     {key:'venue', label:'Journal / Conference', type:'text', required:true},
     {key:'role', label:'Role', type:'select', options:['Reviewer','Editorial Board','Guest Editor'], default:'Reviewer'},
     {key:'paperTitle', label:'Paper Title', type:'text'},
-    {key:'status', label:'Status', type:'select', options:['Assigned','In Progress','Completed'], default:'Assigned'}
+    {key:'deadline', label:'Review Deadline', type:'date'},
+    {key:'status', label:'Status', type:'select', options:['Assigned','In Progress','Completed'], default:'Assigned'},
+    {key:'indexing', label:'Indexing', hint:'Scopus / SCI / UGC-CARE / Web of Science, etc.', type:'select', options:['Scopus','SCI/SCIE','Web of Science','UGC-CARE','ABDC','Other'], listHide:true, section:'🔗 Details'},
+    {key:'reviewLink', label:'Review Portal Link', hint:'Editorial Manager / journal submission link', type:'url', listHide:true}
   ]},
   'research-contacts': { label:"Researcher's Database", menu:'research', icon:'🌐', titleField:'name', dateField:null, recordNoun:'researcher', profileExport:true, fields:[
     // 👤 Basic Information — name is the only required field; everything
@@ -949,10 +1024,10 @@ const MODULES = {
     {key:'otherLink', label:'Other Website / Social Link', type:'url'},
     // Usage / Purpose — why this contact is being tracked at all; more than
     // one can apply (e.g. both "Collaboration" and "Grant / Project Partner").
-    {key:'purposes', label:'Select purpose(s)', type:'multiselect', options:RESEARCHER_PURPOSE_OPTIONS, section:'Usage / Purpose'},
+    {key:'purposes', label:'Purposes', type:'multiselect', options:RESEARCHER_PURPOSE_OPTIONS, section:'Usage / Purpose'},
     // 📝 Classification & Notes
-    {key:'source', label:'Source (how you found them)', type:'text', section:'📝 Classification & Notes'},
-    {key:'tags', label:'Tags (comma separated)', type:'text'},
+    {key:'source', label:'Source', hint:'How you found them', type:'text', section:'📝 Classification & Notes'},
+    {key:'tags', label:'Tags', hint:'Comma separated', type:'text'},
     {key:'achievements', label:'Notable Inventions / Patents / Achievements', type:'textarea'},
     {key:'additionalNotes', label:'Notes', type:'textarea'}
   ], logTabs:[
@@ -960,7 +1035,7 @@ const MODULES = {
       {key:'title', label:'Paper / Publication Title', type:'text', required:true},
       {key:'venue', label:'Journal / Conference', type:'text'},
       {key:'year', label:'Year', type:'number'},
-      {key:'link', label:'Link (DOI / URL)', type:'url'}
+      {key:'link', label:'Link', hint:'DOI or URL', type:'url'}
     ], summary:(e)=>(e.title||'(untitled)') + (e.year ? ' (' + e.year + ')' : '') + (e.venue ? ' — ' + e.venue : ''), linkKey:'link' },
     { key:'contact-history', label:'Contact History', icon:'📞', arrayKey:'contactHistory', addLabel:'Log Contact', hintPhrase:'log contact history', fields:[
       {key:'date', label:'Date', type:'date', default:'__today__'},
@@ -974,11 +1049,11 @@ const MODULES = {
       {key:'notes', label:'Notes', type:'textarea'}
     ], summary:(e)=>[e.fromDate?fmtDate(e.fromDate):'', e.toDate?('– '+fmtDate(e.toDate)):''].filter(Boolean).join(' ') + (e.purpose ? (' — ' + e.purpose) : ''), bodyKey:'notes' }
   ]},
-  'project-grants': { label:'Projects & Grants', menu:'projects', icon:'💰', titleField:'title', dateField:'endDate', fields:[
+  'project-grants': { label:'Projects & Grants', menu:'projects', icon:'💰', titleField:'title', dateField:'endDate', completionAction:{statusKey:'status', doneValue:'Completed', excludeValues:['Closed'], label:'✅ Mark Complete', promptLabel:'Closing comment — outcome of this project/grant'}, fields:[
     {key:'title', label:'Title', type:'text', required:true},
     {key:'fundingAgency', label:'Funding Agency', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Planned','Applied','Ongoing','Completed','Closed'], default:'Planned'},
-    {key:'amount', label:'Amount (₹)', type:'number'},
+    {key:'amount', label:'Amount', hint:'₹', type:'number'},
     {key:'startDate', label:'Start Date', type:'date'},
     {key:'endDate', label:'End Date', type:'date'},
     {key:'collaborators', label:'Collaborators', type:'text'}
@@ -1009,7 +1084,7 @@ const MODULES = {
     {key:'status', label:'Status', type:'select', options:['Active','On Hold','Completed'], default:'Active', listHide:true},
     {key:'description', label:'Description / Scope', type:'textarea'}
   ]},
-  'incharge-roles': { label:'In-charges', menu:'incharge', icon:'🛡️', titleField:'roleName', dateField:'endDate', fields:[
+  'incharge-roles': { label:'In-charges', menu:'incharge', icon:'🛡️', titleField:'roleName', dateField:'endDate', completionAction:{statusKey:'status', doneValue:'Completed', label:'✅ Mark Complete', promptLabel:'Closing comment — handover notes for this role'}, fields:[
     {key:'roleName', label:'Role Name', type:'text', required:true},
     {key:'durationType', label:'Duration', type:'select', options:['Semester','Annual','Ongoing'], default:'Semester'},
     {key:'startDate', label:'Start Date', type:'date'},
@@ -1025,7 +1100,7 @@ const MODULES = {
       {key:'progressStatus', label:'Progress', type:'select', options:['On Track','Delayed','Completed']}
     ]}
   ]},
-  'committees': { label:'Committees', menu:'committees', icon:'🏛️', titleField:'name', dateField:null, fields:[
+  'committees': { label:'Committees', menu:'committees', icon:'🏛️', titleField:'name', dateField:null, completionAction:{statusKey:'status', doneValue:'Completed', label:'✅ Mark Complete', promptLabel:'Closing comment — wrap-up notes for this committee role'}, fields:[
     {key:'name', label:'Committee Name', type:'text', required:true},
     {key:'myRole', label:'My Role', type:'text'},
     {key:'academicYear', label:'Academic Year', type:'text'},
@@ -1048,7 +1123,7 @@ const MODULES = {
     {key:'attendees', label:'Attendees', type:'textarea'},
     {key:'minutes', label:'Minutes', type:'textarea'},
     {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'},
-    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration', hint:'In hours — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   // "Action" comes first now (not "Meeting") — an action item is most often
   // typed out before its origin is picked, and it doesn't always have one.
@@ -1082,7 +1157,7 @@ const MODULES = {
     {key:'status', label:'Status', type:'select', options:['Pending','Resolved'], default:'Pending'}
   ]},
   'responsibilities': { label:'Responsibilities', menu:'responsibilities', icon:'📋', titleField:'title', dateField:null, fields:[
-    {key:'title', label:'Title (e.g. Class Teacher)', type:'text', required:true},
+    {key:'title', label:'Title', hint:'e.g. Class Teacher', type:'text', required:true},
     {key:'classSection', label:'Class / Section', type:'text'},
     {key:'academicYear', label:'Academic Year', type:'text'},
     {key:'contacts', label:'Students / Contacts', type:'subtable', rowLabel:'Contact', rowLabelPlural:'contacts', subfields:[
@@ -1103,7 +1178,7 @@ const MODULES = {
   ]},
   'custom-modules': { label:'Custom menus', menu:'custom-modules', icon:'🧩', titleField:'label', dateField:'', fields:[
     {key:'label', label:'Menu Name', type:'text', required:true},
-    {key:'icon', label:'Icon (one emoji)', type:'text', default:'🗂️'},
+    {key:'icon', label:'Icon', hint:'One emoji', type:'text', default:'🗂️'},
     {key:'category', label:'Category', hint:'Which tab it appears under — ignored if attached to a Responsibility Area below, since attached menus live under Roles & Responsibilities instead', type:'categoryRef', default:'tools'},
     {key:'responsibilityAreaId', label:'Attach to a Responsibility Area', hint:'Optional — menus attached to the same responsibility group together under it in Roles & Responsibilities, instead of each being a separate top-level menu', type:'reference', ref:'responsibility-areas'},
     {key:'fieldsSpec', label:'Fields', hint:'One per line: Label|type|options|required. Types: text, textarea, number, date, select, email, tel, subtable (options comma-separated, select only; write "required" as the 4th part). A subtable\'s sub-columns go in the options part, e.g. "Semester Marks|subtable|Marks,Status:select:Pass;Fail" — a 4th part that\'s a semicolon list instead of "required" gives it fixed, pre-named rows, e.g. "...|Sem-1;Sem-2;Sem-3"', type:'textarea', required:true, default:'Details|textarea'},
@@ -2312,6 +2387,7 @@ function renderShellSkeleton(){
 function closeAllNavDropdowns(){
   document.querySelectorAll('.topnav-cat.open').forEach(el=>el.classList.remove('open'));
 }
+let WIRE_SHELL_DOC_LISTENERS_ADDED = false;
 function wireShell(){
   const catsEl = document.getElementById('topnav-cats');
   catsEl.addEventListener('click', (e)=>{
@@ -2342,11 +2418,21 @@ function wireShell(){
     closeAllNavDropdowns();
     navigate(item.dataset.href);
   });
-  // Click outside any category, or Escape, closes an open dropdown.
-  document.addEventListener('click', (e)=>{
-    if(!e.target.closest('.topnav-cat')) closeAllNavDropdowns();
-  });
-  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeAllNavDropdowns(); });
+  // Click outside any category, or Escape, closes an open dropdown. wireShell()
+  // itself runs on EVERY render() — every navigation (hashchange fires it),
+  // every "Mark Completed"/"Renew"/delete-then-refresh, every login. The
+  // elements above (#topnav-cats, #logout-btn, …) are safe to re-wire each
+  // time because renderShellSkeleton() just rebuilt them fresh — but `document`
+  // itself is never rebuilt, so listeners attached to it here would otherwise
+  // stack up forever, one more pair per navigation, for the life of the page.
+  // WIRE_SHELL_DOC_LISTENERS guards these two so they're only ever added once.
+  if(!WIRE_SHELL_DOC_LISTENERS_ADDED){
+    document.addEventListener('click', (e)=>{
+      if(!e.target.closest('.topnav-cat')) closeAllNavDropdowns();
+    });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeAllNavDropdowns(); });
+    WIRE_SHELL_DOC_LISTENERS_ADDED = true;
+  }
 
   document.getElementById('logout-btn').addEventListener('click', doLogout);
   const fsBtn = document.getElementById('fullscreen-toggle');
@@ -2373,12 +2459,18 @@ function wireShell(){
 function fieldByKey(mod, key){ return mod.fields.find(f=>f.key===key); }
 
 // A field's on-screen <label> is kept short and plain (e.g. "Academic Year",
-// not a whole sentence) — any example/explanation that used to be crammed
-// into the label itself now lives in field.hint and renders as one small
-// muted line under the input instead, so dialog boxes read as short label +
-// input, with the "why/how" available but not competing for attention.
+// not a whole sentence, and never anything in brackets) — any example or
+// explanation that used to be crammed into the label itself now lives in
+// field.hint, behind a small "?" help button next to the label (see
+// fieldHelpBtnHtml) instead of an always-visible line of text — click it to
+// reveal/hide just that field's guidance. The click itself is handled by ONE
+// delegated listener registered once, near the top of the script (search
+// "help-btn" click handler) — not re-wired on every form render.
 function fieldHintHtml(f){
-  return f.hint ? '<div class="field-hint">' + escapeHtml(f.hint) + '</div>' : '';
+  return f.hint ? '<div class="field-hint hidden">' + escapeHtml(f.hint) + '</div>' : '';
+}
+function fieldHelpBtnHtml(f){
+  return f.hint ? ' <button type="button" class="help-btn" title="Help" aria-label="Help for ' + escapeHtml(f.label) + '">?</button>' : '';
 }
 
 function moduleDisplayColumns(mod){
@@ -3072,7 +3164,14 @@ function fieldInputHtml(mod, field, value, rec, idPrefix, presets){
   // the browser silently block form submission for any decimal value (e.g.
   // 1.5 hours) — the input shows no visible error, the Save click just does
   // nothing. Every hours/marks/amount field in the app is decimal-capable.
-  const extraAttrs = field.type === 'number' ? ' step="any"' : '';
+  // field.maxToday (Work Diary's own "Date" field) caps the browser's own
+  // date picker at today — a diary logs work already done, so there's
+  // nothing to log for a day that hasn't happened yet. The submit handler
+  // below also checks this explicitly (see "cannot be a future date"),
+  // rather than relying only on the browser's native max= enforcement.
+  let extraAttrs = '';
+  if(field.type === 'number') extraAttrs = ' step="any"';
+  else if(field.type === 'date' && field.maxToday) extraAttrs = ' max="' + todayStr() + '"';
   return '<input class="input" id="' + id + '" type="' + (typeMap[field.type] || 'text') + '"' + extraAttrs + ' value="' + escapeHtml(v) + '">';
 }
 /** Canonical {subject, subjectCode} pairs, sourced from Timetable — see the
@@ -3124,22 +3223,33 @@ function applySubjectAutoFill(mod, data){
 /** Finds the roster record for a given Subject+Section pair, or null if
  *  none has been created yet. Case/whitespace-insensitive on both sides,
  *  same as every other place this app matches free-typed Subject text. */
-function findClassRoster(subject, section){
+/** Matches by Subject Code first (when both sides have recorded one) —
+ *  a short, stable identifier — before falling back to Subject text. This
+ *  is what makes two Timetable slots for the same class in the same week
+ *  (e.g. Monday and Wednesday of "Electromagnetics") land on the SAME
+ *  roster even if the Subject was typed slightly differently between the
+ *  two entries (extra space, different casing, a small wording tweak) —
+ *  Subject Code doesn't have that risk since it's normally short and
+ *  copy-pasted rather than retyped each time. */
+function findClassRoster(subject, section, subjectCode){
   const subjNorm = String(subject || '').trim().toLowerCase();
   const secNorm = String(section || '').trim().toLowerCase();
-  if(!subjNorm) return null;
-  return getActive('class-rosters').find(r =>
-    String(r.subject || '').trim().toLowerCase() === subjNorm
-    && String(r.section || '').trim().toLowerCase() === secNorm
-  ) || null;
+  const codeNorm = String(subjectCode || '').trim().toLowerCase();
+  if(!subjNorm && !codeNorm) return null;
+  return getActive('class-rosters').find(r => {
+    if(String(r.section || '').trim().toLowerCase() !== secNorm) return false;
+    const rCode = String(r.subjectCode || '').trim().toLowerCase();
+    if(codeNorm && rCode) return rCode === codeNorm;
+    return String(r.subject || '').trim().toLowerCase() === subjNorm;
+  }) || null;
 }
-/** Opens the roster for a Subject+Section — editing the existing one if
- *  Timetable (or anywhere else) already created it, or a pre-filled Add
+/** Opens the roster for a Subject(+Code)+Section — editing the existing one
+ *  if Timetable (or anywhere else) already created it, or a pre-filled Add
  *  form if this is the first time. Multiple Timetable slots for the same
  *  class (e.g. Mon and Wed sessions) deliberately land on the SAME roster
  *  record, since they're the same class meeting twice, not two classes. */
 function openClassRosterFor(subject, subjectCode, section){
-  const existing = findClassRoster(subject, section);
+  const existing = findClassRoster(subject, section, subjectCode);
   if(existing) openModuleForm('class-rosters', existing.id);
   else openModuleForm('class-rosters', null, { subject: subject, subjectCode: subjectCode, section: section });
 }
@@ -3174,9 +3284,11 @@ function wireLoadRosterButtons(mod){
     btn.addEventListener('click', ()=>{
       const subjectEl = document.getElementById('f_subject');
       const sectionEl = document.getElementById('f_section');
+      const subjectCodeEl = document.getElementById('f_subjectCode');
       const subject = subjectEl ? subjectEl.value : '';
       const section = sectionEl ? sectionEl.value : '';
-      const roster = findClassRoster(subject, section);
+      const subjectCode = subjectCodeEl ? subjectCodeEl.value : '';
+      const roster = findClassRoster(subject, section, subjectCode);
       if(!roster){
         toast('No class roster found for "' + subject + (section ? (' — ' + section) : '') + '" yet — add one from Timetable\'s "👥 Class Roster" first.', 'err');
         return;
@@ -3198,6 +3310,93 @@ function wireLoadRosterButtons(mod){
         added++;
       });
       toast(added ? (added + ' student(s) loaded from the class roster') : 'Everyone from that roster is already listed', added ? 'ok' : undefined);
+    });
+  });
+}
+/** Best-effort match of a spreadsheet column header to one of a subtable's
+ *  own subfields (e.g. Class Roster's Name/Reg. No./Email/Phone) — same
+ *  label-then-key, case/space-insensitive approach as matchFieldForHeader,
+ *  just scoped to field.subfields instead of a whole module's fields. */
+function matchSubfieldForHeader(field, header){
+  const norm = String(header || '').trim().toLowerCase();
+  return field.subfields.find(sf => sf.label.trim().toLowerCase() === norm)
+    || field.subfields.find(sf => sf.key.trim().toLowerCase() === norm)
+    || null;
+}
+/** Reads an uploaded workbook into plain row objects keyed by subfield —
+ *  a smaller sibling of parseWorkbookForModule for the subtable case, where
+ *  there's no "required" concept (any row with at least one matched, non-blank
+ *  cell is kept) and no field defaults to backfill (blank subtable cells just
+ *  stay blank, same as typing a row by hand and leaving some cells empty). */
+function parseWorkbookForSubtable(field, arrayBuffer){
+  const wb = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const sheetRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  const rows = [];
+  let skipped = 0;
+  sheetRows.forEach(row=>{
+    const headers = Object.keys(row);
+    const data = {};
+    let hasAny = false;
+    headers.forEach(h=>{
+      const sf = matchSubfieldForHeader(field, h);
+      if(!sf) return;
+      const val = coerceImportValue(sf, row[h]);
+      if(String(val).trim() !== ''){ data[sf.key] = val; hasAny = true; }
+    });
+    if(hasAny) rows.push(data); else skipped++;
+  });
+  return { rows: rows, skipped: skipped, totalRows: sheetRows.length };
+}
+/** Wires each "⬆ Import from Excel" button (rendered right next to "📋 Load
+ *  from Class Roster" — see isStudentRosterSubtable) to its hidden file
+ *  input. Reuses the exact same SheetJS parsing plumbing as the generic
+ *  Bulk Import drawer (matchFieldForHeader's sibling, coerceImportValue),
+ *  just landing rows into this ONE subtable instead of creating whole new
+ *  records — the natural way to get a class list of 60+ students in
+ *  without retyping each one. De-dupes against rows already in the table
+ *  by Reg. No. when that subfield exists, same as "Load from Class Roster". */
+function wireImportSubtableButtons(mod){
+  mod.fields.filter(f => isStudentRosterSubtable(mod, f)).forEach(f=>{
+    const btn = document.querySelector('[data-import-excel-field="' + f.key + '"]');
+    const fileInput = document.querySelector('[data-import-excel-input="' + f.key + '"]');
+    if(!btn || !fileInput) return;
+    btn.addEventListener('click', ()=>{
+      if(!bulkImportAvailable()){
+        toast('The spreadsheet library failed to load (needs an internet connection) — try again once you\'re back online.', 'err');
+        return;
+      }
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', ()=>{
+      const file = fileInput.files && fileInput.files[0];
+      if(!file) return;
+      file.arrayBuffer().then(buf=>{
+        const parsed = parseWorkbookForSubtable(f, buf);
+        const container = document.getElementById('f_' + f.key);
+        const tbody = container.querySelector('.subtable-body');
+        const hasRegNoCol = f.subfields.some(sf => sf.key === 'regNo');
+        const existingRegNos = new Set(hasRegNoCol ? Array.from(tbody.querySelectorAll('.subtable-row')).map(tr=>{
+          const cell = tr.querySelector('[data-subkey="regNo"]');
+          return cell ? cell.value.trim().toLowerCase() : '';
+        }).filter(Boolean) : []);
+        let added = 0, duplicates = 0;
+        parsed.rows.forEach(row=>{
+          const regNo = hasRegNoCol ? String(row.regNo || '').trim() : '';
+          if(regNo && existingRegNos.has(regNo.toLowerCase())){ duplicates++; return; }
+          tbody.insertAdjacentHTML('beforeend', subtableRowHtml(f, row));
+          if(regNo) existingRegNos.add(regNo.toLowerCase());
+          added++;
+        });
+        const parts = [added + ' row(s) imported'];
+        if(duplicates) parts.push(duplicates + ' duplicate(s) skipped');
+        if(parsed.skipped) parts.push(parsed.skipped + ' blank row(s) skipped');
+        toast(parts.join(', '), added ? 'ok' : undefined);
+        fileInput.value = '';
+      }).catch(()=>{
+        toast('Could not read that file — make sure it\'s a valid .xlsx, .xls, or .csv.', 'err');
+        fileInput.value = '';
+      });
     });
   });
 }
@@ -3422,7 +3621,7 @@ function logTabHtml(rec, tabDef){
   });
   html += '</div>';
   html += '<div class="field-grid" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
-  tabDef.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml({fields:tabDef.fields}, f, undefined, null, 'log_' + tabDef.key + '_') + fieldHintHtml(f) + '</div>'; });
+  tabDef.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + fieldHelpBtnHtml(f) + '</label>' + fieldInputHtml({fields:tabDef.fields}, f, undefined, null, 'log_' + tabDef.key + '_') + fieldHintHtml(f) + '</div>'; });
   html += '<div class="error-box" id="log-' + tabDef.key + '-error"></div>';
   html += '<button class="btn btn-primary btn-sm" type="button" data-log-add="' + tabDef.key + '">' + escapeHtml(tabDef.addLabel || 'Add') + '</button>';
   html += '</div>';
@@ -3475,6 +3674,20 @@ function openModuleForm(moduleKey, id, presets){
       + '</div>';
   }
   html += '<div id="tab-details" class="tab-panel"><form id="record-form">';
+  // A brand-new Custom Menu gets a "Start from a template" picker ahead of
+  // its own fields (see CUSTOM_MENU_TEMPLATES / wireModuleForm) — most
+  // menus attached to a Responsibility Area are one of a handful of common
+  // shapes (minutes, a work-done log, a report, a status tracker, a list of
+  // people), so picking one fills in Menu Name/Icon/Fields as a starting
+  // point instead of everyone typing a Fields spec from a blank page. Only
+  // shown when adding (not editing) — changing the template on a menu that
+  // already has saved fields/data would be more confusing than helpful.
+  if(moduleKey === 'custom-modules' && !rec){
+    html += '<div class="field"><label>Start from a template <span style="font-weight:400;color:var(--text-dim);">(optional)</span></label>'
+      + '<select class="input" id="menu-template-select"><option value="">— Blank (build your own) —</option>'
+      + CUSTOM_MENU_TEMPLATES.map(t=>'<option value="' + t.key + '">' + t.icon + ' ' + escapeHtml(t.label) + '</option>').join('')
+      + '</select><div class="field-hint">Fills in Menu Name, Icon, and Fields below — everything stays fully editable before you save.</div></div>';
+  }
   // presets: only used when adding a brand-new record (e.g. clicking
   // "+ Add to this group" from a grouped list view) to pre-fill one field —
   // like the group's own value — so the new record lands in that same group.
@@ -3488,9 +3701,13 @@ function openModuleForm(moduleKey, id, presets){
       currentSection = f.section;
       html += '<h4 class="form-section-heading">' + escapeHtml(currentSection) + '</h4>';
     }
-    html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec, undefined, presets) + fieldHintHtml(f) + '</div>';
+    html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + fieldHelpBtnHtml(f) + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec, undefined, presets) + fieldHintHtml(f) + '</div>';
     if(isStudentRosterSubtable(mod, f)){
-      html += '<div style="display:flex;margin:-6px 0 13px;"><button type="button" class="btn btn-ghost btn-sm" data-load-roster-field="' + f.key + '">📋 Load from Class Roster</button></div>';
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:-6px 0 13px;">'
+        + '<button type="button" class="btn btn-ghost btn-sm" data-load-roster-field="' + f.key + '">📋 Load from Class Roster</button>'
+        + '<button type="button" class="btn btn-ghost btn-sm" data-import-excel-field="' + f.key + '">⬆ Import from Excel</button>'
+        + '<input type="file" accept=".xlsx,.xls,.csv" data-import-excel-input="' + f.key + '" class="hidden">'
+        + '</div>';
     }
   });
   html += '<div class="error-box" id="form-error"></div>';
@@ -3540,6 +3757,24 @@ function wireModuleForm(moduleKey, id){
   });
   wireSubtableFields(mod);
   wireLoadRosterButtons(mod);
+  wireImportSubtableButtons(mod);
+  // "Start from a template" (see CUSTOM_MENU_TEMPLATES) — picking one fills
+  // in Menu Name (only if still blank, so it never clobbers a name already
+  // typed in), Icon, and Fields; picking "— Blank —" again just leaves
+  // whatever's there. Everything it fills stays a normal editable input.
+  const templateSelect = document.getElementById('menu-template-select');
+  if(templateSelect){
+    templateSelect.addEventListener('change', ()=>{
+      const tpl = CUSTOM_MENU_TEMPLATES.find(t=>t.key === templateSelect.value);
+      if(!tpl) return;
+      const labelEl = document.getElementById('f_label');
+      const iconEl = document.getElementById('f_icon');
+      const specEl = document.getElementById('f_fieldsSpec');
+      if(labelEl && !labelEl.value.trim()) labelEl.value = tpl.label;
+      if(iconEl) iconEl.value = tpl.icon;
+      if(specEl) specEl.value = tpl.fieldsSpec;
+    });
+  }
   const cancelBtn = document.getElementById('form-cancel');
   if(cancelBtn) cancelBtn.addEventListener('click', closeDrawer);
   const form = document.getElementById('record-form');
@@ -3577,6 +3812,16 @@ function wireModuleForm(moduleKey, id){
         const v = data[f.key];
         if(f.required && (v === '' || v == null)){
           errEl.textContent = f.label + ' is required.';
+          const el = document.getElementById('f_' + f.key);
+          if(el) el.focus();
+          return;
+        }
+        // field.maxToday (Work Diary's own Date field) — checked explicitly
+        // here too, not just via the input's own max= attribute, so a
+        // future date is rejected with a clear message even if a browser's
+        // native date-picker validation gets bypassed (e.g. typed directly).
+        if(f.type === 'date' && f.maxToday && v && v > todayStr()){
+          errEl.textContent = f.label + ' cannot be a future date — a diary logs work already done.';
           const el = document.getElementById('f_' + f.key);
           if(el) el.focus();
           return;
@@ -4557,8 +4802,16 @@ function renderTimetableScreen(){
           // different courses that happen to share a subject name are still
           // told apart at a glance; Batch Number (only set on Laboratory
           // sessions) is appended to the section/venue line when present.
-          html += '<td data-id="' + cell.id + '" data-action="edit-cell" style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;vertical-align:top;font-size:12px;'
+          // A small "👥" in the corner opens/creates this class's roster
+          // straight from the grid — the same openClassRosterFor() the "All
+          // entries" list's "👥 Class Roster" row action already uses — so
+          // it's discoverable from the main weekly view too, not only after
+          // scrolling to the list below. It stopPropagation()s in
+          // wireTimetableScreen() so clicking it never also opens the
+          // whole-cell Edit form underneath.
+          html += '<td data-id="' + cell.id + '" data-action="edit-cell" style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;vertical-align:top;font-size:12px;position:relative;'
             + (cell.status==='Cancelled' ? 'opacity:.5;text-decoration:line-through;' : '') + '">'
+            + '<button type="button" class="btn-grid-roster" data-action="grid-roster" data-id="' + cell.id + '" title="Class Roster">👥</button>'
             + '<b>' + escapeHtml(cell.subject||'') + '</b>' + (cell.subjectCode ? (' <span class="mono" style="color:var(--text-dim);font-size:10.5px;">' + escapeHtml(cell.subjectCode) + '</span>') : '')
             + '<br><span style="color:var(--text-dim);">' + escapeHtml(cell.section||'') + (cell.batchNumber ? (' · Batch ' + escapeHtml(cell.batchNumber)) : '') + (cell.venue?(' · '+escapeHtml(cell.venue)):'') + '</span></td>';
         }else{
@@ -4581,6 +4834,14 @@ function wireTimetableScreen(){
   document.getElementById('bulk-import-btn').addEventListener('click', ()=>openBulkImportDrawer('timetable', ()=>renderRoute()));
   document.querySelectorAll('[data-action="edit-cell"]').forEach(td=>{
     td.addEventListener('click', ()=>openModuleForm('timetable', td.dataset.id));
+    const rosterBtn = td.querySelector('[data-action="grid-roster"]');
+    if(rosterBtn){
+      rosterBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const rec = getRecord('timetable', rosterBtn.dataset.id);
+        if(rec) openClassRosterFor(rec.subject, rec.subjectCode, rec.section);
+      });
+    }
   });
   const cols = moduleDisplayColumns(MODULES.timetable);
   const wrap = document.getElementById('module-table-wrap');
