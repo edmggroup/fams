@@ -649,6 +649,7 @@ const MAIN_MENUS = [
   { key:'action-items', label:'Action items' },
   { key:'reminders', label:'Reminders' },
   { key:'office-followups', label:'Office follow-ups' },
+  { key:'new-updates', label:'New Updates' },
   { key:'responsibilities', label:'Class teacher / responsibilities' },
   { key:'analytics', label:'Analytics' },
   { key:'reports', label:'Reports' },
@@ -689,6 +690,20 @@ const MODULES = {
     {key:'date', label:'Date', type:'date', required:true},
     {key:'name', label:'Holiday Name', type:'text', required:true},
     {key:'type', label:'Type', type:'select', options:['University Holiday','National Holiday','Local Holiday'], default:'University Holiday'}
+  ]},
+  // A separate, manually-curated menu — just an external news Title and
+  // Link — feeding the Dashboard's "📰 New Updates" ticker (see
+  // dashboardTickerHtml()). Deliberately NOT the same thing as
+  // recentActivity() (the app's own audit trail of records you've added);
+  // this is for outside news/announcements the faculty member wants
+  // surfaced on their own Dashboard. Like Leave/OD and Holidays, it has no
+  // nav-dropdown entry of its own — reached via the Dashboard's quick-add
+  // button (placed right after "🏖️ Add Holiday") and the ticker's own
+  // "Manage →" link.
+  'new-updates': { label:'New Updates', menu:'new-updates', icon:'📰', titleField:'title', dateField:'date', fields:[
+    {key:'title', label:'Title', type:'text', required:true},
+    {key:'link', label:'Link (URL)', type:'text', required:true},
+    {key:'date', label:'Date', type:'date', default:'__today__'}
   ]},
   'class-log': { label:'Class log', menu:'teaching', icon:'📝', titleField:'topic', dateField:'date', fields:[
     {key:'date', label:'Date', type:'date', required:true},
@@ -2074,12 +2089,18 @@ function fieldDisplayValue(mod, field, rec){
       // Fixed-row mode (e.g. Sem-1..Sem-6): every slot always exists in
       // storage even before its mark is entered, so "rows.length" alone
       // would always just say the total — the useful number here is how
-      // many slots actually have something filled in yet.
+      // many slots actually have something filled in yet. The preview shows
+      // each filled row's actual values (e.g. "Sem-1: 85/Pass"), not just
+      // which row labels have something — a row label alone doesn't tell
+      // you the mark itself without opening the record.
       const filledRows = rows.filter(r=>field.subfields.some(sf=>r[sf.key]));
       if(filledRows.length === 0) return '<span style="color:var(--text-faint)">—</span>';
-      const preview = filledRows.map(r=>r._rowLabel).filter(Boolean).slice(0,4).join(', ');
+      const preview = filledRows.slice(0,4).map(r=>{
+        const vals = field.subfields.map(sf=>r[sf.key]).filter(Boolean).join('/');
+        return (r._rowLabel ? escapeHtml(r._rowLabel) + ': ' : '') + escapeHtml(vals);
+      }).join(', ');
       return '<span class="badge badge-ok">' + filledRows.length + ' / ' + field.fixedRows.length + ' ' + escapeHtml(field.rowLabelPlural || field.rowLabel || 'entries') + '</span>'
-        + (preview ? '<div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;">' + escapeHtml(preview) + (filledRows.length>4?'…':'') + '</div>' : '');
+        + (preview ? '<div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;">' + preview + (filledRows.length>4?'…':'') + '</div>' : '');
     }
     if(rows.length === 0) return '<span style="color:var(--text-faint)">—</span>';
     const firstKey = field.subfields[0].key;
@@ -2193,7 +2214,30 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
   // "Present Status") gets a bulk "apply to whole group" control right in
   // the group header, alongside the group's own quick-add and export.
   const groupStatusField = (grouping && mod.groupByField) ? mod.fields.find(f=>f.type==='select' && /status/i.test(f.key)) : null;
-  let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>';
+  // Grouping data is computed up front (rather than inline further down) so
+  // a "Jump to <Batch/month/…>" dropdown can be rendered ABOVE the table —
+  // handy once there are more groups than fit on one screen (e.g. UG
+  // Research grouped by Batch): picking one scrolls straight to that
+  // group's header instead of scrolling through everyone else's rows first.
+  let groupOrder = [], groups = {};
+  if(grouping){
+    rows.forEach(r=>{
+      const key = rowGroupKey(mod, r);
+      if(!groups[key]){ groups[key] = []; groupOrder.push(key); }
+      groups[key].push(r);
+    });
+  }
+  let html = '';
+  if(grouping && groupOrder.length > 1){
+    const jumpLabel = mod.groupByField ? ((mod.fields.find(f=>f.key===mod.groupByField)||{}).label || 'group') : 'month';
+    html += '<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">'
+      + '<label style="font-size:12px;color:var(--text-dim);white-space:nowrap;">Jump to ' + escapeHtml(jumpLabel) + ':</label>'
+      + '<select class="input input-sm" id="group-jump-select" style="width:auto;">'
+      + '<option value="">— Select —</option>'
+      + groupOrder.map(key=>'<option value="' + escapeHtml(key) + '">' + escapeHtml(rowGroupLabel(mod, key)) + ' (' + groups[key].length + ')</option>').join('')
+      + '</select></div>';
+  }
+  html += '<table style="width:100%;border-collapse:collapse;"><thead><tr>';
   if(selectable){
     const visibleIds = rows.map(r=>r.id);
     const allSelected = visibleIds.length > 0 && visibleIds.every(id=>LIST_SELECTION.has(id));
@@ -2205,17 +2249,10 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
   if(!grouping){
     rows.forEach(r=>{ html += moduleRowHtml(mod, cols, r, selectable, moduleKey); });
   }else{
-    const groupOrder = [];
-    const groups = {};
-    rows.forEach(r=>{
-      const key = rowGroupKey(mod, r);
-      if(!groups[key]){ groups[key] = []; groupOrder.push(key); }
-      groups[key].push(r);
-    });
     groupOrder.forEach(key=>{
       const groupRows = groups[key];
       const safeKey = escapeHtml(key);
-      html += '<tr class="group-header-row"><td colspan="' + colspan + '" style="padding:10px 12px;background:#f4f6fb;border-bottom:1px solid var(--border);border-top:2px solid var(--border);">'
+      html += '<tr class="group-header-row" data-group-key="' + safeKey + '"><td colspan="' + colspan + '" style="padding:10px 12px;background:#f4f6fb;border-bottom:1px solid var(--border);border-top:2px solid var(--border);">'
         + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
         + '<strong style="font-size:13px;">' + escapeHtml(rowGroupLabel(mod, key)) + '</strong>'
         + '<span class="badge badge-neutral">' + groupRows.length + '</span>'
@@ -2290,6 +2327,16 @@ function wireModuleList(moduleKey){
   if(addBtn) addBtn.addEventListener('click', ()=>openModuleForm(moduleKey, null));
   const bulkImportBtn = document.getElementById('bulk-import-btn');
   if(bulkImportBtn) bulkImportBtn.addEventListener('click', ()=>openBulkImportDrawer(moduleKey, refreshTable));
+  // "Jump to <Batch/month/…>" dropdown (see moduleTableHtml) — scrolls
+  // straight to that group's header row. A plain 'change' listener on the
+  // wrap survives refreshTable() re-rendering the select every time, since
+  // it's attached to wrap itself, not the (replaced) select element.
+  wrap.addEventListener('change', (e)=>{
+    const jumpSelect = e.target.closest('#group-jump-select');
+    if(!jumpSelect || !jumpSelect.value) return;
+    const target = wrap.querySelector('tr.group-header-row[data-group-key="' + CSS.escape(jumpSelect.value) + '"]');
+    if(target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
   wrap.addEventListener('click', async (e)=>{
     const selectAllBox = e.target.closest('#select-all-rows');
     if(selectAllBox){
@@ -3002,6 +3049,42 @@ function todaysClasses(){
   return getActive('timetable').filter(t=>t.day===dow && t.status!=='Cancelled')
     .sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||'')));
 }
+/** Everything else (besides Timetable) that can carry a real From/To Time
+ *  for a specific date — feeds todaysScheduleItems() below, so the
+ *  Dashboard's "Today's Schedule" shows the whole day's work, not just
+ *  classes. Class Log is deliberately left out: a class marked "Held"
+ *  today already shows via its matching Timetable slot, so repeating it
+ *  here would just be the same class twice. */
+const TODAYS_SCHEDULE_EXTRA_SOURCES = [
+  { key:'meetings', icon:'📅', title:(r)=>r.title||'', meta:(r)=>r.venue||'' },
+  { key:'invigilation-duties', icon:'🖊️', title:(r)=>r.examName||'', meta:(r)=>[r.session, r.venue].filter(Boolean).join(', ') },
+  { key:'extra-classes', icon:'➕', title:(r)=>(r.subject||'') + (r.subjectCode?(' ('+r.subjectCode+')'):''), meta:(r)=>r.type||'' },
+  { key:'lab-exams', icon:'🔬', title:(r)=>r.labCourse||'', meta:(r)=>r.batch||'' },
+  { key:'research-events', icon:'🎤', title:(r)=>r.eventName||'', meta:(r)=>r.role||'' }
+];
+/** Today's whole schedule, combined from every module that can carry a
+ *  real time for a specific date — Timetable's recurring classes plus any
+ *  Meeting, Invigilation Duty, Extra/Additional Class, Lab Exam or Research
+ *  Event actually dated today (see TODAYS_SCHEDULE_EXTRA_SOURCES) — sorted
+ *  chronologically by From Time; items with no time set (or Timetable's own
+ *  Start Time) sort after the timed ones, in the order they were entered. */
+function todaysScheduleItems(){
+  const today = todayStr();
+  const items = [];
+  todaysClasses().forEach(c=>{
+    items.push({ moduleKey:'timetable', icon:'📘', time:c.startTime||'', endTime:c.endTime||'',
+      title:c.subject||'', meta:[c.section, c.venue].filter(Boolean).join(', '), cancelled:false });
+  });
+  TODAYS_SCHEDULE_EXTRA_SOURCES.forEach(src=>{
+    const dateField = MODULES[src.key].dateField;
+    getActive(src.key).filter(r=>dateField && r[dateField] === today).forEach(r=>{
+      items.push({ moduleKey:src.key, icon:src.icon, time:r.fromTime||'', endTime:r.toTime||'',
+        title:src.title(r), meta:src.meta(r), cancelled: r.status === 'Cancelled' });
+    });
+  });
+  items.sort((a,b)=>String(a.time||'99:99').localeCompare(String(b.time||'99:99')));
+  return items;
+}
 /* ---------- cross-module day status: Holidays/Leave automatically affect
    the Timetable/Dashboard, per the "leave marked ... automatically connects
    with other menus" requirement. A holiday cancels the day outright; an
@@ -3246,6 +3329,7 @@ function renderDashboard(){
     + '<button class="qa-btn" data-qa="office-followups">📮 Add Office Follow-up</button>'
     + '<button class="qa-btn" data-qa="leave-records">🗓️ Apply Leave/OD</button>'
     + '<button class="qa-btn" data-qa="holidays">🏖️ Add Holiday</button>'
+    + '<button class="qa-btn" data-qa="new-updates">📰 Add New Update</button>'
     + '</div></div>';
 
   // One consolidated stat strip — merges the old "today" row and the old
@@ -3268,6 +3352,7 @@ function renderDashboard(){
       + '</div>';
   }
 
+  const scheduleItems = todaysScheduleItems();
   html += '<div class="grid grid-2">';
   html += '<div class="card"><h3>📅 Today\'s Schedule</h3>';
   if(dayStatus.holiday){
@@ -3275,9 +3360,21 @@ function renderDashboard(){
   }else if(dayStatus.leave){
     html += '<div class="activity-item urgency-today" style="padding-left:8px;background:#fff7ec;border-radius:6px;margin-bottom:8px;">🗓️ <b>You are on approved ' + escapeHtml(dayStatus.leave.type || 'Leave') + ' today.</b> Classes below may need rescheduling. <i>(auto-detected from Leave / OD)</i></div>';
   }
-  html += (classes.length
-    ? classes.map(c=>'<a href="#/module/timetable" class="dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + (dayStatus.holiday || dayStatus.leave ? 'var(--warn,#d97706)' : AREA_COLORS.teaching) + ';font-size:13px;' + (dayStatus.holiday ? 'opacity:.55;text-decoration:line-through;' : '') + '"><b>' + escapeHtml(fmtTime12(c.startTime)) + '–' + escapeHtml(fmtTime12(c.endTime)) + '</b>&nbsp; ' + escapeHtml(c.subject||'') + ' <span style="color:var(--text-dim);">(' + escapeHtml(c.section||'') + ', ' + escapeHtml(c.venue||'') + ')</span></a>').join('')
-    : '<div class="empty">No classes today. Enjoy the breathing room.</div>') + '</div>';
+  // Today's Schedule combines Timetable classes with anything else dated
+  // today that carries a real time (Meetings, Invigilation Duty, Extra
+  // Classes, Lab Exams, Research Events) — not classes alone. A holiday
+  // only dims/strikes-through the Timetable rows (a holiday cancels
+  // classes specifically); other rows keep their own module's color and a
+  // strike-through only if that individual record's own Status is
+  // Cancelled.
+  html += (scheduleItems.length
+    ? scheduleItems.map(it=>{
+        const dimmed = (dayStatus.holiday && it.moduleKey === 'timetable') || it.cancelled;
+        const borderColor = (dayStatus.holiday || dayStatus.leave) && it.moduleKey === 'timetable' ? 'var(--warn,#d97706)' : (AREA_COLORS[MODULES[it.moduleKey].menu] || AREA_COLORS.teaching);
+        const timeLabel = it.time ? (escapeHtml(fmtTime12(it.time)) + (it.endTime ? '–' + escapeHtml(fmtTime12(it.endTime)) : '')) : 'All day';
+        return '<a href="#/module/' + it.moduleKey + '" class="dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + borderColor + ';font-size:13px;' + (dimmed ? 'opacity:.55;text-decoration:line-through;' : '') + '">' + it.icon + ' <b>' + timeLabel + '</b>&nbsp; ' + escapeHtml(it.title) + (it.meta ? ' <span style="color:var(--text-dim);">(' + escapeHtml(it.meta) + ')</span>' : '') + '</a>';
+      }).join('')
+    : '<div class="empty">Nothing scheduled today. Enjoy the breathing room.</div>') + '</div>';
   html += '<div class="card"><h3>⏰ Upcoming (next 30 days)</h3>' + (upcoming.length
     ? upcoming.slice(0,10).map(it=>'<a href="#/module/' + it.moduleKey + '" class="' + urgencyClass(it.date) + ' dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;gap:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span><span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></a>').join('')
     : '<div class="empty">Nothing due in the next 30 days.</div>') + '</div>';
@@ -3310,20 +3407,33 @@ function renderDashboard(){
 
   return '<div class="dash-layout"><div class="dash-main">' + html + '</div>' + dashboardTickerHtml() + '</div>';
 }
-/** A small auto-scrolling "latest updates" ticker for the right side of the
- *  Dashboard — up to 10 of the most recently added/changed records across
- *  every module (reusing recentActivity's own cross-module feed), each shown
- *  as just an icon + title that links straight to its module. The list is
+/** A small auto-scrolling "New Updates" ticker for the right side of the
+ *  Dashboard — up to 10 items from the separate New Updates menu (just an
+ *  external news Title + Link, manually added via the Dashboard's "📰 Add
+ *  New Update" quick-add button or the "Manage →" link here), NOT the app's
+ *  own activity feed — a deliberately different, simpler thing. Sorted
+ *  newest first by each entry's own Date. A title with a real http(s) link
+ *  opens it in a new tab; anything else (blank, or not a real URL) shows as
+ *  plain non-clickable text rather than risk an unsafe href. The list is
  *  rendered twice back-to-back and looped with a plain CSS keyframe
  *  animation (translateY 0 → -50%) so it scrolls continuously bottom-to-top
  *  with no JS timer; hovering pauses it so a title can actually be clicked. */
 function dashboardTickerHtml(){
-  const items = recentActivity(10);
+  const items = getActive('new-updates').slice()
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')))
+    .slice(0, 10);
+  const manageLink = '<a href="#/module/new-updates" class="dash-link" style="font-size:11px;font-weight:600;color:var(--gold,#c99a3c);margin-left:auto;white-space:nowrap;">Manage →</a>';
   if(items.length === 0){
-    return '<div class="news-ticker"><h3>📰 Latest Updates</h3><div class="empty">Nothing yet — add a record in any module to see updates here.</div></div>';
+    return '<div class="news-ticker"><h3>📰 New Updates' + manageLink + '</h3><div class="empty">Nothing yet — click "📰 Add New Update" above to add an external news title and link.</div></div>';
   }
-  const itemHtml = items.map(a=>'<a href="#/module/' + a.moduleKey + '" class="ticker-item" title="' + escapeHtml(a.label) + ': ' + escapeHtml(a.title) + '">' + a.icon + ' ' + escapeHtml(a.title) + '</a>').join('');
-  return '<div class="news-ticker"><h3>📰 Latest Updates</h3>'
+  const itemHtml = items.map(r=>{
+    const url = /^https?:\/\//i.test(String(r.link||'').trim()) ? String(r.link).trim() : '';
+    const label = escapeHtml(r.title || '(untitled)');
+    return url
+      ? '<a href="' + escapeHtml(url) + '" class="ticker-item" target="_blank" rel="noopener noreferrer" title="' + label + '">📰 ' + label + '</a>'
+      : '<span class="ticker-item" style="cursor:default;" title="' + label + '">📰 ' + label + '</span>';
+  }).join('');
+  return '<div class="news-ticker"><h3>📰 New Updates' + manageLink + '</h3>'
     + '<div class="news-ticker-viewport"><div class="news-ticker-track">' + itemHtml + itemHtml + '</div></div></div>';
 }
 let DASHBOARD_CHARTS = [];
@@ -3344,10 +3454,11 @@ function wireDashboard(){
     const weekLoad = weekdayClassCounts();
     const todayDow = DOW_NAMES3[new Date().getDay()];
     DASHBOARD_CHARTS.push(new Chart(weekCanvas, {
-      type:'bar',
+      type:'pie',
       data:{ labels: weekLoad.days, datasets:[{ label:'Classes', data: weekLoad.counts,
-        backgroundColor: weekLoad.days.map(d=>d===todayDow ? AREA_COLORS.dashboard : AREA_COLORS.teaching) }] },
-      options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+        backgroundColor: weekLoad.days.map((d,i)=>d===todayDow ? AREA_COLORS.dashboard : palette[i % palette.length]),
+        borderColor: '#fff', borderWidth: 2 }] },
+      options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:11, font:{ size:11 } } } } }
     }));
   }
 
@@ -3357,9 +3468,9 @@ function wireDashboard(){
     const labels = Object.keys(workDiaryHours.byCat);
     if(labels.length){
       DASHBOARD_CHARTS.push(new Chart(timeCanvas, {
-        type:'bar',
-        data:{ labels: labels, datasets:[{ label:'Hours', data: labels.map(l=>workDiaryHours.byCat[l]), backgroundColor: palette }] },
-        options:{ indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ beginAtZero:true } } }
+        type:'pie',
+        data:{ labels: labels, datasets:[{ label:'Hours', data: labels.map(l=>workDiaryHours.byCat[l]), backgroundColor: palette, borderColor: '#fff', borderWidth: 2 }] },
+        options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:11, font:{ size:11 } } } } }
       }));
     }
   }
