@@ -169,6 +169,7 @@ button{font-family:inherit;}
    (truncated in the closed control, full text still in the dropdown). */
 .field{margin-bottom:13px;min-width:0;}
 .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-dim);margin-bottom:5px;}
+.field-hint{font-size:11px;color:var(--text-faint);margin-top:4px;line-height:1.4;}
 .form-section-heading{font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 10px;padding-bottom:6px;border-bottom:1.5px solid var(--border);}
 .form-section-heading:first-child{margin-top:0;}
 /* Every add/edit form (the generic record-form used by every module, plus
@@ -197,7 +198,13 @@ th{text-align:left;padding:10px 12px;background:#f8f9fc;border-bottom:1.5px soli
   font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);white-space:nowrap;}
 td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
 tr:hover td{background:#fafbfd;}
-.row-actions{display:flex;gap:6px;white-space:nowrap;}
+/* flex-wrap (not nowrap) is what actually stops a row with many action
+   buttons from forcing the whole table into horizontal scroll — the
+   buttons themselves still don't wrap their own label text mid-word. */
+.row-actions{display:flex;gap:6px;flex-wrap:wrap;max-width:340px;}
+.row-actions .btn{white-space:nowrap;}
+.hub-menu-card{cursor:pointer;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);padding:14px 16px;min-width:160px;flex:1 1 200px;box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s;}
+.hub-menu-card:hover{box-shadow:0 6px 18px rgba(20,30,60,.12);transform:translateY(-1px);}
 
 .badge{display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:99px;font-size:11px;font-weight:700;}
 .badge-ok{background:var(--ok-wash);color:var(--ok);}
@@ -768,7 +775,7 @@ const MODULES = {
     {key:'section', label:'Section', type:'text'},
     {key:'topic', label:'Topic Covered', type:'textarea', required:true},
     {key:'status', label:'Status', type:'select', options:['Held','Cancelled','Rescheduled'], default:'Held'},
-    {key:'durationHours', label:'Duration (hours) — optional, only needed if this class isn\'t already on the Timetable', type:'number'},
+    {key:'durationHours', label:'Duration (hours)', hint:'Only needed if this class isn\'t already on the Timetable', type:'number'},
     {key:'students', label:'Students (optional attendance)', type:'subtable', rowLabel:'Student', rowLabelPlural:'students', subfields:[
       {key:'name', label:'Name'},
       {key:'regNo', label:'Reg. No.'},
@@ -801,7 +808,7 @@ const MODULES = {
     {key:'role', label:'Role', type:'select', options:['Invigilator','Chief Superintendent','Squad Member'], default:'Invigilator'},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
-    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'question-bank': { label:'Question bank', menu:'exams', icon:'❓', titleField:'question', dateField:null, fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
@@ -867,7 +874,7 @@ const MODULES = {
     {key:'externalExaminer', label:'External Examiner', type:'text'},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
-    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'extra-classes': { label:'Extra / Additional Classes', menu:'extra-classes', icon:'➕', titleField:'subject', dateField:'date', fields:[
     {key:'type', label:'Type', type:'select', options:['Extra Class','Compensatory Class','Makeup Class'], default:'Extra Class'},
@@ -877,7 +884,7 @@ const MODULES = {
     {key:'date', label:'Date', type:'date', required:true},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
-    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'research-targets': { label:'Plans', menu:'research', icon:'🎯', titleField:'description', dateField:'targetDate', fields:[
     {key:'description', label:'Target Description', type:'textarea', required:true},
@@ -906,7 +913,7 @@ const MODULES = {
     {key:'date', label:'Date', type:'date'},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
-    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   'peer-reviews': { label:'Peer Review & Editorial', menu:'research', icon:'🧾', titleField:'paperTitle', dateField:null, fields:[
     {key:'venue', label:'Journal / Conference', type:'text', required:true},
@@ -986,14 +993,20 @@ const MODULES = {
   // different tracking sheets gets five menus grouped under one header,
   // and one that needs a single simple log gets just one. Nothing here
   // hardcodes what a responsibility "is" — that's the whole point.
-  'responsibility-areas': { label:'Responsibility Areas', menu:'responsibility-areas', icon:'📋', titleField:'name', dateField:null,
+  // serialNumbered: the list view gets a plain "#" running-count column —
+  // together with listHide on Icon/Nature/Status below (still fully
+  // editable on the form, and shown on this responsibility's own hub page —
+  // see renderResponsibilityAreaHub), the LIST row stays to just #, Name,
+  // Academic Year and the action buttons, so it never needs horizontal
+  // scrolling no matter how many responsibilities are added.
+  'responsibility-areas': { label:'Responsibility Areas', menu:'responsibility-areas', icon:'📋', titleField:'name', dateField:null, serialNumbered:true,
     completionAction:{statusKey:'status', doneValue:'Completed', label:'✅ Mark Completed for this Year', promptLabel:'Wrap-up notes — outcomes, handover info, anything useful for next year'},
     fields:[
-    {key:'name', label:'Responsibility Name (e.g. UG Research, Science Forum, IQAC Criterion 3)', type:'text', required:true},
-    {key:'icon', label:'Icon (one emoji, shown before the name in the nav)', type:'text', default:'📌'},
-    {key:'natureTag', label:'Nature of Work', type:'select', options:['Academic Programme','Event / Activity Coordination','Student Management','Committee / Team Work','Financial Tracking','Documentation','Mentoring','Project Management','Other'], default:'Other'},
-    {key:'academicYear', label:'Academic Year (e.g. 2026-27 — optional; use "🔁 Renew" each year instead of editing this in place, so past years stay on record)', type:'text'},
-    {key:'status', label:'Status', type:'select', options:['Active','On Hold','Completed'], default:'Active'},
+    {key:'name', label:'Responsibility Name', hint:'e.g. UG Research, Science Forum, IQAC Criterion 3', type:'text', required:true},
+    {key:'icon', label:'Icon', hint:'One emoji, shown before the name', type:'text', default:'📌', listHide:true},
+    {key:'natureTag', label:'Nature of Work', type:'select', options:['Academic Programme','Event / Activity Coordination','Student Management','Committee / Team Work','Financial Tracking','Documentation','Mentoring','Project Management','Other'], default:'Other', listHide:true},
+    {key:'academicYear', label:'Academic Year', hint:'e.g. 2026-27. Use 🔁 Renew each year instead of editing this — past years stay on record', type:'text'},
+    {key:'status', label:'Status', type:'select', options:['Active','On Hold','Completed'], default:'Active', listHide:true},
     {key:'description', label:'Description / Scope', type:'textarea'}
   ]},
   'incharge-roles': { label:'In-charges', menu:'incharge', icon:'🛡️', titleField:'roleName', dateField:'endDate', fields:[
@@ -1027,7 +1040,7 @@ const MODULES = {
   'meetings': { label:'Meetings', menu:'meetings', icon:'📅', titleField:'title', dateField:'date', completionAction:{statusKey:'status', doneValue:'Completed', excludeValues:['Cancelled'], label:'✅ Mark Complete', promptLabel:'Closing comment — what came out of this meeting?'}, fields:[
     {key:'title', label:'Title', type:'text', required:true},
     {key:'relatedModule', label:'Related To — Menu', type:'moduleRef'},
-    {key:'relatedRecordId', label:'Related To — Specific Record (e.g. a student, project, committee…)', type:'recordRef', dependsOn:'relatedModule'},
+    {key:'relatedRecordId', label:'Related To — Specific Record', hint:'e.g. a student, project, committee…', type:'recordRef', dependsOn:'relatedModule'},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
@@ -1035,7 +1048,7 @@ const MODULES = {
     {key:'attendees', label:'Attendees', type:'textarea'},
     {key:'minutes', label:'Minutes', type:'textarea'},
     {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'},
-    {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
+    {key:'durationHours', label:'Duration (hours)', hint:'Only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
   // "Action" comes first now (not "Meeting") — an action item is most often
   // typed out before its origin is picked, and it doesn't always have one.
@@ -1047,9 +1060,9 @@ const MODULES = {
   // of any action item that already had the old single Meeting link).
   'action-items': { label:'Action items', menu:'action-items', icon:'☑️', titleField:'action', dateField:'dueDate', completionAction:{statusKey:'status', doneValue:'Done', label:'✅ Mark Complete', promptLabel:'Closing comment — how was this resolved?'}, fields:[
     {key:'action', label:'Action', type:'text', required:true},
-    {key:'owner', label:'Owner — who this is assigned to', type:'text'},
+    {key:'owner', label:'Owner', hint:'Who this is assigned to', type:'text'},
     {key:'dueDate', label:'Due Date', type:'date'},
-    {key:'relatedModule', label:'Related To — Menu (optional — the meeting, project, committee, responsibility, or any other record this action came out of)', type:'moduleRef'},
+    {key:'relatedModule', label:'Related To — Menu', hint:'Optional — the meeting, project, committee, responsibility, or any other record this action came out of', type:'moduleRef'},
     {key:'relatedRecordId', label:'Related To — Specific Record', type:'recordRef', dependsOn:'relatedModule'},
     {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
   ]},
@@ -1091,10 +1104,10 @@ const MODULES = {
   'custom-modules': { label:'Custom menus', menu:'custom-modules', icon:'🧩', titleField:'label', dateField:'', fields:[
     {key:'label', label:'Menu Name', type:'text', required:true},
     {key:'icon', label:'Icon (one emoji)', type:'text', default:'🗂️'},
-    {key:'category', label:'Category (which tab it appears under — ignored if this menu is attached to a Responsibility Area below, since attached menus always live under Roles & Responsibilities, grouped with that responsibility\'s other menus)', type:'categoryRef', default:'tools'},
-    {key:'responsibilityAreaId', label:'Attach to a Responsibility Area (optional — every custom menu attached to the SAME responsibility groups together under that responsibility\'s own section in Roles & Responsibilities, instead of each showing up as its own separate top-level menu)', type:'reference', ref:'responsibility-areas'},
-    {key:'fieldsSpec', label:'Fields — one per line: Label|type|options|required (type: text, textarea, number, date, select, email, tel, subtable — options comma-separated, only for select — write "required" as the 4th part to make it mandatory. For a "subtable" field — a repeating mini-table inside each record — put its sub-columns in the options part, comma-separated, e.g. "Semester Marks|subtable|Marks,Status:select:Pass;Fail" (a sub-column can be a dropdown with Label:select:Opt A;Opt B). Add a 4th part that\'s a semicolon list instead of "required" to make the rows FIXED and pre-named — one guaranteed slot each, no +Add/✕Remove — e.g. "Semester Marks|subtable|Marks,Status:select:Pass;Fail|Sem-1;Sem-2;Sem-3;Sem-4;Sem-5;Sem-6" gives every record exactly one Marks entry per semester, always', type:'textarea', required:true, default:'Details|textarea'},
-    {key:'groupByLabel', label:'Group the list by (optional — type the exact field Label above, e.g. "Batch" — every record sharing that value is shown together under one heading, with the value shown once at the top of the group instead of repeated on every row; the group heading also gets a quick "+ Add to this group" button, a "Export this group" button, and — if one of your fields is a Status-style dropdown — a "Set status for whole group" control)', type:'text'}
+    {key:'category', label:'Category', hint:'Which tab it appears under — ignored if attached to a Responsibility Area below, since attached menus live under Roles & Responsibilities instead', type:'categoryRef', default:'tools'},
+    {key:'responsibilityAreaId', label:'Attach to a Responsibility Area', hint:'Optional — menus attached to the same responsibility group together under it in Roles & Responsibilities, instead of each being a separate top-level menu', type:'reference', ref:'responsibility-areas'},
+    {key:'fieldsSpec', label:'Fields', hint:'One per line: Label|type|options|required. Types: text, textarea, number, date, select, email, tel, subtable (options comma-separated, select only; write "required" as the 4th part). A subtable\'s sub-columns go in the options part, e.g. "Semester Marks|subtable|Marks,Status:select:Pass;Fail" — a 4th part that\'s a semicolon list instead of "required" gives it fixed, pre-named rows, e.g. "...|Sem-1;Sem-2;Sem-3"', type:'textarea', required:true, default:'Details|textarea'},
+    {key:'groupByLabel', label:'Group the list by', hint:'Optional — type the exact field Label above, e.g. "Batch", to cluster records under one heading with quick add/export/bulk-status controls', type:'text'}
   ]}
 };
 let MODULE_KEYS = Object.keys(MODULES);
@@ -1903,12 +1916,21 @@ const NAV_CATEGORIES = [
   // "Laboratory" section in the dropdown.
   { key:'academics', label:'Academics', icon:'📘', groups:['teaching','exams','extra-classes'] },
   { key:'research', label:'Research', icon:'🔬', groups:['research','projects'] },
-  // Students + Administrative Duties combined into one "Responsibilities" category.
-  // Mentoring (Mentees, Mentoring Meetings) and Responsibilities (Class
-  // Teacher) are deliberately absent — In-Charges already covers "a role
-  // with a roster of people attached" (see migrateMentoringAndResponsibilitiesIntoIncharges()),
-  // so adding a role there is now the single place for what these used to be.
-  { key:'admin-duties', label:'Roles & Responsibilities', icon:'📋', groups:['responsibility-areas','incharge','committees'] },
+  // Roles & Responsibilities is now JUST Responsibility Areas — In-Charges
+  // and Committees used to also live here (and Mentoring/Class-Teacher
+  // before that, folded into In-Charges — see
+  // migrateMentoringAndResponsibilitiesIntoIncharges()), but per request
+  // they're removed from this nav section now that Responsibility Areas
+  // covers the same ground more flexibly. Deliberately NOT deleted or
+  // migrated — 'incharge'/'committees' simply aren't listed in any group
+  // below anymore, so both modules and every record already in them are
+  // untouched and still fully reachable via Admin & Settings ▸ Data
+  // Management's "Jump to menu", via Reports, and as a "Related To" target
+  // on Meetings/Reminders/Action Items — exactly the same pattern already
+  // used for the legacy 'responsibilities' module. If In-Charges or
+  // Committees ever need to come back into this nav section, add 'incharge'
+  // and/or 'committees' back into the groups list below.
+  { key:'admin-duties', label:'Roles & Responsibilities', icon:'📋', groups:['responsibility-areas'] },
   { key:'tools', label:'Administrator', icon:'⚙️', groups:['analytics','audit-log','custom-modules','mail-merge','admin'] }
 ];
 
@@ -2178,11 +2200,23 @@ function navItemHtml(icon, label, href, active, color){
   const style = color ? ' style="background:' + color + '38;"' : '';
   return '<div class="nav-item' + (active ? ' active' : '') + '" data-href="' + href + '"><span class="chip"' + style + '>' + icon + '</span><span>' + escapeHtml(label) + '</span></div>';
 }
+// A responsibility (Roles & Responsibilities) is one flat nav entry, no
+// matter how many custom menus are attached to it — clicking it opens that
+// responsibility's own small dialog (openResponsibilityAreaHub) with its
+// menus as buttons, rather than expanding into the dropdown itself.
+function navRaHubItemHtml(raId, color){
+  const rec = getRecord('responsibility-areas', raId);
+  const label = rec ? (rec.name || 'Responsibility') : 'Responsibility';
+  const icon = rec ? (rec.icon || '📋') : '📋';
+  const style = color ? ' style="background:' + color + '38;"' : '';
+  return '<div class="nav-item" data-ra-hub="' + raId + '"><span class="chip"' + style + '>' + icon + '</span><span>' + escapeHtml(label) + '</span></div>';
+}
 function navGroupHtml(group){
   const color = AREA_COLORS[group.key];
   if(SPECIAL_SCREENS[group.key] && group.key !== 'work-diary'){
     return navItemHtml(SPECIAL_SCREENS[group.key], group.label, '#/' + group.key, isScreenRoute(group.key), color);
   }
+  if(group.key.indexOf('ra_') === 0) return navRaHubItemHtml(group.key.slice(3), color);
   const mods = MODULE_KEYS.filter(k => MODULES[k].menu === group.key);
   if(mods.length === 1 && mods[0] === group.key){
     const m = MODULES[mods[0]];
@@ -2297,6 +2331,12 @@ function wireShell(){
       if(!wasOpen) catEl.classList.add('open');
       return;
     }
+    const raHubItem = e.target.closest('[data-ra-hub]');
+    if(raHubItem){
+      closeAllNavDropdowns();
+      openResponsibilityAreaHub(raHubItem.dataset.raHub);
+      return;
+    }
     const item = e.target.closest('.nav-item');
     if(!item) return;
     closeAllNavDropdowns();
@@ -2332,6 +2372,15 @@ function wireShell(){
    ============================================================ */
 function fieldByKey(mod, key){ return mod.fields.find(f=>f.key===key); }
 
+// A field's on-screen <label> is kept short and plain (e.g. "Academic Year",
+// not a whole sentence) — any example/explanation that used to be crammed
+// into the label itself now lives in field.hint and renders as one small
+// muted line under the input instead, so dialog boxes read as short label +
+// input, with the "why/how" available but not competing for attention.
+function fieldHintHtml(f){
+  return f.hint ? '<div class="field-hint">' + escapeHtml(f.hint) + '</div>' : '';
+}
+
 function moduleDisplayColumns(mod){
   const cols = [];
   const titleF = fieldByKey(mod, mod.titleField);
@@ -2350,6 +2399,12 @@ function moduleDisplayColumns(mod){
     if(cols.length >= cap) return;
     if(cols.indexOf(f) !== -1) return;
     if(f.type === 'textarea' || f.type === 'subtable' || f.type === 'multiselect') return;
+    // A field can opt out of the auto-picked list columns entirely
+    // (listHide) — used for fields that matter in the edit form / a
+    // module's own detail view but just add width to an already-busy list
+    // row (e.g. Responsibility Areas' Icon, Nature of Work, Status — all
+    // still visible on that responsibility's own hub page).
+    if(f.listHide) return;
     // When the list is grouped by this field, its value is shown once at
     // the top of each group instead of repeated on every row — so it's
     // left out of the per-row columns (unless it doubles as the title/date
@@ -2481,8 +2536,13 @@ function rowGroupLabel(mod, key){
   }
   return key;
 }
-function moduleRowHtml(mod, cols, r, selectable, moduleKey){
+function moduleRowHtml(mod, cols, r, selectable, moduleKey, serialNo){
   let html = '<tr data-id="' + r.id + '"' + (r.deleted ? ' style="opacity:.5;"' : '') + '>';
+  // A "#" column (mod.serialNumbered) is purely a display convenience — a
+  // plain running count of the visible rows, not stored data — used today
+  // by Responsibility Areas so a growing list still reads at a glance
+  // instead of needing yet another data column.
+  if(mod.serialNumbered) html += '<td style="padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-faint);">' + (serialNo || '') + '</td>';
   if(selectable) html += '<td style="padding:10px 6px;border-bottom:1px solid var(--border);"><input type="checkbox" class="row-select" data-id="' + r.id + '"' + (LIST_SELECTION.has(r.id) ? ' checked' : '') + '></td>';
   cols.forEach((c, ci)=>{
     // The first (title) column on an auto-logged Work Diary entry gets a
@@ -2559,7 +2619,7 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
   });
   if(rows.length === 0) return '<div class="empty">' + (mod.readOnly ? 'No activity recorded yet.' : ('No records yet. Click "Add ' + escapeHtml(mod.label) + '" to create the first one.')) + '</div>';
   const grouping = !!(mod.groupByField || mod.groupByMonth);
-  const colspan = cols.length + (selectable ? 2 : 1);
+  const colspan = cols.length + (selectable ? 2 : 1) + (mod.serialNumbered ? 1 : 0);
   // A "Status"-style dropdown on a grouped module (e.g. UG Research's
   // "Present Status") gets a bulk "apply to whole group" control right in
   // the group header, alongside the group's own quick-add and export.
@@ -2595,6 +2655,7 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
       + '</select></div>';
   }
   html += '<table style="width:100%;border-collapse:collapse;"><thead><tr>';
+  if(mod.serialNumbered) html += '<th style="width:38px;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);border-bottom:1px solid var(--border);">#</th>';
   if(selectable){
     const visibleIds = visibleRows.map(r=>r.id);
     const allSelected = visibleIds.length > 0 && visibleIds.every(id=>LIST_SELECTION.has(id));
@@ -2603,8 +2664,9 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
   cols.forEach(c=>{ html += '<th style="text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);border-bottom:1px solid var(--border);">' + escapeHtml(c.label) + '</th>'; });
   if(selectable) html += '<th style="border-bottom:1px solid var(--border);"></th>';
   html += '</tr></thead><tbody>';
+  let serialCounter = 0;
   if(!grouping){
-    rows.forEach(r=>{ html += moduleRowHtml(mod, cols, r, selectable, moduleKey); });
+    rows.forEach(r=>{ serialCounter++; html += moduleRowHtml(mod, cols, r, selectable, moduleKey, serialCounter); });
   }else{
     visibleGroupOrder.forEach(key=>{
       const groupRows = groups[key];
@@ -2621,11 +2683,132 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
             + '<button class="btn btn-ghost btn-sm" data-action="group-status-apply" data-group-value="' + safeKey + '" data-status-field="' + groupStatusField.key + '">Apply</button>'
             + '</span>') : '')
         + '</div></td></tr>';
-      groupRows.forEach(r=>{ html += moduleRowHtml(mod, cols, r, selectable, moduleKey); });
+      groupRows.forEach(r=>{ serialCounter++; html += moduleRowHtml(mod, cols, r, selectable, moduleKey, serialCounter); });
     });
   }
   html += '</tbody></table>';
   return html;
+}
+
+// Shared by the Responsibility Areas list row AND its own hub dialog (see
+// openResponsibilityAreaHub below) so "Mark Complete"/"Renew" work exactly
+// the same regardless of where they're triggered from — one dialog, two
+// entry points, instead of two copies of the same logic drifting apart.
+function openCompletionDialog(moduleKey, id, onDone){
+  const mod = MODULES[moduleKey];
+  const rec = getRecord(moduleKey, id);
+  if(!rec) return;
+  const ca = mod.completionAction;
+  openModal('<h3 style="margin:0 0 10px;">' + escapeHtml(ca.label || '✅ Mark Complete') + ' — ' + escapeHtml(rec[mod.titleField] || '') + '</h3>'
+    + '<div class="field"><label>' + escapeHtml(ca.promptLabel || 'Closing comment') + ' *</label><textarea class="input" id="completion-comment" rows="4"></textarea></div>'
+    + '<div class="error-box" id="completion-error"></div>'
+    + '<div style="display:flex;gap:8px;"><button class="btn btn-primary" id="completion-save">' + escapeHtml(ca.label || '✅ Mark Complete') + '</button><button class="btn btn-ghost" id="completion-cancel">Cancel</button></div>');
+  document.getElementById('completion-cancel').addEventListener('click', closeModal);
+  document.getElementById('completion-save').addEventListener('click', async ()=>{
+    const comment = document.getElementById('completion-comment').value.trim();
+    const errEl = document.getElementById('completion-error');
+    if(!comment){ errEl.textContent = 'A closing comment is required to mark this complete.'; return; }
+    const btn = document.getElementById('completion-save');
+    btn.disabled = true;
+    try{
+      await updateRecord(moduleKey, id, { [ca.statusKey]: ca.doneValue });
+      await addNote(moduleKey, id, comment);
+      logAudit(moduleKey, 'Completed', id, rec[mod.titleField] || '', comment);
+      toast('Marked complete', 'ok');
+      closeModal();
+      if(onDone) onDone();
+    }catch(err){ errEl.textContent = 'Failed to save.'; btn.disabled = false; }
+  });
+}
+function openRenewResponsibilityDialog(id){
+  const rec = getRecord('responsibility-areas', id);
+  if(!rec) return;
+  const suggestedYear = nextAcademicYearGuess(rec.academicYear);
+  openModal('<h3 style="margin:0 0 10px;">🔁 Renew "' + escapeHtml(rec.name || '') + '" for a New Year</h3>'
+    + '<p style="font-size:12.5px;color:var(--text-dim);margin:0 0 10px;">Creates a fresh copy of this responsibility (same name, nature, and description) with the academic year below, and marks this one Completed. Every menu and record already attached to it stays exactly as it is — nothing is deleted or moved.</p>'
+    + '<div class="field"><label>New Academic Year</label><input class="input" id="renew-year" value="' + escapeHtml(suggestedYear) + '"></div>'
+    + '<div class="error-box" id="renew-error"></div>'
+    + '<div style="display:flex;gap:8px;"><button class="btn btn-primary" id="renew-save">🔁 Renew</button><button class="btn btn-ghost" id="renew-cancel">Cancel</button></div>');
+  document.getElementById('renew-cancel').addEventListener('click', closeModal);
+  document.getElementById('renew-save').addEventListener('click', async ()=>{
+    const newYear = document.getElementById('renew-year').value.trim();
+    const errEl = document.getElementById('renew-error');
+    if(!newYear){ errEl.textContent = 'Enter an academic year (e.g. 2027-28).'; return; }
+    const saveBtn = document.getElementById('renew-save');
+    saveBtn.disabled = true;
+    try{
+      const renewed = await createRecord('responsibility-areas', { name: rec.name, icon: rec.icon, natureTag: rec.natureTag, academicYear: newYear, status: 'Active', description: rec.description });
+      logAudit('responsibility-areas', 'Renewed', renewed.id, renewed.name || '', 'Renewed from ' + (rec.academicYear || 'previous year'));
+      if(rec.status !== 'Completed'){
+        await updateRecord('responsibility-areas', id, { status: 'Completed' });
+        logAudit('responsibility-areas', 'Completed', id, rec.name || '', 'Superseded by the renewed ' + newYear + ' record');
+      }
+      toast('Renewed for ' + newYear, 'ok');
+      closeModal();
+      registerAllCustomModules();
+      render();
+    }catch(err){ errEl.textContent = 'Failed to renew.'; saveBtn.disabled = false; }
+  });
+}
+
+/** The Roles & Responsibilities dialog for ONE responsibility (opened by
+ *  clicking that responsibility's own nav entry — see navGroupHtml/
+ *  navRaHubItemHtml). This is the "menu" for that responsibility; every
+ *  custom menu attached to it (registerCustomModule's 'ra_<id>' grouping)
+ *  shows up here as one button — its "sub-menus" — instead of each cluttering
+ *  the main Roles & Responsibilities dropdown on its own. Clicking a
+ *  sub-menu button closes this dialog and opens that menu's own normal
+ *  list screen, exactly like any other menu in the app. */
+function openResponsibilityAreaHub(raId){
+  const rec = getRecord('responsibility-areas', raId);
+  if(!rec || rec.deleted){ toast('This responsibility could not be found — it may have been renewed or deleted.', 'danger'); return; }
+  const groupKey = 'ra_' + raId;
+  const attached = MODULE_KEYS.filter(k => MODULES[k].menu === groupKey);
+  const metaParts = [rec.natureTag, rec.academicYear].filter(Boolean).map(escapeHtml);
+  if(rec.status) metaParts.push('<span class="badge ' + statusBadgeClass(rec.status) + '">' + escapeHtml(rec.status) + '</span>');
+  let html = '<h3 style="margin:0 0 4px;">' + escapeHtml(rec.icon || '📋') + ' ' + escapeHtml(rec.name || '') + '</h3>';
+  html += '<p style="font-size:12px;color:var(--text-dim);margin:0 0 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' + metaParts.join(' <span style="color:var(--border);">·</span> ') + '</p>';
+  if(rec.description) html += '<p style="font-size:12.5px;color:var(--text-dim);white-space:pre-wrap;margin:0 0 14px;">' + escapeHtml(rec.description) + '</p>';
+  html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-faint);margin-bottom:8px;">Menus for this responsibility</div>';
+  if(attached.length === 0){
+    html += '<div class="empty" style="padding:16px 0;">No menus yet — add the first one below.</div>';
+  }else{
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">'
+      + attached.map(k=>'<button type="button" class="btn btn-ghost btn-sm" data-ra-open-module="' + k + '">' + MODULES[k].icon + ' ' + escapeHtml(MODULES[k].label) + '</button>').join('')
+      + '</div>';
+  }
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;">'
+    + '<button type="button" class="btn btn-ghost btn-sm" data-ra-hub-action="edit">Edit</button>'
+    + '<button type="button" class="btn btn-ghost btn-sm" data-ra-hub-action="notes">Notes' + ((rec.notes && rec.notes.length) ? ' (' + rec.notes.length + ')' : '') + '</button>'
+    + (rec.status !== 'Completed' ? '<button type="button" class="btn btn-ghost btn-sm" data-ra-hub-action="complete">✅ Mark Completed for this Year</button>' : '')
+    + '<button type="button" class="btn btn-primary btn-sm" data-ra-hub-action="add-submodule">➕ Add a Menu</button>'
+    + '<button type="button" class="btn btn-ghost btn-sm" data-ra-hub-action="renew">🔁 Renew</button>'
+    + '<button type="button" class="btn btn-ghost btn-sm" data-ra-hub-action="delete">Delete</button>'
+    + '</div>';
+  openModal(html);
+  const body = document.getElementById('modal-body');
+  body.querySelectorAll('[data-ra-open-module]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ closeModal(); navigate('#/module/' + btn.dataset.raOpenModule); });
+  });
+  body.querySelectorAll('[data-ra-hub-action]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const action = btn.dataset.raHubAction;
+      if(action === 'edit'){ closeModal(); openModuleForm('responsibility-areas', raId); }
+      else if(action === 'notes'){ closeModal(); openNotesDrawer('responsibility-areas', raId); }
+      else if(action === 'add-submodule'){ closeModal(); openModuleForm('custom-modules', null, { responsibilityAreaId: raId, category: 'admin-duties' }); }
+      else if(action === 'complete'){ openCompletionDialog('responsibility-areas', raId, ()=>{ registerAllCustomModules(); render(); }); }
+      else if(action === 'renew'){ openRenewResponsibilityDialog(raId); }
+      else if(action === 'delete'){
+        if(!confirm('Delete "' + (rec.name || 'this responsibility') + '"? You can restore it later from "Show deleted" in Responsibility Areas.')) return;
+        await softDeleteRecord('responsibility-areas', raId);
+        logAudit('responsibility-areas', 'Deleted', raId, rec.name || '');
+        toast('Deleted', 'ok');
+        closeModal();
+        registerAllCustomModules();
+        render();
+      }
+    });
+  });
 }
 
 function wireModuleList(moduleKey){
@@ -2776,30 +2959,12 @@ function wireModuleList(moduleKey){
       openModuleForm('action-items', null, { relatedModule: 'meetings', relatedRecordId: id, action: 'Follow up: ' + (rec[mod.titleField] || 'meeting') });
     }
     else if(action === 'complete'){
-      const ca = mod.completionAction;
-      openModal('<h3 style="margin:0 0 10px;">' + escapeHtml(ca.label || '✅ Mark Complete') + ' — ' + escapeHtml(rec[mod.titleField] || '') + '</h3>'
-        + '<div class="field"><label>' + escapeHtml(ca.promptLabel || 'Closing comment') + ' *</label><textarea class="input" id="completion-comment" rows="4"></textarea></div>'
-        + '<div class="error-box" id="completion-error"></div>'
-        + '<div style="display:flex;gap:8px;"><button class="btn btn-primary" id="completion-save">' + escapeHtml(ca.label || '✅ Mark Complete') + '</button><button class="btn btn-ghost" id="completion-cancel">Cancel</button></div>');
-      document.getElementById('completion-cancel').addEventListener('click', closeModal);
-      document.getElementById('completion-save').addEventListener('click', async ()=>{
-        const comment = document.getElementById('completion-comment').value.trim();
-        const errEl = document.getElementById('completion-error');
-        if(!comment){ errEl.textContent = 'A closing comment is required to mark this complete.'; return; }
-        const btn = document.getElementById('completion-save');
-        btn.disabled = true;
-        try{
-          await updateRecord(moduleKey, id, { [ca.statusKey]: ca.doneValue });
-          await addNote(moduleKey, id, comment);
-          logAudit(moduleKey, 'Completed', id, rec[mod.titleField] || '', comment);
-          toast('Marked complete', 'ok');
-          closeModal();
-          // A completed Responsibility Area's attached custom menus need to
-          // drop out of the nav right away (see registerCustomModule's
-          // showInNav logic) — a plain refreshTable() only redraws this
-          // list, not the nav shell, so a full render() is needed here too.
-          if(moduleKey === 'responsibility-areas'){ registerAllCustomModules(); render(); } else refreshTable();
-        }catch(err){ errEl.textContent = 'Failed to save.'; btn.disabled = false; }
+      openCompletionDialog(moduleKey, id, ()=>{
+        // A completed Responsibility Area's attached custom menus need to
+        // drop out of the nav right away (see registerCustomModule's
+        // showInNav logic) — a plain refreshTable() only redraws this
+        // list, not the nav shell, so a full render() is needed here too.
+        if(moduleKey === 'responsibility-areas'){ registerAllCustomModules(); render(); } else refreshTable();
       });
     }
     else if(action === 'add-submodule'){
@@ -2812,32 +2977,7 @@ function wireModuleList(moduleKey){
       openModuleForm('custom-modules', null, { responsibilityAreaId: id, category: 'admin-duties' });
     }
     else if(action === 'renew'){
-      const suggestedYear = nextAcademicYearGuess(rec.academicYear);
-      openModal('<h3 style="margin:0 0 10px;">🔁 Renew "' + escapeHtml(rec.name || '') + '" for a New Year</h3>'
-        + '<p style="font-size:12.5px;color:var(--text-dim);margin:0 0 10px;">Creates a fresh copy of this responsibility (same name, nature, and description) with the academic year below, and marks this one Completed. Every menu and record already attached to it stays exactly as it is — nothing is deleted or moved.</p>'
-        + '<div class="field"><label>New Academic Year</label><input class="input" id="renew-year" value="' + escapeHtml(suggestedYear) + '"></div>'
-        + '<div class="error-box" id="renew-error"></div>'
-        + '<div style="display:flex;gap:8px;"><button class="btn btn-primary" id="renew-save">🔁 Renew</button><button class="btn btn-ghost" id="renew-cancel">Cancel</button></div>');
-      document.getElementById('renew-cancel').addEventListener('click', closeModal);
-      document.getElementById('renew-save').addEventListener('click', async ()=>{
-        const newYear = document.getElementById('renew-year').value.trim();
-        const errEl = document.getElementById('renew-error');
-        if(!newYear){ errEl.textContent = 'Enter an academic year (e.g. 2027-28).'; return; }
-        const saveBtn = document.getElementById('renew-save');
-        saveBtn.disabled = true;
-        try{
-          const renewed = await createRecord('responsibility-areas', { name: rec.name, icon: rec.icon, natureTag: rec.natureTag, academicYear: newYear, status: 'Active', description: rec.description });
-          logAudit('responsibility-areas', 'Renewed', renewed.id, renewed.name || '', 'Renewed from ' + (rec.academicYear || 'previous year'));
-          if(rec.status !== 'Completed'){
-            await updateRecord('responsibility-areas', id, { status: 'Completed' });
-            logAudit('responsibility-areas', 'Completed', id, rec.name || '', 'Superseded by the renewed ' + newYear + ' record');
-          }
-          toast('Renewed for ' + newYear, 'ok');
-          closeModal();
-          registerAllCustomModules();
-          render();
-        }catch(err){ errEl.textContent = 'Failed to renew.'; saveBtn.disabled = false; }
-      });
+      openRenewResponsibilityDialog(id);
     }
     else if(action === 'email') openEmailComposeDrawer(moduleKey, [rec], refreshTable);
     else if(action === 'whatsapp') window.open(waLink(rec.phone), '_blank');
@@ -3282,7 +3422,7 @@ function logTabHtml(rec, tabDef){
   });
   html += '</div>';
   html += '<div class="field-grid" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
-  tabDef.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml({fields:tabDef.fields}, f, undefined, null, 'log_' + tabDef.key + '_') + '</div>'; });
+  tabDef.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml({fields:tabDef.fields}, f, undefined, null, 'log_' + tabDef.key + '_') + fieldHintHtml(f) + '</div>'; });
   html += '<div class="error-box" id="log-' + tabDef.key + '-error"></div>';
   html += '<button class="btn btn-primary btn-sm" type="button" data-log-add="' + tabDef.key + '">' + escapeHtml(tabDef.addLabel || 'Add') + '</button>';
   html += '</div>';
@@ -3348,7 +3488,7 @@ function openModuleForm(moduleKey, id, presets){
       currentSection = f.section;
       html += '<h4 class="form-section-heading">' + escapeHtml(currentSection) + '</h4>';
     }
-    html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec, undefined, presets) + '</div>';
+    html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec, undefined, presets) + fieldHintHtml(f) + '</div>';
     if(isStudentRosterSubtable(mod, f)){
       html += '<div style="display:flex;margin:-6px 0 13px;"><button type="button" class="btn btn-ghost btn-sm" data-load-roster-field="' + f.key + '">📋 Load from Class Roster</button></div>';
     }
