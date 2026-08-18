@@ -158,10 +158,34 @@ button{font-family:inherit;}
 .btn-sm{padding:6px 11px;font-size:12px;border-radius:6px;}
 .btn:disabled{opacity:.55;cursor:not-allowed;}
 
-.field{margin-bottom:13px;}
+/* min-width:0 overrides the grid item's default min-width:auto — without
+   it, a <select> with long option text (Country's 193-entry list, most
+   notably) reports its own intrinsic content width as this grid cell's
+   minimum, which can be far wider than the 230px track minimum below and
+   pushes the whole grid — and the drawer's contents with it — past the
+   drawer's right edge. min-width:0 lets the cell (and the select inside it,
+   via width:100%) shrink to the track's actual width instead; the browser's
+   native <select> handles a value wider than its own box the normal way
+   (truncated in the closed control, full text still in the dropdown). */
+.field{margin-bottom:13px;min-width:0;}
 .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-dim);margin-bottom:5px;}
 .form-section-heading{font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 10px;padding-bottom:6px;border-bottom:1.5px solid var(--border);}
 .form-section-heading:first-child{margin-top:0;}
+/* Every add/edit form (the generic record-form used by every module, plus
+   email compose and log-tab entry forms — anything wrapped in
+   .field-grid/#record-form) lays its .field rows out as a responsive
+   multi-column grid instead of one long single-column stack, so a
+   many-field form (Researcher Network's 20+ fields, for one) fits far more
+   of itself in one screen instead of forcing a long scroll. A field that
+   needs the full row's width regardless — a textarea, a subtable, a
+   multiselect checklist, or a section heading — spans every column. */
+#record-form, #email-compose-form, .field-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0 20px;align-content:start;}
+#record-form > .form-section-heading, .field-grid > .form-section-heading,
+#record-form > .error-box, #email-compose-form > .error-box, .field-grid > .error-box,
+#record-form > .field:has(textarea), #email-compose-form > .field:has(textarea), .field-grid > .field:has(textarea),
+#record-form > .field:has(.subtable-field), .field-grid > .field:has(.subtable-field),
+#record-form > .field:has(.multiselect-field), .field-grid > .field:has(.multiselect-field),
+#record-form > div[style*="display:flex"], #email-compose-form > div[style*="display:flex"]{grid-column:1 / -1;}
 .input,select.input,textarea.input{width:100%;padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;
   font-size:14px;background:#fbfcfe;font-family:inherit;transition:.12s;}
 .input:focus{outline:none;border-color:var(--info);box-shadow:0 0 0 3px rgba(42,99,201,.12);}
@@ -333,7 +357,7 @@ a.ring-wrap:hover .ring-label{text-decoration:underline;}
 .drawer-overlay{position:fixed;inset:0;background:rgba(15,25,60,.42);z-index:90;display:flex;justify-content:flex-end;
   opacity:0;pointer-events:none;transition:opacity .22s ease;}
 .drawer-overlay.visible{opacity:1;pointer-events:auto;}
-.drawer{background:var(--card);width:520px;max-width:94vw;height:100%;overflow-y:auto;padding:26px 30px 26px 26px;box-shadow:-8px 0 30px rgba(15,25,60,.22);
+.drawer{background:var(--card);width:820px;max-width:96vw;height:100%;overflow-y:auto;padding:26px 34px 26px 30px;box-shadow:-8px 0 30px rgba(15,25,60,.22);
   transform:translateX(100%);transition:transform .28s cubic-bezier(.19,1,.22,1);position:relative;}
 .drawer-overlay.visible .drawer{transform:translateX(0);}
 .drawer-close{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;background:#f1f3f9;
@@ -948,7 +972,7 @@ const MODULES = {
       {key:'phone', label:'Phone'}
     ]}
   ]},
-  'meetings': { label:'Meetings', menu:'meetings', icon:'📅', titleField:'title', dateField:'date', fields:[
+  'meetings': { label:'Meetings', menu:'meetings', icon:'📅', titleField:'title', dateField:'date', completionAction:{statusKey:'status', doneValue:'Completed', excludeValues:['Cancelled'], label:'✅ Mark Complete', promptLabel:'Closing comment — what came out of this meeting?'}, fields:[
     {key:'title', label:'Title', type:'text', required:true},
     {key:'relatedModule', label:'Related To — Menu', type:'moduleRef'},
     {key:'relatedRecordId', label:'Related To — Specific Record (e.g. a student, project, committee…)', type:'recordRef', dependsOn:'relatedModule'},
@@ -961,14 +985,14 @@ const MODULES = {
     {key:'status', label:'Status', type:'select', options:['Scheduled','Completed','Cancelled'], default:'Scheduled'},
     {key:'durationHours', label:'Duration (hours) — only used if From/To Time above are left blank; counts toward Time Spent', type:'number'}
   ]},
-  'action-items': { label:'Action items', menu:'action-items', icon:'☑️', titleField:'action', dateField:'dueDate', fields:[
+  'action-items': { label:'Action items', menu:'action-items', icon:'☑️', titleField:'action', dateField:'dueDate', completionAction:{statusKey:'status', doneValue:'Done', label:'✅ Mark Complete', promptLabel:'Closing comment — how was this resolved?'}, fields:[
     {key:'meetingId', label:'Meeting', type:'reference', ref:'meetings'},
     {key:'action', label:'Action', type:'text', required:true},
     {key:'owner', label:'Owner', type:'text'},
     {key:'dueDate', label:'Due Date', type:'date'},
     {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
   ]},
-  'reminders': { label:'Reminders', menu:'reminders', icon:'🔔', titleField:'title', dateField:'dueDate', fields:[
+  'reminders': { label:'Reminders', menu:'reminders', icon:'🔔', titleField:'title', dateField:'dueDate', completionAction:{statusKey:'status', doneValue:'Done', label:'✅ Mark Complete', promptLabel:'Closing comment — how was this resolved?'}, fields:[
     {key:'title', label:'Title', type:'text', required:true},
     {key:'dueDate', label:'Due Date', type:'date'},
     {key:'relatedModule', label:'Related To — Menu', type:'moduleRef'},
@@ -976,7 +1000,7 @@ const MODULES = {
     {key:'priority', label:'Priority', type:'select', options:['Low','Medium','High'], default:'Medium'},
     {key:'status', label:'Status', type:'select', options:['Open','Done'], default:'Open'}
   ]},
-  'office-followups': { label:'Office follow-ups', menu:'office-followups', icon:'📮', titleField:'subject', dateField:'followUpDate', fields:[
+  'office-followups': { label:'Office follow-ups', menu:'office-followups', icon:'📮', titleField:'subject', dateField:'followUpDate', completionAction:{statusKey:'status', doneValue:'Resolved', label:'✅ Mark Resolved', promptLabel:'Closing comment — how was this resolved?'}, fields:[
     {key:'subject', label:'Subject', type:'text', required:true},
     {key:'office', label:'Office', type:'text'},
     {key:'submittedDate', label:'Submitted Date', type:'date'},
@@ -2308,6 +2332,20 @@ function moduleRowHtml(mod, cols, r, selectable, moduleKey){
       // "Meeting" reference field), a one-click shortcut for the very
       // common "this meeting needs a follow-up task" step.
       if(moduleKey === 'meetings') html += '<button class="btn btn-ghost btn-sm" data-action="raise-action">☑️ Action Required</button>';
+      // "Mark Complete" (or "Mark Resolved") — any module that declares
+      // completionAction (Action Items, Reminders, Office Follow-ups,
+      // Meetings today) gets a dedicated quick-action button instead of
+      // just flipping Status to its terminal value from the edit form —
+      // closing an open item always asks for a short comment on how it was
+      // resolved, which lands in that record's own Notes tab (see
+      // openCompletionDrawer). Hidden once already at the terminal status,
+      // or at any of its excludeValues (e.g. a Cancelled meeting).
+      if(mod.completionAction){
+        const ca = mod.completionAction;
+        const curStatus = r[ca.statusKey];
+        const isDone = curStatus === ca.doneValue || (ca.excludeValues || []).indexOf(curStatus) !== -1;
+        if(!isDone) html += '<button class="btn btn-ghost btn-sm" data-action="complete">' + escapeHtml(ca.label || '✅ Mark Complete') + '</button>';
+      }
       if(mod.fields.some(f=>f.key==='email')) html += '<button class="btn btn-ghost btn-sm" data-action="email" title="Email">✉️</button>';
       if(mod.fields.some(f=>f.key==='phone')) html += '<button class="btn btn-ghost btn-sm" data-action="whatsapp" title="WhatsApp">💬</button>';
       html += '<button class="btn btn-ghost btn-sm" data-action="delete">Delete</button>';
@@ -2547,6 +2585,29 @@ function wireModuleList(moduleKey){
     }
     else if(action === 'raise-action'){
       openModuleForm('action-items', null, { meetingId: id, action: 'Follow up: ' + (rec[mod.titleField] || 'meeting') });
+    }
+    else if(action === 'complete'){
+      const ca = mod.completionAction;
+      openModal('<h3 style="margin:0 0 10px;">' + escapeHtml(ca.label || '✅ Mark Complete') + ' — ' + escapeHtml(rec[mod.titleField] || '') + '</h3>'
+        + '<div class="field"><label>' + escapeHtml(ca.promptLabel || 'Closing comment') + ' *</label><textarea class="input" id="completion-comment" rows="4"></textarea></div>'
+        + '<div class="error-box" id="completion-error"></div>'
+        + '<div style="display:flex;gap:8px;"><button class="btn btn-primary" id="completion-save">' + escapeHtml(ca.label || '✅ Mark Complete') + '</button><button class="btn btn-ghost" id="completion-cancel">Cancel</button></div>');
+      document.getElementById('completion-cancel').addEventListener('click', closeModal);
+      document.getElementById('completion-save').addEventListener('click', async ()=>{
+        const comment = document.getElementById('completion-comment').value.trim();
+        const errEl = document.getElementById('completion-error');
+        if(!comment){ errEl.textContent = 'A closing comment is required to mark this complete.'; return; }
+        const btn = document.getElementById('completion-save');
+        btn.disabled = true;
+        try{
+          await updateRecord(moduleKey, id, { [ca.statusKey]: ca.doneValue });
+          await addNote(moduleKey, id, comment);
+          logAudit(moduleKey, 'Completed', id, rec[mod.titleField] || '', comment);
+          toast('Marked complete', 'ok');
+          closeModal();
+          refreshTable();
+        }catch(err){ errEl.textContent = 'Failed to save.'; btn.disabled = false; }
+      });
     }
     else if(action === 'email') openEmailComposeDrawer(moduleKey, [rec], refreshTable);
     else if(action === 'whatsapp') window.open(waLink(rec.phone), '_blank');
@@ -2832,7 +2893,7 @@ function logTabHtml(rec, tabDef){
       + '</div></div>';
   });
   html += '</div>';
-  html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
+  html += '<div class="field-grid" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
   tabDef.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml({fields:tabDef.fields}, f, undefined, null, 'log_' + tabDef.key + '_') + '</div>'; });
   html += '<div class="error-box" id="log-' + tabDef.key + '-error"></div>';
   html += '<button class="btn btn-primary btn-sm" type="button" data-log-add="' + tabDef.key + '">' + escapeHtml(tabDef.addLabel || 'Add') + '</button>';
