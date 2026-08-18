@@ -160,6 +160,8 @@ button{font-family:inherit;}
 
 .field{margin-bottom:13px;}
 .field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-dim);margin-bottom:5px;}
+.form-section-heading{font-size:13px;font-weight:700;color:var(--navy);margin:18px 0 10px;padding-bottom:6px;border-bottom:1.5px solid var(--border);}
+.form-section-heading:first-child{margin-top:0;}
 .input,select.input,textarea.input{width:100%;padding:10px 11px;border:1.5px solid var(--border);border-radius:8px;
   font-size:14px;background:#fbfcfe;font-family:inherit;transition:.12s;}
 .input:focus{outline:none;border-color:var(--info);box-shadow:0 0 0 3px rgba(42,99,201,.12);}
@@ -198,20 +200,28 @@ a.stat-card{color:inherit;text-decoration:none;cursor:pointer;}
 
 .dash-layout{display:flex;align-items:flex-start;gap:16px;}
 .dash-main{flex:1;min-width:0;}
-.news-ticker{width:280px;flex:0 0 280px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
-  box-shadow:var(--shadow);padding:16px;position:sticky;top:16px;}
+.dash-side{width:280px;flex:0 0 280px;display:flex;flex-direction:column;gap:16px;position:sticky;top:16px;}
+.news-ticker{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:16px;}
 .news-ticker h3{margin:0 0 10px;font-size:14.5px;display:flex;align-items:center;gap:8px;}
 .news-ticker-viewport{height:360px;overflow:hidden;position:relative;
   -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
   mask-image:linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);}
+/* Few enough updates that scrolling isn't needed — natural height, no fade
+   mask (nothing being scrolled offscreen), no duplicated/animated track. */
+.news-ticker-viewport-auto{height:auto;-webkit-mask-image:none;mask-image:none;}
 .news-ticker-track{display:flex;flex-direction:column;animation:ticker-scroll 30s linear infinite;}
 .news-ticker-track:hover{animation-play-state:paused;}
+.news-ticker-track-static{animation:none;}
 .ticker-item{display:block;padding:9px 4px;font-size:12.5px;line-height:1.35;color:var(--text);text-decoration:none;
   border-bottom:1px solid var(--border);white-space:normal;overflow:hidden;text-overflow:ellipsis;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .ticker-item:hover{color:var(--gold,#c99a3c);}
 @keyframes ticker-scroll{ from{transform:translateY(0);} to{transform:translateY(-50%);} }
-@media (max-width:1180px){ .dash-layout{flex-direction:column;} .news-ticker{width:100%;flex:1 1 auto;position:static;} }
+.dash-mini-chart-card{padding:14px;}
+.dash-mini-chart-card h3{margin:0 0 8px;font-size:13px;display:flex;align-items:center;gap:6px;}
+.dash-mini-chart-wrap{position:relative;height:130px;}
+@media (max-width:1180px){ .dash-layout{flex-direction:column;} .dash-side{width:100%;flex:1 1 auto;position:static;} }
 
 .area-chip-row{display:flex;flex-wrap:wrap;gap:8px;}
 a.area-chip{color:inherit;text-decoration:none;cursor:pointer;transition:transform .12s;}
@@ -639,7 +649,6 @@ const MAIN_MENUS = [
   { key:'leave-holidays', label:'Leave & holidays' },
   { key:'exams', label:'Exams' },
   { key:'mentoring', label:'Student mentoring' },
-  { key:'laboratory', label:'Laboratory' },
   { key:'extra-classes', label:'Extra / additional classes' },
   { key:'research', label:'Research' },
   { key:'projects', label:'Projects & grants' },
@@ -659,6 +668,15 @@ const MAIN_MENUS = [
   { key:'mail-merge', label:'Mail merge' },
   { key:'admin', label:'Admin & settings' }
 ];
+
+/** UN member states — used by the Researcher Network's Country field. A
+ *  plain flat list (not a select-generic thing elsewhere), so it lives here
+ *  right next to the one module that uses it. */
+const UN_COUNTRIES = ['Afghanistan','Albania','Algeria','Andorra','Angola','Antigua and Barbuda','Argentina','Armenia','Australia','Austria','Azerbaijan','Bahamas','Bahrain','Bangladesh','Barbados','Belarus','Belgium','Belize','Benin','Bhutan','Bolivia','Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria','Burkina Faso','Burundi','Cabo Verde','Cambodia','Cameroon','Canada','Central African Republic','Chad','Chile','China','Colombia','Comoros','Congo (Republic of the)','Costa Rica','Croatia','Cuba','Cyprus','Czechia','Democratic Republic of the Congo','Denmark','Djibouti','Dominica','Dominican Republic','Ecuador','Egypt','El Salvador','Equatorial Guinea','Eritrea','Estonia','Eswatini','Ethiopia','Fiji','Finland','France','Gabon','Gambia','Georgia','Germany','Ghana','Greece','Grenada','Guatemala','Guinea','Guinea-Bissau','Guyana','Haiti','Honduras','Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland','Israel','Italy','Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kiribati','Kuwait','Kyrgyzstan','Laos','Latvia','Lebanon','Lesotho','Liberia','Libya','Liechtenstein','Lithuania','Luxembourg','Madagascar','Malawi','Malaysia','Maldives','Mali','Malta','Marshall Islands','Mauritania','Mauritius','Mexico','Micronesia','Moldova','Monaco','Mongolia','Montenegro','Morocco','Mozambique','Myanmar','Namibia','Nauru','Nepal','Netherlands','New Zealand','Nicaragua','Niger','Nigeria','North Korea','North Macedonia','Norway','Oman','Pakistan','Palau','Panama','Papua New Guinea','Paraguay','Peru','Philippines','Poland','Portugal','Qatar','Romania','Russia','Rwanda','Saint Kitts and Nevis','Saint Lucia','Saint Vincent and the Grenadines','Samoa','San Marino','Sao Tome and Principe','Saudi Arabia','Senegal','Serbia','Seychelles','Sierra Leone','Singapore','Slovakia','Slovenia','Solomon Islands','Somalia','South Africa','South Korea','South Sudan','Spain','Sri Lanka','Sudan','Suriname','Sweden','Switzerland','Syria','Tajikistan','Tanzania','Thailand','Timor-Leste','Togo','Tonga','Trinidad and Tobago','Tunisia','Turkey','Turkmenistan','Tuvalu','Uganda','Ukraine','United Arab Emirates','United Kingdom','United States','Uruguay','Uzbekistan','Vanuatu','Venezuela','Vietnam','Yemen','Zambia','Zimbabwe'];
+/** Common reasons a faculty member keeps a researcher in their network —
+ *  used as the checkbox options for Researcher Network's "Usage / Purpose"
+ *  field (a multiselect: any number can apply to the same contact). */
+const RESEARCHER_PURPOSE_OPTIONS = ['Collaboration / Joint Research','Invite for Talk / Seminar','MoU / Institutional Partnership','PhD / Postdoc Recruitment','Grant / Project Partner','Student Exchange / Internship','Consultation / Advisory','Conference / Networking Contact','Reviewer / Editorial Contact','Other'];
 
 const MODULES = {
   'work-diary': { label:'Work diary', menu:'work-diary', icon:'📔', titleField:'summary', dateField:'date', groupByMonth:true, fields:[
@@ -702,7 +720,7 @@ const MODULES = {
   // "Manage →" link.
   'new-updates': { label:'New Updates', menu:'new-updates', icon:'📰', titleField:'title', dateField:'date', fields:[
     {key:'title', label:'Title', type:'text', required:true},
-    {key:'link', label:'Link (URL)', type:'text', required:true},
+    {key:'link', label:'Link (URL) — optional', type:'text'},
     {key:'date', label:'Date', type:'date', default:'__today__'}
   ]},
   'class-log': { label:'Class log', menu:'teaching', icon:'📝', titleField:'topic', dateField:'date', fields:[
@@ -778,7 +796,7 @@ const MODULES = {
     {key:'advice', label:'Advice Given', type:'textarea'},
     {key:'nextFollowUp', label:'Next Follow-up Date', type:'date'}
   ]},
-  'lab-timetable': { label:'Lab timetable', menu:'laboratory', icon:'🧪', titleField:'labCourse', dateField:null, fields:[
+  'lab-timetable': { label:'Lab timetable', menu:'teaching', icon:'🧪', titleField:'labCourse', dateField:null, fields:[
     {key:'day', label:'Day', type:'select', options:['Mon','Tue','Wed','Thu','Fri','Sat'], required:true},
     {key:'fromTime', label:'From Time', type:'time'},
     {key:'toTime', label:'To Time', type:'time'},
@@ -786,7 +804,7 @@ const MODULES = {
     {key:'batch', label:'Batch', type:'text'},
     {key:'venue', label:'Venue', type:'text'}
   ]},
-  'lab-exams': { label:'Lab exams', menu:'laboratory', icon:'🔬', titleField:'labCourse', dateField:'date', fields:[
+  'lab-exams': { label:'Lab exams', menu:'exams', icon:'🔬', titleField:'labCourse', dateField:'date', fields:[
     {key:'labCourse', label:'Lab Course', type:'text', required:true},
     {key:'date', label:'Date', type:'date', required:true},
     {key:'batch', label:'Batch', type:'text'},
@@ -840,15 +858,58 @@ const MODULES = {
     {key:'paperTitle', label:'Paper Title', type:'text'},
     {key:'status', label:'Status', type:'select', options:['Assigned','In Progress','Completed'], default:'Assigned'}
   ]},
-  'research-contacts': { label:'Researcher Network', menu:'research', icon:'🌐', titleField:'name', dateField:'lastContactDate', fields:[
-    {key:'name', label:'Name', type:'text', required:true},
-    {key:'institution', label:'Institution', type:'text'},
+  'research-contacts': { label:'Researcher Network', menu:'research', icon:'🌐', titleField:'name', dateField:null, recordNoun:'researcher', profileExport:true, fields:[
+    // 👤 Basic Information — name is the only required field; everything
+    // else is "fill in what you know now, add more later". The first 7
+    // fields here double as the list view's columns (see
+    // moduleDisplayColumns' cap), so the most identifying ones come first.
+    {key:'name', label:'Name', type:'text', required:true, section:'👤 Basic Information'},
     {key:'designation', label:'Designation', type:'text'},
-    {key:'expertise', label:'Area of Expertise', type:'text'},
+    {key:'institution', label:'Institution', type:'text'},
+    {key:'priority', label:'Priority', type:'select', options:['High','Medium','Low'], blankLabel:'— Not set —'},
     {key:'email', label:'Email', type:'email'},
     {key:'phone', label:'Phone', type:'phone'},
-    {key:'contactType', label:'Contact Type', type:'select', options:['Talk/Seminar','Collaboration','Project','General'], default:'General'},
-    {key:'lastContactDate', label:'Last Contact Date', type:'date'}
+    {key:'expertise', label:'Focus Area', type:'text'},
+    {key:'organizationType', label:'Organization Type', type:'select', options:['University','Industry','Government','National Lab','Research Institute','Non-Profit','Other']},
+    {key:'city', label:'City', type:'text'},
+    {key:'country', label:'Country', type:'select', options:UN_COUNTRIES, blankLabel:'— Select country —'},
+    // 🔗 Links & Profiles — every field here is optional; none of these are
+    // validated beyond the browser's own url-input format hint, since a
+    // pasted profile link doesn't always start with https://.
+    {key:'profileLink', label:'Profile / Paper Link', type:'url', section:'🔗 Links & Profiles'},
+    {key:'googleScholar', label:'Google Scholar', type:'url'},
+    {key:'orcid', label:'ORCID', type:'text'},
+    {key:'linkedin', label:'LinkedIn', type:'url'},
+    {key:'twitter', label:'Twitter / X', type:'url'},
+    {key:'researchgate', label:'ResearchGate', type:'url'},
+    {key:'labWebsite', label:'Lab / Group Website', type:'url'},
+    {key:'otherLink', label:'Other Website / Social Link', type:'url'},
+    // Usage / Purpose — why this contact is being tracked at all; more than
+    // one can apply (e.g. both "Collaboration" and "Grant / Project Partner").
+    {key:'purposes', label:'Select purpose(s)', type:'multiselect', options:RESEARCHER_PURPOSE_OPTIONS, section:'Usage / Purpose'},
+    // 📝 Classification & Notes
+    {key:'source', label:'Source (how you found them)', type:'text', section:'📝 Classification & Notes'},
+    {key:'tags', label:'Tags (comma separated)', type:'text'},
+    {key:'achievements', label:'Notable Inventions / Patents / Achievements', type:'textarea'},
+    {key:'additionalNotes', label:'Notes', type:'textarea'}
+  ], logTabs:[
+    { key:'papers', label:'Papers', icon:'📄', arrayKey:'papers', addLabel:'Add Paper', hintPhrase:'add papers', fields:[
+      {key:'title', label:'Paper / Publication Title', type:'text', required:true},
+      {key:'venue', label:'Journal / Conference', type:'text'},
+      {key:'year', label:'Year', type:'number'},
+      {key:'link', label:'Link (DOI / URL)', type:'url'}
+    ], summary:(e)=>(e.title||'(untitled)') + (e.year ? ' (' + e.year + ')' : '') + (e.venue ? ' — ' + e.venue : ''), linkKey:'link' },
+    { key:'contact-history', label:'Contact History', icon:'📞', arrayKey:'contactHistory', addLabel:'Log Contact', hintPhrase:'log contact history', fields:[
+      {key:'date', label:'Date', type:'date', default:'__today__'},
+      {key:'mode', label:'Mode', type:'select', options:['Email','Phone Call','Video Call','In-Person Meeting','Conference','Other'], default:'Email'},
+      {key:'notes', label:'Notes', type:'textarea'}
+    ], summary:(e)=>(e.mode||'Contact') + (e.date ? ' — ' + fmtDate(e.date) : ''), bodyKey:'notes' },
+    { key:'india-visits', label:'Visits to India', icon:'🇮🇳', arrayKey:'indiaVisits', addLabel:'Log Visit', hintPhrase:'track visits to India', fields:[
+      {key:'fromDate', label:'From', type:'date'},
+      {key:'toDate', label:'To', type:'date'},
+      {key:'purpose', label:'Purpose / Institution Visited', type:'text'},
+      {key:'notes', label:'Notes', type:'textarea'}
+    ], summary:(e)=>[e.fromDate?fmtDate(e.fromDate):'', e.toDate?('– '+fmtDate(e.toDate)):''].filter(Boolean).join(' ') + (e.purpose ? (' — ' + e.purpose) : ''), bodyKey:'notes' }
   ]},
   'project-grants': { label:'Projects & grants', menu:'projects', icon:'💰', titleField:'title', dateField:'endDate', fields:[
     {key:'title', label:'Title', type:'text', required:true},
@@ -1033,6 +1094,39 @@ function parseCustomSubfieldsSpec(text){
     return sf;
   });
 }
+/** A fixed-row list like "Sem-1;Sem-2;Sem-3;Sem-4;Sem-5;Sem-6" is easy to
+ *  shorthand as "Sem-1;…;Sem-6" when writing instructions — but if that
+ *  shorthand ever gets typed into the actual field spec verbatim (instead of
+ *  spelled out in full), the "…"/"..." placeholder becomes ITS OWN row label
+ *  and every semester in between silently disappears from the form (no row
+ *  ever gets rendered for Sem-2..Sem-5, even though marks may already be
+ *  saved for them). This expands any "…"/"..." token sitting between two
+ *  same-prefix numbered tokens (e.g. "Sem-1" … "Sem-6") into the full
+ *  numbered run, so that shorthand — however it ends up in the spec —
+ *  behaves the way it reads. */
+function expandFixedRowTokens(tokens){
+  const ELLIPSIS = /^(…|\.\.\.)$/;
+  const out = [];
+  for(let i = 0; i < tokens.length; i++){
+    const tok = tokens[i];
+    if(ELLIPSIS.test(tok) && out.length && i + 1 < tokens.length){
+      const prev = out[out.length - 1];
+      const next = tokens[i + 1];
+      const pm = /^(.*?)(\d+)$/.exec(prev);
+      const nm = /^(.*?)(\d+)$/.exec(next);
+      if(pm && nm && pm[1] === nm[1]){
+        const start = parseInt(pm[2], 10), end = parseInt(nm[2], 10);
+        const pad = pm[2].length;
+        if(end > start && (end - start) <= 200){
+          for(let n = start + 1; n < end; n++) out.push(pm[1] + String(n).padStart(pad, '0'));
+          continue; // the placeholder itself is dropped — the run replaces it
+        }
+      }
+    }
+    out.push(tok);
+  }
+  return out;
+}
 function parseCustomFieldsSpec(text){
   const allowedTypes = ['text','textarea','number','date','datetime','select','email','tel','subtable'];
   const lines = String(text || '').split('\n').map(l=>l.trim()).filter(Boolean);
@@ -1063,7 +1157,7 @@ function parseCustomFieldsSpec(text){
       // someone having to type the semester name freely on a blank row).
       const fixedRowsRaw = parts[3] || '';
       if(fixedRowsRaw && fixedRowsRaw.toLowerCase() !== 'required'){
-        field.fixedRows = fixedRowsRaw.split(';').map(s=>s.trim()).filter(Boolean);
+        field.fixedRows = expandFixedRowTokens(fixedRowsRaw.split(';').map(s=>s.trim()).filter(Boolean));
       }
     }
     if(required) field.required = true;
@@ -1501,7 +1595,20 @@ function refLabel(moduleKey, id){
 /** Modules that shouldn't appear as link targets in the "Related To" menu
  *  picker (internal registries, not day-to-day records). */
 const POLYREF_EXCLUDED_MODULES = { 'custom-modules':1, 'audit-log':1 };
-function polyrefTargetModules(){ return MODULE_KEYS.filter(k => !POLYREF_EXCLUDED_MODULES[k]); }
+/** "Related To — Menu" only ever makes sense pointed at something that's
+ *  actually a specific record to attach a Meeting/Reminder to — a student, a
+ *  committee, a role, a project — not at every menu in the app (nobody
+ *  relates a meeting to "a Reminder" or "a Holiday"). So the picker is
+ *  limited to: whatever lives under the Roles & Responsibilities menu
+ *  (In-charges, Committees — read from NAV_CATEGORIES itself so a future
+ *  addition there is picked up automatically, not hardcoded here), plus any
+ *  admin-created custom menu (UG Research, PG Research, Grants, … — each its
+ *  own "other menu name", registered wherever the admin chose to put it). */
+function polyrefTargetModules(){
+  const rolesGroups = (NAV_CATEGORIES.find(c => c.key === 'admin-duties') || { groups: [] }).groups;
+  return MODULE_KEYS.filter(k => !POLYREF_EXCLUDED_MODULES[k]
+    && (rolesGroups.indexOf(MODULES[k].menu) !== -1 || MODULES[k].custom));
+}
 /** `<option>`s listing a module's active records, for a 'recordRef' field's
  *  cascading dropdown (populated once a 'moduleRef' sibling field is chosen). */
 function recordOptionsHtml(moduleKey, selectedId){
@@ -1583,7 +1690,7 @@ const SPECIAL_SCREENS = { dashboard:'📊', 'work-diary':'📔', analytics:'📈
    suffix like color+'22' for tinted backgrounds. */
 const AREA_COLORS = {
   dashboard:'#c99a3c', 'work-diary':'#7c5cbf', teaching:'#2a63c9', 'leave-holidays':'#0d9488', exams:'#7c3aed',
-  mentoring:'#0891b2', laboratory:'#0e9f6e', 'extra-classes':'#d97706', research:'#059669',
+  mentoring:'#0891b2', 'extra-classes':'#d97706', research:'#059669',
   projects:'#c99a3c', incharge:'#dc2626', committees:'#ea580c', meetings:'#4f46e5', 'action-items':'#6d5bd0',
   reminders:'#db2777', 'office-followups':'#a8386d', responsibilities:'#0f766e', analytics:'#6fa3f5', reports:'#8a92a6',
   calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b', 'custom-modules':'#6d4aa8', 'mail-merge':'#c2410c'
@@ -1599,7 +1706,11 @@ const AREA_COLORS = {
    entirely — reached only via the Dashboard's quick-add buttons and deep
    links (see STANDALONE_NAV_SCREENS' comment / DASH_QUICKADD_MODULE_KEYS). */
 const NAV_CATEGORIES = [
-  { key:'academics', label:'Academics', icon:'📘', groups:['teaching','exams','laboratory','extra-classes'] },
+  // Laboratory is deliberately not its own group — Lab timetable joins
+  // Teaching (alongside the regular Timetable) and Lab exams joins Exams
+  // (alongside Invigilation duty), rather than having its own separate
+  // "Laboratory" section in the dropdown.
+  { key:'academics', label:'Academics', icon:'📘', groups:['teaching','exams','extra-classes'] },
   { key:'research', label:'Research', icon:'🔬', groups:['research','projects'] },
   // Students + Administrative Duties combined into one "Responsibilities" category.
   // Mentoring (Mentees, Mentoring Meetings) and Responsibilities (Class
@@ -2047,7 +2158,7 @@ function moduleDisplayColumns(mod){
   mod.fields.forEach(f=>{
     if(cols.length >= cap) return;
     if(cols.indexOf(f) !== -1) return;
-    if(f.type === 'textarea' || f.type === 'subtable') return;
+    if(f.type === 'textarea' || f.type === 'subtable' || f.type === 'multiselect') return;
     // When the list is grouped by this field, its value is shown once at
     // the top of each group instead of repeated on every row — so it's
     // left out of the per-row columns (unless it doubles as the title/date
@@ -2083,6 +2194,15 @@ function fieldDisplayValue(mod, field, rec){
   if(field.type === 'date') return v ? escapeHtml(fmtDate(v)) : '<span style="color:var(--text-faint)">—</span>';
   if(field.type === 'datetime') return v ? escapeHtml(fmtDateTime(v)) : '<span style="color:var(--text-faint)">—</span>';
   if(field.type === 'time') return v ? escapeHtml(fmtTime12(v)) : '<span style="color:var(--text-faint)">—</span>';
+  if(field.type === 'multiselect'){
+    const list = Array.isArray(v) ? v : [];
+    return list.length ? list.map(o=>'<span class="badge badge-neutral" style="margin:0 4px 4px 0;">' + escapeHtml(o) + '</span>').join('') : '<span style="color:var(--text-faint)">—</span>';
+  }
+  if(field.type === 'url'){
+    if(!v) return '<span style="color:var(--text-faint)">—</span>';
+    const href = /^https?:\/\//i.test(v) ? v : 'https://' + v;
+    return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener">' + escapeHtml(v) + '</a>';
+  }
   if(field.type === 'subtable'){
     const rows = Array.isArray(v) ? v : [];
     if(field.fixedRows){
@@ -2093,11 +2213,12 @@ function fieldDisplayValue(mod, field, rec){
       // each filled row's actual values (e.g. "Sem-1: 85/Pass"), not just
       // which row labels have something — a row label alone doesn't tell
       // you the mark itself without opening the record.
-      const filledRows = rows.filter(r=>field.subfields.some(sf=>r[sf.key]));
+      const resolved = resolveFixedRows(field, rows).map((r, i)=>Object.assign({}, r, { _rowLabel: field.fixedRows[i] }));
+      const filledRows = resolved.filter(r=>field.subfields.some(sf=>r[sf.key]));
       if(filledRows.length === 0) return '<span style="color:var(--text-faint)">—</span>';
       const preview = filledRows.slice(0,4).map(r=>{
         const vals = field.subfields.map(sf=>r[sf.key]).filter(Boolean).join('/');
-        return (r._rowLabel ? escapeHtml(r._rowLabel) + ': ' : '') + escapeHtml(vals);
+        return escapeHtml(r._rowLabel) + ': ' + escapeHtml(vals);
       }).join(', ');
       return '<span class="badge badge-ok">' + filledRows.length + ' / ' + field.fixedRows.length + ' ' + escapeHtml(field.rowLabelPlural || field.rowLabel || 'entries') + '</span>'
         + (preview ? '<div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;">' + preview + (filledRows.length>4?'…':'') + '</div>' : '');
@@ -2114,10 +2235,14 @@ function fieldDisplayValue(mod, field, rec){
 }
 
 let LIST_SELECTION = new Set();
+// Which single group (e.g. one Batch, or one month) the list is currently
+// filtered down to — '' means "show everyone, grouped" (the default).
+let LIST_GROUP_FILTER = '';
 
 function renderModuleList(moduleKey){
   const mod = MODULES[moduleKey];
   LIST_SELECTION = new Set();
+  LIST_GROUP_FILTER = '';
   if(mod.readOnly){
     return '<div class="page-head"><div><h2>' + mod.icon + ' ' + escapeHtml(mod.label) + '</h2>'
       + '<p>' + getActive(moduleKey).length + ' entr' + (getActive(moduleKey).length===1?'y':'ies') + ' recorded</p></div></div>'
@@ -2215,10 +2340,11 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
   // the group header, alongside the group's own quick-add and export.
   const groupStatusField = (grouping && mod.groupByField) ? mod.fields.find(f=>f.type==='select' && /status/i.test(f.key)) : null;
   // Grouping data is computed up front (rather than inline further down) so
-  // a "Jump to <Batch/month/…>" dropdown can be rendered ABOVE the table —
-  // handy once there are more groups than fit on one screen (e.g. UG
-  // Research grouped by Batch): picking one scrolls straight to that
-  // group's header instead of scrolling through everyone else's rows first.
+  // a "Filter by <Batch/month/…>" dropdown can be rendered ABOVE the table —
+  // this actually shows the list one group at a time (e.g. UG Research one
+  // Batch at a time) rather than just scrolling to it, so "show it
+  // batch-wise" means what it says: pick a batch, see only that batch.
+  // "— All —" (the default) goes back to today's grouped view of everyone.
   let groupOrder = [], groups = {};
   if(grouping){
     rows.forEach(r=>{
@@ -2227,19 +2353,25 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
       groups[key].push(r);
     });
   }
+  // The active filter only applies if it's still a real group in THIS data
+  // set (search text or a deletion can make a previously-picked batch
+  // disappear) — otherwise silently fall back to showing everyone.
+  const activeFilter = (grouping && LIST_GROUP_FILTER && groups[LIST_GROUP_FILTER]) ? LIST_GROUP_FILTER : '';
+  const visibleGroupOrder = activeFilter ? [activeFilter] : groupOrder;
+  const visibleRows = grouping ? visibleGroupOrder.reduce((acc,key)=>acc.concat(groups[key]), []) : rows;
   let html = '';
   if(grouping && groupOrder.length > 1){
     const jumpLabel = mod.groupByField ? ((mod.fields.find(f=>f.key===mod.groupByField)||{}).label || 'group') : 'month';
     html += '<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">'
-      + '<label style="font-size:12px;color:var(--text-dim);white-space:nowrap;">Jump to ' + escapeHtml(jumpLabel) + ':</label>'
+      + '<label style="font-size:12px;color:var(--text-dim);white-space:nowrap;">Filter by ' + escapeHtml(jumpLabel) + ':</label>'
       + '<select class="input input-sm" id="group-jump-select" style="width:auto;">'
-      + '<option value="">— Select —</option>'
-      + groupOrder.map(key=>'<option value="' + escapeHtml(key) + '">' + escapeHtml(rowGroupLabel(mod, key)) + ' (' + groups[key].length + ')</option>').join('')
+      + '<option value=""' + (activeFilter ? '' : ' selected') + '>— All (' + rows.length + ') —</option>'
+      + groupOrder.map(key=>'<option value="' + escapeHtml(key) + '"' + (key === activeFilter ? ' selected' : '') + '>' + escapeHtml(rowGroupLabel(mod, key)) + ' (' + groups[key].length + ')</option>').join('')
       + '</select></div>';
   }
   html += '<table style="width:100%;border-collapse:collapse;"><thead><tr>';
   if(selectable){
-    const visibleIds = rows.map(r=>r.id);
+    const visibleIds = visibleRows.map(r=>r.id);
     const allSelected = visibleIds.length > 0 && visibleIds.every(id=>LIST_SELECTION.has(id));
     html += '<th style="width:34px;padding:10px 6px;border-bottom:1px solid var(--border);"><input type="checkbox" id="select-all-rows"' + (allSelected ? ' checked' : '') + '></th>';
   }
@@ -2249,7 +2381,7 @@ function moduleTableHtml(moduleKey, cols, search, showDeleted){
   if(!grouping){
     rows.forEach(r=>{ html += moduleRowHtml(mod, cols, r, selectable, moduleKey); });
   }else{
-    groupOrder.forEach(key=>{
+    visibleGroupOrder.forEach(key=>{
       const groupRows = groups[key];
       const safeKey = escapeHtml(key);
       html += '<tr class="group-header-row" data-group-key="' + safeKey + '"><td colspan="' + colspan + '" style="padding:10px 12px;background:#f4f6fb;border-bottom:1px solid var(--border);border-top:2px solid var(--border);">'
@@ -2327,15 +2459,16 @@ function wireModuleList(moduleKey){
   if(addBtn) addBtn.addEventListener('click', ()=>openModuleForm(moduleKey, null));
   const bulkImportBtn = document.getElementById('bulk-import-btn');
   if(bulkImportBtn) bulkImportBtn.addEventListener('click', ()=>openBulkImportDrawer(moduleKey, refreshTable));
-  // "Jump to <Batch/month/…>" dropdown (see moduleTableHtml) — scrolls
-  // straight to that group's header row. A plain 'change' listener on the
-  // wrap survives refreshTable() re-rendering the select every time, since
-  // it's attached to wrap itself, not the (replaced) select element.
+  // "Filter by <Batch/month/…>" dropdown (see moduleTableHtml) — re-renders
+  // the table showing only that one group (picking "— All —" goes back to
+  // everyone, grouped). A plain 'change' listener on the wrap survives
+  // refreshTable() re-rendering the select every time, since it's attached
+  // to wrap itself, not the (replaced) select element.
   wrap.addEventListener('change', (e)=>{
     const jumpSelect = e.target.closest('#group-jump-select');
-    if(!jumpSelect || !jumpSelect.value) return;
-    const target = wrap.querySelector('tr.group-header-row[data-group-key="' + CSS.escape(jumpSelect.value) + '"]');
-    if(target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+    if(!jumpSelect) return;
+    LIST_GROUP_FILTER = jumpSelect.value;
+    refreshTable();
   });
   wrap.addEventListener('click', async (e)=>{
     const selectAllBox = e.target.closest('#select-all-rows');
@@ -2432,13 +2565,23 @@ function wireModuleList(moduleKey){
   });
 }
 
-function fieldInputHtml(mod, field, value, rec){
-  const id = 'f_' + field.key;
+function fieldInputHtml(mod, field, value, rec, idPrefix){
+  const id = (idPrefix || 'f_') + field.key;
   let v = value;
   if(v === undefined || v === null) v = (field.default === '__today__' ? todayStr() : (field.default != null ? field.default : ''));
   if(field.type === 'select'){
     const opts = (field.options || []).map(o=>'<option value="' + escapeHtml(o) + '"' + (o === v ? ' selected' : '') + '>' + escapeHtml(o) + '</option>').join('');
-    return '<select class="input" id="' + id + '"><option value="">— Select —</option>' + opts + '</select>';
+    return '<select class="input" id="' + id + '"><option value="">' + escapeHtml(field.blankLabel || '— Select —') + '</option>' + opts + '</select>';
+  }
+  if(field.type === 'multiselect'){
+    // Stored as a plain array of the checked option strings. Rendered as a
+    // bordered, scrollable checkbox list rather than a native <select
+    // multiple> — much easier to see (and tap, on a phone) which ones are
+    // already checked than a multi-select listbox is.
+    const selected = Array.isArray(v) ? v : [];
+    const opts = (field.options || []).map((o, oi)=>'<label style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:400;padding:4px 2px;cursor:pointer;">'
+      + '<input type="checkbox" class="multiselect-opt" value="' + escapeHtml(o) + '"' + (selected.indexOf(o) !== -1 ? ' checked' : '') + '> ' + escapeHtml(o) + '</label>').join('');
+    return '<div class="multiselect-field" id="' + id + '" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;max-height:180px;overflow-y:auto;">' + opts + '</div>';
   }
   if(field.type === 'textarea') return '<textarea class="input" id="' + id + '">' + escapeHtml(v) + '</textarea>';
   if(field.type === 'reference'){
@@ -2539,6 +2682,26 @@ function applySubjectAutoFill(mod, data){
    collectSubtableValue() for how a field's rows are read back out of
    the DOM on form submit.
    ============================================================ */
+/** Matches stored subtable rows to a field's fixedRows labels — shared by
+ *  the edit-form table, the list-view preview, and the plain-text export, so
+ *  all three surfaces always agree on what's saved. Tolerant of messy/older
+ *  data: an exact _rowLabel match first, then a case/whitespace-insensitive
+ *  match (a copy-pasted spec can easily pick up stray spacing), then — only
+ *  when NONE of the stored rows carry a _rowLabel at all (rows saved before
+ *  this field became fixed-row, or before its fixedRows list was corrected)
+ *  — falls back to matching by position. Existing marks should never just
+ *  vanish off the screen because the fixedRows list's exact text changed. */
+function resolveFixedRows(field, rows){
+  rows = Array.isArray(rows) ? rows : [];
+  const norm = s => String(s == null ? '' : s).trim().toLowerCase();
+  const anyLabeled = rows.some(r => r && r._rowLabel != null && String(r._rowLabel).trim() !== '');
+  return field.fixedRows.map((label, idx)=>{
+    let match = rows.find(r => r && r._rowLabel === label);
+    if(!match) match = rows.find(r => r && norm(r._rowLabel) === norm(label));
+    if(!match && !anyLabeled) match = rows[idx];
+    return match || {};
+  });
+}
 function subtableRowHtml(field, rowData, fixedLabel){
   rowData = rowData || {};
   const labelCell = fixedLabel != null
@@ -2566,10 +2729,11 @@ function subtableFieldHtml(field, rows){
   const headerCells = labelHeader + field.subfields.map(sf=>'<th style="text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-dim);padding:4px 8px;">' + escapeHtml(sf.label) + '</th>').join('') + '<th></th>';
   // Fixed-row mode: always render exactly one row per entry in field.fixedRows,
   // in that order, matching each to any previously-saved data by its stored
-  // _rowLabel — so "Sem-3"'s marks land back in the "Sem-3" row on reopen
-  // regardless of what order rows happen to be stored in.
+  // _rowLabel (see resolveFixedRows) — so "Sem-3"'s marks land back in the
+  // "Sem-3" row on reopen regardless of what order rows happen to be stored
+  // in, or whether they even have a matching label at all.
   const bodyRows = field.fixedRows
-    ? field.fixedRows.map(label=>subtableRowHtml(field, rows.find(r=>r._rowLabel === label) || {}, label)).join('')
+    ? resolveFixedRows(field, rows).map((r, i)=>subtableRowHtml(field, r, field.fixedRows[i])).join('')
     : rows.map(r=>subtableRowHtml(field, r)).join('');
   return '<div class="subtable-field" id="f_' + field.key + '">'
     + '<div style="overflow-x:auto;"><table class="subtable-table" style="width:100%;border-collapse:collapse;"><thead><tr>' + headerCells + '</tr></thead>'
@@ -2620,6 +2784,14 @@ function collectSubtableValue(field){
   });
   return result;
 }
+/** Reads a 'multiselect' field's checked options back out of the DOM (see
+ *  fieldInputHtml's multiselect branch) — parallel to collectSubtableValue
+ *  above, called from the record-form submit handler in place of `el.value`. */
+function collectMultiselectValue(field){
+  const container = document.getElementById('f_' + field.key);
+  if(!container) return [];
+  return Array.from(container.querySelectorAll('.multiselect-opt:checked')).map(cb=>cb.value);
+}
 
 function notesTabHtml(rec){
   const notes = rec.notes || [];
@@ -2632,20 +2804,111 @@ function notesTabHtml(rec){
   return html;
 }
 
+/* ============================================================
+   LOG TABS — a module can declare `logTabs` (see 'research-contacts' for
+   the shape) to get one or more extra append-only, timestamped lists on the
+   edit-record drawer, alongside the built-in Notes tab: e.g. Researcher
+   Network's Papers / Contact History / Visits to India. Each entry is a
+   small structured form (not just free text like Notes), stored as an
+   array on the parent record under tabDef.arrayKey — same "no separate
+   CRUD screen, saves as part of the parent record" idea as a subtable
+   field, but reached from its own tab instead of being inline on the main
+   form, and only available once the record has been saved at least once
+   (there's no id to attach entries to before that).
+   ============================================================ */
+function logTabHtml(rec, tabDef){
+  const entries = rec[tabDef.arrayKey] || [];
+  let html = '<div class="notes-list">';
+  if(entries.length === 0) html += '<div class="empty" style="padding:20px;">No ' + escapeHtml(tabDef.label.toLowerCase()) + ' yet.</div>';
+  entries.slice().reverse().forEach(en=>{
+    const link = tabDef.linkKey && en[tabDef.linkKey] ? en[tabDef.linkKey] : '';
+    const href = link ? (/^https?:\/\//i.test(link) ? link : 'https://' + link) : '';
+    html += '<div class="note-item"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">'
+      + '<div style="flex:1;"><div class="ts">' + escapeHtml(tabDef.summary(en)) + '</div>'
+      + (tabDef.bodyKey && en[tabDef.bodyKey] ? escapeHtml(en[tabDef.bodyKey]) : '')
+      + (href ? ('<div><a href="' + escapeHtml(href) + '" target="_blank" rel="noopener">' + escapeHtml(link) + '</a></div>') : '')
+      + '</div>'
+      + '<button type="button" class="btn btn-ghost btn-sm log-entry-remove" data-log-tab="' + tabDef.key + '" data-entry-id="' + en.id + '" title="Remove">✕</button>'
+      + '</div></div>';
+  });
+  html += '</div>';
+  html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
+  tabDef.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml({fields:tabDef.fields}, f, undefined, null, 'log_' + tabDef.key + '_') + '</div>'; });
+  html += '<div class="error-box" id="log-' + tabDef.key + '-error"></div>';
+  html += '<button class="btn btn-primary btn-sm" type="button" data-log-add="' + tabDef.key + '">' + escapeHtml(tabDef.addLabel || 'Add') + '</button>';
+  html += '</div>';
+  return html;
+}
+async function addLogEntry(moduleKey, id, arrayKey, data){
+  const arr = getCollection(moduleKey).slice();
+  const idx = arr.findIndex(r=>r.id===id);
+  if(idx===-1) return;
+  const list = (arr[idx][arrayKey] || []).slice();
+  list.push(Object.assign({ id: uid(), at: nowIso() }, data));
+  const patch = {}; patch[arrayKey] = list;
+  arr[idx] = Object.assign({}, arr[idx], patch, { updatedAt: nowIso() });
+  await saveCollection(moduleKey, arr);
+}
+async function removeLogEntry(moduleKey, id, arrayKey, entryId){
+  const arr = getCollection(moduleKey).slice();
+  const idx = arr.findIndex(r=>r.id===id);
+  if(idx===-1) return;
+  const list = (arr[idx][arrayKey] || []).filter(e=>e.id !== entryId);
+  const patch = {}; patch[arrayKey] = list;
+  arr[idx] = Object.assign({}, arr[idx], patch, { updatedAt: nowIso() });
+  await saveCollection(moduleKey, arr);
+}
+/** The "save this record first, then you can…" hint shown at the bottom of
+ *  an ADD form (never an edit form, since the log tabs are already right
+ *  there) for any module that declares logTabs and/or profileExport —
+ *  spelled out generically from each logTab's hintPhrase rather than
+ *  hardcoded to Researcher Network, so any future module gets the same
+ *  hint for free just by declaring the same shape. */
+function saveFirstHintHtml(mod){
+  const phrases = (mod.logTabs || []).map(t=>t.hintPhrase).filter(Boolean);
+  if(mod.profileExport) phrases.push('export a profile PDF');
+  if(!phrases.length) return '';
+  const noun = mod.recordNoun || mod.label.toLowerCase();
+  const joined = phrases.length > 1 ? (phrases.slice(0, -1).join(', ') + ', and ' + phrases[phrases.length - 1]) : phrases[0];
+  return '<div style="font-size:12px;color:var(--text-dim);margin-top:10px;">Save this ' + escapeHtml(noun) + ' first, then you can ' + escapeHtml(joined) + '.</div>';
+}
+
 function openModuleForm(moduleKey, id, presets){
   const mod = MODULES[moduleKey];
   const rec = id ? getRecord(moduleKey, id) : null;
-  let html = '<h3 style="margin:0 0 4px;padding-right:26px;">' + (rec ? 'Edit ' : 'Add ') + escapeHtml(mod.label) + '</h3>';
-  if(rec) html += '<div class="drawer-tabs"><div class="drawer-tab active" data-tab="details">Details</div><div class="drawer-tab" data-tab="notes">Notes (' + ((rec.notes || []).length) + ')</div></div>';
-  html += '<div id="tab-details"><form id="record-form">';
+  const exportBtn = (rec && mod.profileExport) ? '<button type="button" class="btn btn-ghost btn-sm" id="export-profile-btn" style="margin-bottom:10px;">📄 Export Profile (PDF)</button>' : '';
+  let html = '<h3 style="margin:0 0 4px;padding-right:26px;">' + (rec ? 'Edit ' : 'Add ') + escapeHtml(mod.label) + '</h3>' + exportBtn;
+  const logTabs = rec ? (mod.logTabs || []) : [];
+  if(rec){
+    html += '<div class="drawer-tabs"><div class="drawer-tab active" data-tab="details">Details</div>'
+      + '<div class="drawer-tab" data-tab="notes">Notes (' + ((rec.notes || []).length) + ')</div>'
+      + logTabs.map(t=>'<div class="drawer-tab" data-tab="' + t.key + '">' + t.icon + ' ' + escapeHtml(t.label) + ' (' + ((rec[t.arrayKey] || []).length) + ')</div>').join('')
+      + '</div>';
+  }
+  html += '<div id="tab-details" class="tab-panel"><form id="record-form">';
   // presets: only used when adding a brand-new record (e.g. clicking
   // "+ Add to this group" from a grouped list view) to pre-fill one field —
   // like the group's own value — so the new record lands in that same group.
-  mod.fields.forEach(f=>{ html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec) + '</div>'; });
+  // A `section` on a field (e.g. Researcher Network's "👤 Basic
+  // Information" / "🔗 Links & Profiles") gets a heading rendered right
+  // before its first field; fields with no section (every other module
+  // today) render exactly as before, with no heading at all.
+  let currentSection = null;
+  mod.fields.forEach(f=>{
+    if(f.section && f.section !== currentSection){
+      currentSection = f.section;
+      html += '<h4 class="form-section-heading">' + escapeHtml(currentSection) + '</h4>';
+    }
+    html += '<div class="field"><label>' + escapeHtml(f.label) + (f.required ? ' *' : '') + '</label>' + fieldInputHtml(mod, f, rec ? rec[f.key] : (presets ? presets[f.key] : undefined), rec) + '</div>';
+  });
   html += '<div class="error-box" id="form-error"></div>';
   html += '<div style="display:flex;gap:8px;margin-top:6px;"><button type="submit" class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" id="form-cancel">Cancel</button></div>';
+  if(!rec) html += saveFirstHintHtml(mod);
   html += '</form></div>';
-  if(rec) html += '<div id="tab-notes" class="hidden">' + notesTabHtml(rec) + '</div>';
+  if(rec){
+    html += '<div id="tab-notes" class="tab-panel hidden">' + notesTabHtml(rec) + '</div>';
+    logTabs.forEach(t=>{ html += '<div id="tab-' + t.key + '" class="tab-panel hidden">' + logTabHtml(rec, t) + '</div>'; });
+  }
   openDrawer(html);
   wireModuleForm(moduleKey, id);
 }
@@ -2662,8 +2925,7 @@ function wireModuleForm(moduleKey, id){
     t.addEventListener('click', ()=>{
       tabs.forEach(x=>x.classList.remove('active'));
       t.classList.add('active');
-      const dTab = drawer.querySelector('#tab-details'); if(dTab) dTab.classList.toggle('hidden', t.dataset.tab !== 'details');
-      const nTab = drawer.querySelector('#tab-notes'); if(nTab) nTab.classList.toggle('hidden', t.dataset.tab !== 'notes');
+      drawer.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('hidden', p.id !== 'tab-' + t.dataset.tab));
     });
   });
   // "Related To" polymorphic-reference fields: a moduleRef select feeds one
@@ -2709,6 +2971,7 @@ function wireModuleForm(moduleKey, id){
       for(let i=0;i<mod.fields.length;i++){
         const f = mod.fields[i];
         if(f.type === 'subtable'){ data[f.key] = collectSubtableValue(f); continue; }
+        if(f.type === 'multiselect'){ data[f.key] = collectMultiselectValue(f); continue; }
         const el = document.getElementById('f_' + f.key);
         let v = el.value;
         if(f.type === 'number') v = v === '' ? '' : Number(v);
@@ -2717,7 +2980,7 @@ function wireModuleForm(moduleKey, id){
       applySubjectAutoFill(mod, data);
       for(let i=0;i<mod.fields.length;i++){
         const f = mod.fields[i];
-        if(f.type === 'subtable') continue;
+        if(f.type === 'subtable' || f.type === 'multiselect') continue;
         const v = data[f.key];
         if(f.required && (v === '' || v == null)){
           errEl.textContent = f.label + ' is required.';
@@ -2764,6 +3027,52 @@ function wireModuleForm(moduleKey, id){
       }catch(err){ toast('Failed to add note', 'danger'); addNoteBtn.disabled = false; }
     });
   }
+  // Log tabs (Papers / Contact History / Visits to India on Researcher
+  // Network, and any future module that declares mod.logTabs the same way):
+  // one "add" button per tab, wired to that tab's own small field set, plus
+  // a "✕" remove button on every already-saved entry.
+  (mod.logTabs || []).forEach(tabDef=>{
+    const addBtn = drawer.querySelector('[data-log-add="' + tabDef.key + '"]');
+    if(!addBtn) return;
+    addBtn.addEventListener('click', async ()=>{
+      if(addBtn.disabled) return;
+      const errEl = document.getElementById('log-' + tabDef.key + '-error');
+      if(errEl) errEl.textContent = '';
+      const idPrefix = 'log_' + tabDef.key + '_';
+      const data = {};
+      tabDef.fields.forEach(f=>{
+        const el = document.getElementById(idPrefix + f.key);
+        if(!el) return;
+        let v = el.value;
+        if(f.type === 'number') v = v === '' ? '' : Number(v);
+        data[f.key] = v;
+      });
+      const missing = tabDef.fields.find(f=>f.required && (data[f.key] === '' || data[f.key] == null));
+      if(missing){ if(errEl) errEl.textContent = missing.label + ' is required.'; return; }
+      addBtn.disabled = true;
+      try{
+        await addLogEntry(moduleKey, id, tabDef.arrayKey, data);
+        openModuleForm(moduleKey, id);
+        const tab = document.querySelector('.drawer-tab[data-tab="' + tabDef.key + '"]');
+        if(tab) tab.click();
+      }catch(err){ if(errEl) errEl.textContent = 'Failed to save.'; addBtn.disabled = false; }
+    });
+  });
+  drawer.querySelectorAll('.log-entry-remove').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const tabKey = btn.dataset.logTab;
+      const entryId = btn.dataset.entryId;
+      const tabDef = (mod.logTabs || []).find(t=>t.key === tabKey);
+      if(!tabDef) return;
+      if(!confirm('Remove this entry? This cannot be undone.')) return;
+      await removeLogEntry(moduleKey, id, tabDef.arrayKey, entryId);
+      openModuleForm(moduleKey, id);
+      const tab = document.querySelector('.drawer-tab[data-tab="' + tabKey + '"]');
+      if(tab) tab.click();
+    });
+  });
+  const exportBtn = document.getElementById('export-profile-btn');
+  if(exportBtn) exportBtn.addEventListener('click', ()=>{ exportRecordProfilePdf(moduleKey, id); });
 }
 
 /* ============================================================
@@ -2844,7 +3153,7 @@ function downloadModuleTemplate(moduleKey){
   // single cell — it isn't representable as one flat spreadsheet column, so
   // bulk import simply doesn't cover it (add members after import, from the
   // record's own edit form).
-  const importableFields = mod.fields.filter(f=>f.type !== 'subtable');
+  const importableFields = mod.fields.filter(f=>f.type !== 'subtable' && f.type !== 'multiselect');
   const headers = importableFields.map(f=>f.label);
   const sampleRow = {};
   importableFields.forEach(f=>{
@@ -2860,8 +3169,9 @@ function downloadModuleTemplate(moduleKey){
  *  exact label, then by field key, both case/space-insensitive. */
 function matchFieldForHeader(mod, header){
   const norm = String(header || '').trim().toLowerCase();
-  return mod.fields.filter(f => f.type !== 'subtable').find(f => f.label.trim().toLowerCase() === norm)
-    || mod.fields.filter(f => f.type !== 'subtable').find(f => f.key.trim().toLowerCase() === norm)
+  const candidates = mod.fields.filter(f => f.type !== 'subtable' && f.type !== 'multiselect');
+  return candidates.find(f => f.label.trim().toLowerCase() === norm)
+    || candidates.find(f => f.key.trim().toLowerCase() === norm)
     || null;
 }
 /** Loosely coerces a spreadsheet cell into the shape a field expects —
@@ -2904,7 +3214,7 @@ function parseWorkbookForModule(moduleKey, arrayBuffer){
       skipped.push({ row: idx + 2, reason: 'missing ' + missingRequired.map(f=>f.label).join(', ') });
       return;
     }
-    mod.fields.forEach(f=>{ if(data[f.key] === undefined) data[f.key] = f.type === 'subtable' ? [] : (f.default === '__today__' ? todayStr() : (f.default != null ? f.default : '')); });
+    mod.fields.forEach(f=>{ if(data[f.key] === undefined) data[f.key] = (f.type === 'subtable' || f.type === 'multiselect') ? [] : (f.default === '__today__' ? todayStr() : (f.default != null ? f.default : '')); });
     records.push(data);
   });
   return { records, skipped, totalRows: rows.length };
@@ -3279,18 +3589,43 @@ function progressRingHtml(percent, color, label, sub, href){
     + '<div style="width:56px;height:56px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;"><span class="ring-num" data-count="' + p + '">0%</span></div></div>'
     + '<div><div class="ring-label">' + escapeHtml(label) + '</div><div class="ring-sub">' + escapeHtml(sub) + '</div></div></' + tag + '>';
 }
+/** A Dashboard box listing a module's currently-open records — same visual
+ *  style as "Today's Schedule" / "Upcoming (next 30 days)" (a title + due
+ *  date row, colored by how soon/overdue it is) rather than just the bare
+ *  count already shown in the stat cards above. Every row links to the
+ *  module itself (consistent with every other Dashboard list), not a
+ *  specific record — there's no per-record deep link anywhere on the
+ *  Dashboard today. */
+function dashboardOpenListCardHtml(moduleKey, icon, title, items, dateKey, titleKey, emptyText){
+  const rows = items.slice(0, 10).map(it=>{
+    const dateStr = it[dateKey];
+    const cls = dateStr ? urgencyClass(dateStr) : '';
+    const dateLabel = dateStr ? '<span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(dateStr)) + '</span>' : '';
+    return '<a href="#/module/' + moduleKey + '" class="' + cls + ' dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;gap:8px;"><span>' + escapeHtml(it[titleKey] || '(untitled)') + '</span>' + dateLabel + '</a>';
+  }).join('');
+  return '<div class="card"><h3>' + icon + ' ' + escapeHtml(title) + ' <span class="badge badge-neutral" style="margin-left:6px;font-weight:600;">' + items.length + '</span></h3>'
+    + (items.length ? rows : '<div class="empty">' + escapeHtml(emptyText) + '</div>') + '</div>';
+}
 function renderDashboard(){
   const q = quoteOfTheDay();
   const classes = todaysClasses();
   const dayStatus = todayDayStatus();
   const upcoming = upcomingItems(30);
   const overdue = overdueItems();
-  const openActions = getActive('action-items').filter(a=>a.status!=='Done').length;
+  // Full lists (not just counts) for the "Open Action Items / Reminders /
+  // Office Follow-ups" boxes below Today's Schedule/Upcoming — nearest due
+  // date first, undated ones last — so the stat-card counts above and the
+  // list boxes below always agree on exactly what's "open".
+  const sortByDate = (key) => (a,b) => String(a[key]||'9999-99-99').localeCompare(String(b[key]||'9999-99-99'));
+  const openActionsList = getActive('action-items').filter(a=>a.status!=='Done').sort(sortByDate('dueDate'));
+  const openRemindersList = getActive('reminders').filter(r=>r.status!=='Done').sort(sortByDate('dueDate'));
+  const openFollowupsList = getActive('office-followups').filter(o=>o.status!=='Resolved').sort(sortByDate('followUpDate'));
+  const openActions = openActionsList.length;
   const totalActions = getActive('action-items').length;
   const doneActions = totalActions - openActions;
-  const openReminders = getActive('reminders').filter(r=>r.status!=='Done').length;
+  const openReminders = openRemindersList.length;
   const pendingLeave = getActive('leave-records').filter(l=>l.status==='Applied').length;
-  const openFollowups = getActive('office-followups').filter(o=>o.status!=='Resolved').length;
+  const openFollowups = openFollowupsList.length;
 
   const weekStart = startOfWeekStr();
   const weekEnd = endOfWeekStr();
@@ -3380,6 +3715,15 @@ function renderDashboard(){
     : '<div class="empty">Nothing due in the next 30 days.</div>') + '</div>';
   html += '</div>';
 
+  // Open Action Items / Reminders / Office Follow-ups — the actual open
+  // list for each, not just the count already shown in the stat cards
+  // above, styled the same way as Today's Schedule / Upcoming.
+  html += '<div class="grid grid-3" style="margin-top:16px;">';
+  html += dashboardOpenListCardHtml('action-items', '☑️', 'Open Action Items', openActionsList, 'dueDate', 'action', 'Nothing open — all action items are done.');
+  html += dashboardOpenListCardHtml('reminders', '🔔', 'Open Reminders', openRemindersList, 'dueDate', 'title', 'Nothing open — no active reminders.');
+  html += dashboardOpenListCardHtml('office-followups', '📮', 'Open Office Follow-ups', openFollowupsList, 'followUpDate', 'subject', 'Nothing open — no pending follow-ups.');
+  html += '</div>';
+
   html += '<div class="grid grid-2" style="margin-top:16px;">';
   html += '<div class="card"><h3>📈 Progress</h3><div style="display:flex;flex-direction:column;gap:16px;">'
     + progressRingHtml(actionPct, AREA_COLORS.meetings, 'Action Items Closed', doneActions + ' of ' + totalActions + ' total', '#/module/action-items')
@@ -3395,17 +3739,19 @@ function renderDashboard(){
       : '<div class="empty">Nothing overdue or due in the next 30 days.</div>') + '</div>';
   html += '</div>';
 
-  html += '<div class="grid grid-2" style="margin-top:16px;">';
-  html += '<div class="card"><h3>📘 This Week\'s Teaching Load<a href="#/module/timetable" class="dash-link" style="display:inline;margin-left:auto;font-size:11.5px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View Timetable →</a></h3>' + (chartsAvailable
-    ? '<canvas id="dash-chart-week" height="140"></canvas>'
+  // These two mini pie charts are deliberately small and live in the side
+  // column (below the New Updates ticker), not the main column — per the
+  // user's explicit request that they be "very small" and positioned below
+  // the news updates section.
+  let chartsHtml = '<div class="card dash-mini-chart-card"><h3>📘 This Week\'s Teaching Load<a href="#/module/timetable" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>' + (chartsAvailable
+    ? '<div class="dash-mini-chart-wrap"><canvas id="dash-chart-week"></canvas></div>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>') + '</div>';
-  html += '<div class="card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + ' <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(Work Diary + classes held + logged durations)</span><a href="#/module/work-diary" class="dash-link" style="display:inline;margin-left:auto;font-size:11.5px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View Work Diary →</a></h3>' + (chartsAvailable
-    ? '<canvas id="dash-chart-time" height="140"></canvas>'
+  chartsHtml += '<div class="card dash-mini-chart-card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + '<a href="#/module/work-diary" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>' + (chartsAvailable
+    ? '<div class="dash-mini-chart-wrap"><canvas id="dash-chart-time"></canvas></div>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>')
-    + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:14px 0 0;">Nothing logged yet — add Work Diary entries, mark classes Held in Class Log, or fill in an optional Duration on Meetings/Invigilation Duty/Extra Classes/Lab Exams/Research Events.</div>' : '') + '</div>';
-  html += '</div>';
+    + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:10px 0 0;font-size:11.5px;">Nothing logged yet — add Work Diary entries, mark classes Held in Class Log, or fill in an optional Duration on Meetings/Invigilation Duty/Extra Classes/Lab Exams/Research Events.</div>' : '') + '</div>';
 
-  return '<div class="dash-layout"><div class="dash-main">' + html + '</div>' + dashboardTickerHtml() + '</div>';
+  return '<div class="dash-layout"><div class="dash-main">' + html + '</div><div class="dash-side">' + dashboardTickerHtml() + chartsHtml + '</div></div>';
 }
 /** A small auto-scrolling "New Updates" ticker for the right side of the
  *  Dashboard — up to 10 items from the separate New Updates menu (just an
@@ -3433,8 +3779,18 @@ function dashboardTickerHtml(){
       ? '<a href="' + escapeHtml(url) + '" class="ticker-item" target="_blank" rel="noopener noreferrer" title="' + label + '">📰 ' + label + '</a>'
       : '<span class="ticker-item" style="cursor:default;" title="' + label + '">📰 ' + label + '</span>';
   }).join('');
+  // The scrolling marquee duplicates its content so the loop back to the
+  // top is seamless — but that duplication only makes sense once there's
+  // enough content to actually need scrolling. With just a handful of
+  // updates it just shows the same update(s) twice on screen at once
+  // (nothing being scrolled past), which reads as a bug ("one entry showing
+  // as two"), not a ticker — so few items get a plain, static, un-duplicated
+  // list instead.
+  const needsScroll = items.length > 5;
+  const trackHtml = needsScroll ? (itemHtml + itemHtml) : itemHtml;
   return '<div class="news-ticker"><h3>📰 New Updates' + manageLink + '</h3>'
-    + '<div class="news-ticker-viewport"><div class="news-ticker-track">' + itemHtml + itemHtml + '</div></div></div>';
+    + '<div class="news-ticker-viewport' + (needsScroll ? '' : ' news-ticker-viewport-auto') + '">'
+    + '<div class="news-ticker-track' + (needsScroll ? '' : ' news-ticker-track-static') + '">' + trackHtml + '</div></div></div>';
 }
 let DASHBOARD_CHARTS = [];
 function destroyDashboardCharts(){ DASHBOARD_CHARTS.forEach(c=>{ try{ c.destroy(); }catch(e){} }); DASHBOARD_CHARTS = []; }
@@ -3458,7 +3814,7 @@ function wireDashboard(){
       data:{ labels: weekLoad.days, datasets:[{ label:'Classes', data: weekLoad.counts,
         backgroundColor: weekLoad.days.map((d,i)=>d===todayDow ? AREA_COLORS.dashboard : palette[i % palette.length]),
         borderColor: '#fff', borderWidth: 2 }] },
-      options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:11, font:{ size:11 } } } } }
+      options:{ maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:8, font:{ size:9.5 }, padding:6 } } } }
     }));
   }
 
@@ -3470,7 +3826,7 @@ function wireDashboard(){
       DASHBOARD_CHARTS.push(new Chart(timeCanvas, {
         type:'pie',
         data:{ labels: labels, datasets:[{ label:'Hours', data: labels.map(l=>workDiaryHours.byCat[l]), backgroundColor: palette, borderColor: '#fff', borderWidth: 2 }] },
-        options:{ plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:11, font:{ size:11 } } } } }
+        options:{ maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:8, font:{ size:9.5 }, padding:6 } } } }
       }));
     }
   }
@@ -3700,8 +4056,8 @@ function wireAnalytics(){
     options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
   }));
 
-  const areaLabels = ['Teaching','Exams','Mentoring','Laboratory','Extra Classes','Research','Projects','In-Charge','Committees','Meetings','Action Items','Reminders','Follow-ups','Responsibilities'];
-  const areaMenus = ['teaching','exams','mentoring','laboratory','extra-classes','research','projects','incharge','committees','meetings','action-items','reminders','office-followups','responsibilities'];
+  const areaLabels = ['Teaching','Exams','Mentoring','Extra Classes','Research','Projects','In-Charge','Committees','Meetings','Action Items','Reminders','Follow-ups','Responsibilities'];
+  const areaMenus = ['teaching','exams','mentoring','extra-classes','research','projects','incharge','committees','meetings','action-items','reminders','office-followups','responsibilities'];
   const areaCounts = areaMenus.map(m => MODULE_KEYS.filter(k=>MODULES[k].menu===m).reduce((sum,k)=>sum+getActive(k).length, 0));
   ANALYTICS_CHARTS.push(new Chart(document.getElementById('chart-mix'), {
     type:'pie',
@@ -3958,10 +4314,15 @@ function fieldPlainValue(mod, field, rec){
   if(field.type === 'recordRef'){ const depModKey = rec[field.dependsOn]; return (depModKey && v) ? refLabel(depModKey, v) : ''; }
   if(field.type === 'date') return v ? fmtDate(v) : '';
   if(field.type === 'time') return v ? fmtTime12(v) : '';
+  if(field.type === 'multiselect') return Array.isArray(v) ? v.join('; ') : '';
   if(field.type === 'subtable'){
     const rows = Array.isArray(v) ? v : [];
-    const nonBlank = field.fixedRows ? rows.filter(r=>field.subfields.some(sf=>r[sf.key])) : rows;
-    return nonBlank.map(r => (r._rowLabel ? r._rowLabel + ': ' : '') + field.subfields.map(sf => r[sf.key]).filter(Boolean).join(' - ')).join('; ');
+    if(field.fixedRows){
+      const resolved = resolveFixedRows(field, rows).map((r, i)=>Object.assign({}, r, { _rowLabel: field.fixedRows[i] }));
+      const nonBlank = resolved.filter(r=>field.subfields.some(sf=>r[sf.key]));
+      return nonBlank.map(r => r._rowLabel + ': ' + field.subfields.map(sf => r[sf.key]).filter(Boolean).join(' - ')).join('; ');
+    }
+    return rows.map(r => (r._rowLabel ? r._rowLabel + ': ' : '') + field.subfields.map(sf => r[sf.key]).filter(Boolean).join(' - ')).join('; ');
   }
   return v == null ? '' : String(v);
 }
@@ -4031,6 +4392,44 @@ function printHtmlDocument(title, bodyHtml){
   win.document.close();
   win.focus();
   setTimeout(()=>{ win.print(); }, 350);
+}
+
+/** "📄 Export Profile (PDF)" — a full one-page-per-record profile document
+ *  (Basic Information / Links / Purpose / Classification, grouped by the
+ *  same `section` headings as the edit form, plus every logTabs entry) for
+ *  any module that declares mod.profileExport, driven through the same
+ *  print-to-PDF path as every other PDF export in the app (printHtmlDocument). */
+function recordProfileBodyHtml(mod, rec){
+  let html = '<h1>' + escapeHtml(rec[mod.titleField] || '(untitled)') + '</h1>'
+    + '<div class="meta">' + escapeHtml(mod.label) + ' profile &middot; Generated ' + escapeHtml(fmtDateTime(nowIso())) + '</div>';
+  let currentSection = null, rows = '';
+  const flushSection = ()=>{ if(rows){ html += '<table><tbody>' + rows + '</tbody></table>'; rows = ''; } };
+  mod.fields.forEach(f=>{
+    if(f.section !== currentSection){
+      flushSection();
+      currentSection = f.section;
+      html += '<h2 style="font-size:13pt;color:#0f1f3d;margin:14px 0 4px;">' + escapeHtml(currentSection || mod.label) + '</h2>';
+    }
+    const val = fieldPlainValue(mod, f, rec);
+    if(!val) return;
+    rows += '<tr><td style="font-weight:700;width:220px;">' + escapeHtml(f.label) + '</td><td>' + escapeHtml(val) + '</td></tr>';
+  });
+  flushSection();
+  (mod.logTabs || []).forEach(t=>{
+    const entries = rec[t.arrayKey] || [];
+    html += '<h2 style="font-size:13pt;color:#0f1f3d;margin:18px 0 4px;">' + t.icon + ' ' + escapeHtml(t.label) + '</h2>';
+    if(!entries.length){ html += '<p style="color:#888;">None recorded.</p>'; return; }
+    html += '<table><thead><tr>' + t.fields.map(f=>'<th>' + escapeHtml(f.label) + '</th>').join('') + '</tr></thead><tbody>'
+      + entries.slice().sort((a,b)=>String(a.at||'').localeCompare(String(b.at||''))).map(en=>'<tr>' + t.fields.map(f=>'<td>' + escapeHtml(en[f.key] != null ? String(en[f.key]) : '') + '</td>').join('') + '</tr>').join('')
+      + '</tbody></table>';
+  });
+  return html;
+}
+function exportRecordProfilePdf(moduleKey, id){
+  const mod = MODULES[moduleKey];
+  const rec = getRecord(moduleKey, id);
+  if(!rec) return;
+  printHtmlDocument((rec[mod.titleField] || mod.label) + ' — Profile', recordProfileBodyHtml(mod, rec));
 }
 
 /* ---------- Excel (.xlsx) + plain-text (.txt) export ----------
