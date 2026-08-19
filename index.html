@@ -1135,6 +1135,7 @@ const MODULES = {
   // of any action item that already had the old single Meeting link).
   'action-items': { label:'Action items', menu:'action-items', icon:'☑️', titleField:'action', dateField:'dueDate', completionAction:{statusKey:'status', doneValue:'Done', label:'✅ Mark Complete', promptLabel:'Closing comment — how was this resolved?'}, fields:[
     {key:'action', label:'Action', type:'text', required:true},
+    {key:'description', label:'Description', hint:'A brief on the task — more detail than fits in Action', type:'textarea'},
     {key:'owner', label:'Owner', hint:'Who this is assigned to', type:'text'},
     {key:'dueDate', label:'Due Date', type:'date'},
     {key:'relatedModule', label:'Related To — Menu', hint:'Optional — the meeting, project, committee, responsibility, or any other record this action came out of', type:'moduleRef'},
@@ -1143,6 +1144,7 @@ const MODULES = {
   ]},
   'reminders': { label:'Reminders', menu:'reminders', icon:'🔔', titleField:'title', dateField:'dueDate', completionAction:{statusKey:'status', doneValue:'Done', label:'✅ Mark Complete', promptLabel:'Closing comment — how was this resolved?'}, fields:[
     {key:'title', label:'Title', type:'text', required:true},
+    {key:'description', label:'Description', hint:'A brief on what this reminder is about — more detail than fits in Title', type:'textarea'},
     {key:'dueDate', label:'Due Date', type:'date'},
     {key:'relatedModule', label:'Related To — Menu', type:'moduleRef'},
     {key:'relatedRecordId', label:'Related To — Specific Record', type:'recordRef', dependsOn:'relatedModule'},
@@ -1896,6 +1898,40 @@ function recordOptionsHtml(moduleKey, selectedId){
   return getActive(moduleKey).map(r=>'<option value="' + r.id + '"' + (r.id === selectedId ? ' selected' : '') + '>'
     + escapeHtml(r[m.titleField] || '(untitled)') + '</option>').join('');
 }
+/** Every module that carries a "Related To" moduleRef+recordRef pair
+ *  (Meetings, Action Items, Reminders today) — found by shape, not a
+ *  hardcoded module-key list, so any future module built the same way is
+ *  picked up automatically. Used by findLinkedRecords below to answer
+ *  "what points AT this record", the reverse direction of the moduleRef
+ *  picker itself (which answers "what does this record point at"). */
+function polyrefSourceModules(){
+  return MODULE_KEYS.map(k=>{
+    const mod = MODULES[k];
+    const modRefField = mod.fields.find(f=>f.type === 'moduleRef');
+    if(!modRefField) return null;
+    const recRefField = mod.fields.find(f=>f.type === 'recordRef' && f.dependsOn === modRefField.key);
+    if(!recRefField) return null;
+    return { moduleKey: k, modRefKey: modRefField.key, recRefKey: recRefField.key };
+  }).filter(Boolean);
+}
+/** Reverse "Related To" lookup — every active Meeting/Action Item/Reminder
+ *  (or future lookalike) whose "Related To" currently points at this exact
+ *  (targetModuleKey, targetId). Deliberately computed fresh every time
+ *  rather than stored back on the target record: a "Related To" pointer
+ *  only lives on the record that carries it, so the moment it's edited to
+ *  point somewhere else, this lookup — run again the next time either
+ *  record is opened — immediately reflects the new target and stops
+ *  showing the old one. Nothing needs to be "moved"; there's no stale
+ *  cache to invalidate. */
+function findLinkedRecords(targetModuleKey, targetId){
+  const out = [];
+  polyrefSourceModules().forEach(src=>{
+    getActive(src.moduleKey).forEach(r=>{
+      if(r[src.modRefKey] === targetModuleKey && r[src.recRefKey] === targetId) out.push({ moduleKey: src.moduleKey, rec: r });
+    });
+  });
+  return out;
+}
 
 /* ============================================================
    AUTH — a single-faculty app, so "auth" is just: has a PIN been
@@ -2075,6 +2111,14 @@ async function boot(){
     const btn = document.getElementById('retry-load-btn');
     if(btn) btn.addEventListener('click', boot);
     return;
+  }
+  // Auto-log today's scheduled classes into Class Log (see
+  // autoSyncClassLogFromTimetable) — once per page load, after data is in
+  // but before the first render. Only once STATE.meta exists (first-run
+  // setup already completed — nothing to sync against before that), and
+  // never allowed to block the app from loading if it errors.
+  if(STATE.meta){
+    try{ await autoSyncClassLogFromTimetable(); }catch(e){ console.error('Class Log auto-sync failed:', e); }
   }
   window.addEventListener('hashchange', render);
   render();
@@ -3592,6 +3636,30 @@ function notesTabHtml(rec){
   return html;
 }
 
+/** The "🔗 Linked" tab — every Meeting/Action Item/Reminder whose "Related
+ *  To" currently points at this record (see findLinkedRecords). Available
+ *  on every module's own edit drawer, since "Related To" can point at
+ *  literally anything (see polyrefTargetModules) — not just the three
+ *  modules that themselves carry a "Related To" field. */
+function linkedTabHtml(moduleKey, id){
+  const linked = findLinkedRecords(moduleKey, id);
+  let html = '<div class="notes-list">';
+  if(!linked.length){
+    html += '<div class="empty" style="padding:20px;">Nothing else in the app has its "Related To" pointed at this record yet.</div>';
+  }else{
+    linked.forEach(item=>{
+      const srcMod = MODULES[item.moduleKey];
+      const title = srcMod.titleField ? (item.rec[srcMod.titleField] || '(untitled)') : '(record)';
+      html += '<div class="note-item" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
+        + '<div><div class="ts">' + escapeHtml(srcMod.icon || '') + ' ' + escapeHtml(srcMod.label) + '</div>' + escapeHtml(title) + '</div>'
+        + '<button type="button" class="btn btn-ghost btn-sm" data-open-linked-module="' + item.moduleKey + '" data-open-linked-id="' + item.rec.id + '">Open →</button>'
+        + '</div>';
+    });
+  }
+  html += '</div>';
+  return html;
+}
+
 /* ============================================================
    LOG TABS — a module can declare `logTabs` (see 'research-contacts' for
    the shape) to get one or more extra append-only, timestamped lists on the
@@ -3667,9 +3735,11 @@ function openModuleForm(moduleKey, id, presets){
   const exportBtn = (rec && mod.profileExport) ? '<button type="button" class="btn btn-ghost btn-sm" id="export-profile-btn" style="margin-bottom:10px;">📄 Export Profile (PDF)</button>' : '';
   let html = '<h3 style="margin:0 0 4px;padding-right:26px;">' + (rec ? 'Edit ' : 'Add ') + escapeHtml(mod.label) + '</h3>' + exportBtn;
   const logTabs = rec ? (mod.logTabs || []) : [];
+  const linkedCount = rec ? findLinkedRecords(moduleKey, id).length : 0;
   if(rec){
     html += '<div class="drawer-tabs"><div class="drawer-tab active" data-tab="details">Details</div>'
       + '<div class="drawer-tab" data-tab="notes">Notes (' + ((rec.notes || []).length) + ')</div>'
+      + '<div class="drawer-tab" data-tab="linked">🔗 Linked (' + linkedCount + ')</div>'
       + logTabs.map(t=>'<div class="drawer-tab" data-tab="' + t.key + '">' + t.icon + ' ' + escapeHtml(t.label) + ' (' + ((rec[t.arrayKey] || []).length) + ')</div>').join('')
       + '</div>';
   }
@@ -3716,6 +3786,7 @@ function openModuleForm(moduleKey, id, presets){
   html += '</form></div>';
   if(rec){
     html += '<div id="tab-notes" class="tab-panel hidden">' + notesTabHtml(rec) + '</div>';
+    html += '<div id="tab-linked" class="tab-panel hidden">' + linkedTabHtml(moduleKey, id) + '</div>';
     logTabs.forEach(t=>{ html += '<div id="tab-' + t.key + '" class="tab-panel hidden">' + logTabHtml(rec, t) + '</div>'; });
   }
   openDrawer(html);
@@ -3758,6 +3829,12 @@ function wireModuleForm(moduleKey, id){
   wireSubtableFields(mod);
   wireLoadRosterButtons(mod);
   wireImportSubtableButtons(mod);
+  // "🔗 Linked" tab's "Open →" buttons jump straight into the record that's
+  // pointing at this one — reopens the drawer on that record instead of
+  // this one, same as clicking it from that module's own list would.
+  drawer.querySelectorAll('[data-open-linked-module]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ openModuleForm(btn.dataset.openLinkedModule, btn.dataset.openLinkedId); });
+  });
   // "Start from a template" (see CUSTOM_MENU_TEMPLATES) — picking one fills
   // in Menu Name (only if still blank, so it never clobbers a name already
   // typed in), Icon, and Fields; picking "— Blank —" again just leaves
@@ -4241,6 +4318,52 @@ function todaysScheduleItems(){
    approved Leave/OD flags today's classes as needing rescheduling — neither
    requires touching the Timetable module's own records. ---------- */
 function holidayOn(dateStr){ return getActive('holidays').find(h=>h.date===dateStr) || null; }
+/** Auto-logs today's scheduled classes into Class Log so a faculty member
+ *  never has to remember to add one by hand — called once per app load
+ *  (see boot()), after the day's data is in. For each Timetable slot that
+ *  meets today (matched by weekday, same DOW_NAMES3 mapping used
+ *  everywhere else), it creates a "Held" Class Log entry unless:
+ *    - that Timetable slot itself isn't Scheduled (Cancelled/Rescheduled —
+ *      the whole weekly slot doesn't run, not just today)
+ *    - today is a marked Holiday (holidayOn)
+ *    - today falls inside an Approved Leave/OD (approvedLeaveOn) — the
+ *      class didn't happen, so it shouldn't be auto-marked Held
+ *    - a Class Log entry for this exact slot+date already exists — whether
+ *      it was auto-created earlier today (re-opening the app doesn't
+ *      duplicate it) or already added/edited by hand (e.g. marked
+ *      Cancelled/Rescheduled for just that one day, or logged before
+ *      auto-sync got to it) — an existing row is NEVER touched or
+ *      overwritten, only ever created once, the first time it's missing.
+ *  Topic Covered gets a placeholder ("Add topic covered") rather than being
+ *  left blank — Topic Covered is a required field on the manual Edit form,
+ *  so a genuinely empty one would block even a quick later edit (e.g. just
+ *  flipping Status to Cancelled) behind that same required-field check.
+ *  Tagged with the same `autoSource` field Work Diary's auto entries use,
+ *  so it picks up the same "🔗 Auto" list badge for free (see
+ *  moduleRowHtml). */
+async function autoSyncClassLogFromTimetable(){
+  const date = todayStr();
+  if(holidayOn(date) || approvedLeaveOn(date)) return;
+  const dow = DOW_NAMES3[new Date(date + 'T00:00:00').getDay()];
+  const slots = getActive('timetable').filter(t => (t.status || 'Scheduled') === 'Scheduled' && t.day === dow);
+  const existingLogs = getActive('class-log');
+  for(const slot of slots){
+    const tag = 'timetable:' + slot.id + ':' + date;
+    const alreadyLogged = existingLogs.some(r => r.autoSource === tag
+      || (r.date === date && r.subject === slot.subject && r.subjectCode === slot.subjectCode && (r.section || '') === (slot.section || '')));
+    if(alreadyLogged) continue;
+    const created = await createRecord('class-log', {
+      date: date,
+      subject: slot.subject,
+      subjectCode: slot.subjectCode,
+      section: slot.section || '',
+      topic: 'Add topic covered',
+      status: 'Held',
+      autoSource: tag
+    });
+    existingLogs.push(created);
+  }
+}
 function approvedLeaveOn(dateStr){
   return getActive('leave-records').find(l=>l.status==='Approved' && l.fromDate && l.toDate && l.fromDate<=dateStr && dateStr<=l.toDate) || null;
 }
