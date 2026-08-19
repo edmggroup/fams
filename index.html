@@ -1951,7 +1951,23 @@ const PIN_MAX_FAILS = 5;
 const PIN_LOCK_MINUTES = 5;
 
 function isAuthed(){ return SESSION_ACTIVE; }
-function startSession(){ SESSION_ACTIVE = true; }
+/** Marks the session authenticated (called on both first-run setup and a
+ *  normal PIN login) and, in the background, kicks off
+ *  autoSyncClassLogFromTimetable() — deliberately NOT awaited here.
+ *  Previously this ran from boot(), awaited before the very first render(),
+ *  which meant the login screen itself couldn't appear until every
+ *  matching Timetable slot's Class Log entry had round-tripped to the
+ *  backend one at a time — on a slow connection (or several classes
+ *  scheduled that day) that could take a long time, or hang outright if a
+ *  single request never resolved, with nothing on screen the whole time.
+ *  Firing it here instead — after the dashboard is already showing — means
+ *  a slow/failed sync can never again block anything the person is looking
+ *  at; only a later navigation (which reloads from STATE.data, already
+ *  updated in place) picks up whatever it created. */
+function startSession(){
+  SESSION_ACTIVE = true;
+  autoSyncClassLogFromTimetable().catch(e => console.error('Class Log auto-sync failed:', e));
+}
 function endSession(){ SESSION_ACTIVE = false; }
 
 function pinLocked(){ return Number(localStorage.getItem(PIN_LOCK_KEY) || 0) > Date.now(); }
@@ -2111,14 +2127,6 @@ async function boot(){
     const btn = document.getElementById('retry-load-btn');
     if(btn) btn.addEventListener('click', boot);
     return;
-  }
-  // Auto-log today's scheduled classes into Class Log (see
-  // autoSyncClassLogFromTimetable) — once per page load, after data is in
-  // but before the first render. Only once STATE.meta exists (first-run
-  // setup already completed — nothing to sync against before that), and
-  // never allowed to block the app from loading if it errors.
-  if(STATE.meta){
-    try{ await autoSyncClassLogFromTimetable(); }catch(e){ console.error('Class Log auto-sync failed:', e); }
   }
   window.addEventListener('hashchange', render);
   render();
