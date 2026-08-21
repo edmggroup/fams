@@ -236,9 +236,16 @@ a.stat-card{color:inherit;text-decoration:none;cursor:pointer;}
 .stat-card.compact .stat-icon{width:36px;height:36px;font-size:16px;border-radius:10px;}
 .stat-card.compact .stat-num{font-size:19px;}
 
-.dash-layout{display:flex;align-items:flex-start;gap:16px;}
-.dash-main{flex:1;min-width:0;}
-.dash-side{width:280px;flex:0 0 280px;display:flex;flex-direction:column;gap:16px;position:sticky;top:16px;}
+/* Dashboard "Snapshots" — a CSS multi-column (masonry-style) flow, not a
+   fixed-width sidebar. A single 280px side column wasted the rest of a wide
+   screen while cramming every small card into one narrow strip; column-width
+   instead lets the browser fit as many card-columns as the window actually
+   has room for (2 on a laptop, 3-4 on a wide monitor, 1 on mobile — no
+   media query needed), and break-inside:avoid keeps each card whole rather
+   than split across columns. This is what actually "uses the space
+   effectively" for a growing number of snapshot cards. */
+.dash-snapshots{column-width:290px;column-gap:16px;margin-top:16px;}
+.dash-snapshots>*{break-inside:avoid;margin:0 0 16px;}
 .news-ticker{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:16px;}
 .news-ticker h3{margin:0 0 10px;font-size:14.5px;display:flex;align-items:center;gap:8px;}
@@ -259,7 +266,6 @@ a.stat-card{color:inherit;text-decoration:none;cursor:pointer;}
 .dash-mini-chart-card{padding:14px;}
 .dash-mini-chart-card h3{margin:0 0 8px;font-size:13px;display:flex;align-items:center;gap:6px;}
 .dash-mini-chart-wrap{position:relative;height:130px;}
-@media (max-width:1180px){ .dash-layout{flex-direction:column;} .dash-side{width:100%;flex:1 1 auto;position:static;} }
 
 .area-chip-row{display:flex;flex-wrap:wrap;gap:8px;}
 a.area-chip{color:inherit;text-decoration:none;cursor:pointer;transition:transform .12s;}
@@ -1768,6 +1774,47 @@ async function purgeRecord(moduleKey, id){
     if(existing) await purgeRecord('work-diary', existing.id);
   }
 }
+/** Batch versions of createRecord/updateRecord/softDeleteRecord — the
+ *  single-record versions each round-trip the ENTIRE collection to the
+ *  backend via saveCollection (this is a generic key-value store, not a
+ *  per-record API), so a loop calling them N times for one bulk action
+ *  (bulk delete, bulk status change, importing a class roster) does N
+ *  full-collection network saves back to back, which is the real
+ *  bottleneck for anything touching more than a couple of records. These
+ *  batch versions apply every change to a single in-memory copy of the
+ *  array and save ONCE. AUTO_WORK_DIARY_SOURCES syncing (a separate,
+ *  much smaller collection) still runs once per affected record
+ *  afterward — that part isn't the bottleneck since work-diary itself is
+ *  typically tiny, so it isn't worth the extra complexity of batching too. */
+async function createRecordsBatch(moduleKey, dataArr){
+  if(!dataArr.length) return [];
+  const arr = getCollection(moduleKey).slice();
+  const created = dataArr.map(data => Object.assign({ id: uid(), createdAt: nowIso(), updatedAt: nowIso(), notes: [], deleted:false }, data));
+  arr.push(...created);
+  await saveCollection(moduleKey, arr);
+  if(AUTO_WORK_DIARY_SOURCES[moduleKey]){
+    for(const rec of created) await syncAutoWorkDiaryEntry(moduleKey, rec);
+  }
+  return created;
+}
+async function updateRecordsBatch(moduleKey, ids, patch){
+  const idSet = new Set(ids);
+  if(!idSet.size) return [];
+  const arr = getCollection(moduleKey).slice();
+  const touched = [];
+  for(let i=0;i<arr.length;i++){
+    if(idSet.has(arr[i].id)){
+      arr[i] = Object.assign({}, arr[i], patch, { updatedAt: nowIso() });
+      touched.push(arr[i]);
+    }
+  }
+  if(touched.length) await saveCollection(moduleKey, arr);
+  if(AUTO_WORK_DIARY_SOURCES[moduleKey]){
+    for(const rec of touched) await syncAutoWorkDiaryEntry(moduleKey, rec);
+  }
+  return touched;
+}
+async function softDeleteRecordsBatch(moduleKey, ids){ return updateRecordsBatch(moduleKey, ids, { deleted:true }); }
 
 /* ============================================================
    AUTO WORK DIARY — Timetable-derived Class Log entries, Meetings,
@@ -3010,11 +3057,13 @@ function wireModuleList(moduleKey){
       bulkDeleteBtn.disabled = true;
       try{
         const ids = Array.from(LIST_SELECTION);
-        for(const id of ids){
-          const rec = getRecord(moduleKey, id);
-          await softDeleteRecord(moduleKey, id);
-          logAudit(moduleKey, 'Deleted', id, rec ? (rec[mod.titleField] || '') : '');
-        }
+        // Titles for the audit log, read before the batch delete (an
+        // in-memory lookup — no network cost either way).
+        const titles = new Map(ids.map(id=>{ const rec = getRecord(moduleKey, id); return [id, rec ? (rec[mod.titleField] || '') : '']; }));
+        // One saveCollection round-trip for the whole selection instead of
+        // one per record — see updateRecordsBatch.
+        await softDeleteRecordsBatch(moduleKey, ids);
+        ids.forEach(id=>logAudit(moduleKey, 'Deleted', id, titles.get(id) || ''));
         toast(ids.length + ' record(s) deleted', 'ok');
         LIST_SELECTION.clear();
         refreshTable();
@@ -3091,9 +3140,9 @@ function wireModuleList(moduleKey){
       if(!confirm('Set ' + statusField + ' to "' + newStatus + '" for all ' + groupRecords.length + ' record(s) in this group?')) return;
       btn.disabled = true;
       try{
-        for(const r of groupRecords){
-          await updateRecord(moduleKey, r.id, { [statusField]: newStatus });
-        }
+        // One saveCollection round-trip for the whole group instead of one
+        // per record — see updateRecordsBatch.
+        await updateRecordsBatch(moduleKey, groupRecords.map(r=>r.id), { [statusField]: newStatus });
         logAudit(moduleKey, 'Bulk status update', '', groupValue + ' → ' + newStatus + ' (' + groupRecords.length + ' records)');
         toast('Updated ' + groupRecords.length + ' record(s)', 'ok');
         refreshTable();
@@ -3512,18 +3561,22 @@ function openRosterImportModal(onDone){
       const existing = getActive('internal-marks').filter(r =>
         String(r.subject || '').trim().toLowerCase() === subjNorm && String(r.section || '').trim().toLowerCase() === secNorm);
       const existingRegNos = new Set(existing.map(r => String(r.regNo || '').trim().toLowerCase()).filter(Boolean));
-      let imported = 0, skipped = 0;
+      let skipped = 0;
+      const toImport = [];
       for(const student of (roster.students || [])){
         const regNo = String(student.regNo || '').trim();
         if(!regNo || !student.name){ skipped++; continue; }
         if(existingRegNos.has(regNo.toLowerCase())){ skipped++; continue; }
-        await createRecord('internal-marks', {
+        toImport.push({
           regNo: regNo, studentName: student.name, subject: roster.subject,
           subjectCode: roster.subjectCode || '', section: roster.section || '', academicYear: academicYear
         });
         existingRegNos.add(regNo.toLowerCase());
-        imported++;
       }
+      // One saveCollection round-trip for the whole roster instead of one
+      // per student — see createRecordsBatch.
+      await createRecordsBatch('internal-marks', toImport);
+      const imported = toImport.length;
       logAudit('internal-marks', 'Imported from Class Roster', '', roster.subject || '', imported + ' student(s) imported, ' + skipped + ' skipped');
       toast(imported + ' imported' + (skipped ? ', ' + skipped + ' skipped (already present or incomplete)' : ''), 'ok');
       closeModal();
@@ -4385,12 +4438,13 @@ async function autoSyncClassLogFromTimetable(){
   const dow = DOW_NAMES3[new Date(date + 'T00:00:00').getDay()];
   const slots = getActive('timetable').filter(t => (t.status || 'Scheduled') === 'Scheduled' && t.day === dow);
   const existingLogs = getActive('class-log');
+  const toCreate = [];
   for(const slot of slots){
     const tag = 'timetable:' + slot.id + ':' + date;
-    const alreadyLogged = existingLogs.some(r => r.autoSource === tag
-      || (r.date === date && r.subject === slot.subject && r.subjectCode === slot.subjectCode && (r.section || '') === (slot.section || '')));
+    const sameSlot = r => r.date === date && r.subject === slot.subject && r.subjectCode === slot.subjectCode && (r.section || '') === (slot.section || '');
+    const alreadyLogged = existingLogs.some(r => r.autoSource === tag || sameSlot(r)) || toCreate.some(sameSlot);
     if(alreadyLogged) continue;
-    const created = await createRecord('class-log', {
+    toCreate.push({
       date: date,
       subject: slot.subject,
       subjectCode: slot.subjectCode,
@@ -4399,8 +4453,10 @@ async function autoSyncClassLogFromTimetable(){
       status: 'Held',
       autoSource: tag
     });
-    existingLogs.push(created);
   }
+  // One saveCollection round-trip for the whole day's sync instead of one
+  // per Timetable slot — see createRecordsBatch.
+  if(toCreate.length) await createRecordsBatch('class-log', toCreate);
 }
 function approvedLeaveOn(dateStr){
   return getActive('leave-records').find(l=>l.status==='Approved' && l.fromDate && l.toDate && l.fromDate<=dateStr && dateStr<=l.toDate) || null;
@@ -4740,10 +4796,10 @@ function renderDashboard(){
       : '<div class="empty">Nothing overdue or due in the next 30 days.</div>') + '</div>';
   html += '</div>';
 
-  // These two mini pie charts are deliberately small and live in the side
-  // column (below the New Updates ticker), not the main column — per the
-  // user's explicit request that they be "very small" and positioned below
-  // the news updates section.
+  // These two mini pie charts are deliberately small snapshot cards, one
+  // tile among several in the Snapshots section below (not off in their own
+  // sidebar column) — per the user's explicit request that they be "very
+  // small" and shown below the main dashboard content.
   let chartsHtml = '<div class="card dash-mini-chart-card"><h3>📘 This Week\'s Teaching Load<a href="#/module/timetable" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>' + (chartsAvailable
     ? '<div class="dash-mini-chart-wrap"><canvas id="dash-chart-week"></canvas></div>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>') + '</div>';
@@ -4752,40 +4808,136 @@ function renderDashboard(){
     : '<div class="empty">Charts need an internet connection the first time they load.</div>')
     + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:10px 0 0;font-size:11.5px;">Nothing logged yet — add Work Diary entries, mark classes Held in Class Log, or fill in an optional Duration on Meetings/Invigilation Duty/Extra Classes/Lab Exams/Research Events.</div>' : '') + '</div>';
 
-  return '<div class="dash-layout"><div class="dash-main">' + html + '</div><div class="dash-side">' + dashboardTickerHtml() + quickNotesCardHtml() + chartsHtml + '</div></div>';
+  // "Snapshots" — a masonry-style flow of smaller cards (New Updates,
+  // Research, Quick Notes, the two mini charts) that packs as many as fit
+  // side by side on a wide screen instead of stacking them all in one
+  // narrow fixed-width sidebar (see .dash-snapshots). New snapshot cards
+  // can simply be appended to this string — the layout adapts on its own.
+  const snapshotsHtml = '<div class="dash-snapshots">' + dashboardTickerHtml() + researchSnapshotHtml() + quickNotesCardHtml() + chartsHtml + '</div>';
+
+  return html + snapshotsHtml;
 }
 /** A deliberately "quiet" scratchpad, tucked into the Dashboard's side
  *  column below the ticker rather than competing with Today's Schedule/
  *  Upcoming for attention — type something and hit Add, no menu to pick
- *  and no form to fill in first. Each note can be assigned to a specific
- *  record in any menu later (see the 'quick-notes' module's Assign To —
- *  Menu/Specific Record fields) by opening it, the same "Related To" pair
- *  every other polyref module uses — once assigned, it shows up on that
- *  record's own "🔗 Linked" tab automatically. Shows the 8 most recent. */
+ *  and no form to fill in first. The entry box is a full multi-line
+ *  textarea sized for a short list of points, not a one-liner — starting
+ *  a line with "1. " and pressing Enter auto-continues the numbering (see
+ *  autoNumberQuickNoteLine below), so jotting down "1. ... 2. ... 3. ..."
+ *  needs no manual retyping of the numbers.
+ *  Each note can be assigned to a specific record in any menu later (see
+ *  the 'quick-notes' module's Assign To — Menu/Specific Record fields) by
+ *  opening it, the same "Related To" pair every other polyref module uses
+ *  — once assigned, it shows up on that record's own "🔗 Linked" tab
+ *  automatically, and — per the user's explicit request — drops off THIS
+ *  card entirely (it has "moved" to that record; the full history,
+ *  assigned or not, is still visible via "View all →"). Shows the 8 most
+ *  recent still-unassigned notes. */
 function quickNotesCardHtml(){
-  const notes = getActive('quick-notes').slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0, 8);
-  let html = '<div class="card" id="quick-notes-card" style="margin-top:16px;">'
+  const allNotes = getActive('quick-notes');
+  const notes = allNotes.filter(n=>!n.relatedModule).slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0, 8);
+  let html = '<div class="card" id="quick-notes-card">'
     + '<h3>🗒️ Quick Notes<a href="#/module/quick-notes" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View all →</a></h3>'
-    + '<div style="font-size:11px;color:var(--text-dim);margin:-6px 0 10px;">A quiet place to jot something down — assign it to any menu later.</div>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin:-6px 0 10px;">A quiet place to jot down a few points — assign a note to any menu later and it moves there.</div>'
     + '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">'
-    + '<textarea class="input" id="quick-note-input" rows="1" placeholder="Jot something down…" style="flex:1;resize:vertical;min-height:36px;font-size:12.5px;"></textarea>'
+    + '<textarea class="input" id="quick-note-input" rows="5" placeholder="Jot something down… start with “1. ” and press Enter to number your points automatically" style="flex:1;resize:vertical;min-height:104px;font-size:12.5px;line-height:1.5;"></textarea>'
     + '<button class="btn btn-primary btn-sm" id="quick-note-add-btn" type="button">Add</button>'
     + '</div>';
   if(!notes.length){
-    html += '<div class="empty" style="padding:4px 0;">Nothing jotted down yet.</div>';
+    html += allNotes.length
+      ? '<div class="empty" style="padding:4px 0;">Every note has been assigned to a menu — find them on that record\'s 🔗 Linked tab, or see the full history in <a href="#/module/quick-notes">Quick Notes</a>.</div>'
+      : '<div class="empty" style="padding:4px 0;">Nothing jotted down yet.</div>';
   }else{
     html += '<div class="notes-list">' + notes.map(n=>{
-      const assignedMod = n.relatedModule && MODULES[n.relatedModule];
-      const assignedLabel = assignedMod ? refLabel(n.relatedModule, n.relatedRecordId) : '';
-      const assignedTag = assignedMod ? (' <span style="font-size:10px;font-weight:700;color:var(--gold);background:#fbf3e2;padding:2px 6px;border-radius:8px;white-space:nowrap;">→ ' + escapeHtml(assignedMod.icon || '') + ' ' + escapeHtml(assignedLabel) + '</span>') : '';
       return '<div class="note-item" style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">'
-        + '<div style="flex:1;cursor:pointer;" data-quick-note-open="' + n.id + '" title="Open — assign this to a menu, or edit it"><div class="ts">' + escapeHtml(fmtDateTime(n.createdAt)) + assignedTag + '</div>' + escapeHtml(n.text) + '</div>'
+        + '<div style="flex:1;cursor:pointer;" data-quick-note-open="' + n.id + '" title="Open — assign this to a menu, or edit it"><div class="ts">' + escapeHtml(fmtDateTime(n.createdAt)) + '</div><div style="white-space:pre-wrap;">' + escapeHtml(n.text) + '</div></div>'
         + '<button type="button" class="btn btn-ghost btn-sm" data-quick-note-delete="' + n.id + '" title="Delete">✕</button>'
         + '</div>';
     }).join('') + '</div>';
   }
   html += '</div>';
   return html;
+}
+/** A compact Dashboard snapshot of the Research menus (Plans, Publications,
+ *  Collaborations, Conferences/Workshops, Peer Review & Editorial) — the
+ *  user's explicit request for "Research section updates in the Dashboard".
+ *  Two parts: a row of small counts across every research module (so
+ *  Publications/Collaborations, which don't carry a single date, are still
+ *  represented) and, below that, the nearest research-related dates in the
+ *  next 30 days — event dates, abstract-submission deadlines, plan target
+ *  dates, and peer-review deadlines — sorted soonest first, same styling as
+ *  the main "Upcoming" card. Researcher's Database is a contact list with no
+ *  dates/lifecycle of its own, so it isn't part of this snapshot. */
+function researchSnapshotHtml(){
+  const targets = getActive('research-targets');
+  const pubs = getActive('publications');
+  const collabs = getActive('collaborations');
+  const events = getActive('research-events');
+  const reviews = getActive('peer-reviews');
+  const openTargets = targets.filter(t=>t.status !== 'Completed').length;
+  const publishedPubs = pubs.filter(p=>p.status === 'Published').length;
+  const activeCollabs = collabs.filter(c=>c.status !== 'Completed').length;
+  const pendingReviews = reviews.filter(r=>r.status !== 'Completed').length;
+
+  const today = todayStr();
+  const in30 = addDaysStr(today, 30);
+  const items = [];
+  events.forEach(e=>{
+    if(e.date) items.push({ moduleKey:'research-events', icon:'🎤', label:'Event', title: e.eventName || '(untitled)', date: e.date });
+    if(e.abstractDeadline) items.push({ moduleKey:'research-events', icon:'📝', label:'Abstract due', title: e.eventName || '(untitled)', date: e.abstractDeadline });
+  });
+  targets.forEach(t=>{
+    if(t.targetDate && t.status !== 'Completed') items.push({ moduleKey:'research-targets', icon:'🎯', label:'Plan due', title: t.description || '(untitled)', date: t.targetDate });
+  });
+  reviews.forEach(r=>{
+    if(r.deadline && r.status !== 'Completed') items.push({ moduleKey:'peer-reviews', icon:'🧾', label:'Review due', title: r.paperTitle || r.venue || '(untitled)', date: r.deadline });
+  });
+  const upcoming = items.filter(it=>it.date >= today && it.date <= in30).sort((a,b)=>a.date.localeCompare(b.date)).slice(0, 6);
+
+  const chip = (moduleKey, num, label) => '<a href="#/module/' + moduleKey + '" class="dash-link" style="flex:1;min-width:80px;text-align:center;background:var(--surface,#f8f9fc);border-radius:8px;padding:8px 6px;">'
+    + '<div style="font-size:17px;font-weight:700;">' + num + '</div><div style="font-size:10.5px;color:var(--text-dim);">' + escapeHtml(label) + '</div></a>';
+
+  let html = '<div class="card" id="research-snapshot-card">'
+    + '<h3>🔬 Research<a href="#/module/research-events" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'
+    + chip('research-targets', openTargets, 'Plans open')
+    + chip('publications', publishedPubs + '/' + pubs.length, 'Published')
+    + chip('collaborations', activeCollabs, 'Collabs active')
+    + chip('peer-reviews', pendingReviews, 'Reviews pending')
+    + '</div>';
+  html += '<div style="font-size:11px;font-weight:600;color:var(--text-dim);margin:8px 0 4px;">Next 30 days</div>';
+  html += upcoming.length
+    ? upcoming.map(it=>'<a href="#/module/' + it.moduleKey + '" class="' + urgencyClass(it.date) + ' dash-link" style="padding:7px 0 7px 8px;border-bottom:1px solid var(--border);font-size:12.5px;display:flex;justify-content:space-between;gap:8px;">'
+        + '<span>' + it.icon + ' <b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span>'
+        + '<span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></a>').join('')
+    : '<div class="empty" style="padding:4px 0;">Nothing research-related due in the next 30 days.</div>';
+  html += '</div>';
+  return html;
+}
+/** Enter-key handler for the Quick Notes textarea: if the line the cursor
+ *  is currently on starts with "N. " (a numbered point), Enter continues
+ *  the list with "(N+1). " instead of inserting a bare newline — pressing
+ *  Enter again on an EMPTY numbered line ends the list instead of piling
+ *  up empty points (mirrors the familiar Word/Notion auto-list feel).
+ *  Lines that aren't numbered get a plain newline, same as before. Returns
+ *  true if it handled the key (caller should preventDefault). */
+function autoNumberQuickNoteLine(textarea){
+  const val = textarea.value;
+  const pos = textarea.selectionStart;
+  const lineStart = val.lastIndexOf('\n', pos - 1) + 1;
+  const currentLine = val.slice(lineStart, pos);
+  const m = currentLine.match(/^(\d+)\.\s(.*)$/);
+  if(!m) return false;
+  if(m[2].trim() === ''){
+    // Empty numbered line + Enter = stop the list, don't add another number.
+    textarea.value = val.slice(0, lineStart) + val.slice(pos);
+    textarea.selectionStart = textarea.selectionEnd = lineStart;
+    return true;
+  }
+  const insert = '\n' + (parseInt(m[1], 10) + 1) + '. ';
+  textarea.value = val.slice(0, pos) + insert + val.slice(pos);
+  textarea.selectionStart = textarea.selectionEnd = pos + insert.length;
+  return true;
 }
 /** A small auto-scrolling "New Updates" ticker for the right side of the
  *  Dashboard — up to 10 items from the separate New Updates menu (just an
@@ -4844,9 +4996,15 @@ function wireQuickNotesCard(){
   };
   addBtn.addEventListener('click', addNote);
   input.addEventListener('keydown', e=>{
-    // Enter adds the note (matches the "quick" capture idea); Shift+Enter
-    // still inserts a newline for a note that's more than one line.
-    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); addNote(); }
+    if(e.key !== 'Enter') return;
+    // Ctrl/Cmd+Enter always saves, from anywhere in the note.
+    if(e.ctrlKey || e.metaKey){ e.preventDefault(); addNote(); return; }
+    // Plain Shift+Enter is a bare newline. Plain Enter on a numbered line
+    // ("1. …") auto-continues the numbering instead of just adding a line
+    // break — see autoNumberQuickNoteLine. Plain Enter anywhere else is a
+    // normal newline, since the box is now sized for multi-point notes
+    // rather than a single line that Enter would submit.
+    if(!e.shiftKey && autoNumberQuickNoteLine(input)) e.preventDefault();
   });
   card.querySelectorAll('[data-quick-note-open]').forEach(el=>{
     el.addEventListener('click', ()=>openModuleForm('quick-notes', el.dataset.quickNoteOpen));
