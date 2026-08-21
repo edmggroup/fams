@@ -4471,10 +4471,21 @@ function overdueItems(){
   DEADLINE_SOURCES.forEach(src=>{
     const key = src[0], dateField = src[1], statusField = src[2], doneValues = src[3], label = src[4];
     if(!dateField) return;
+    // A source with no completion status (Invigilation Duty, Mentee
+    // Meetings, Lab Exams, Extra/Additional Classes) has no way to say
+    // "this was handled" — they're calendar-style entries that either
+    // happened or didn't, not an outstanding task someone still owes.
+    // Flagging one "Overdue" forever once its date passes would be
+    // permanently wrong for every single one of them (this is exactly what
+    // was reported: a past Extra Class staying stuck as "Overdue"), so only
+    // sources with a real status field are eligible here. The others still
+    // show up in Upcoming while their date is ahead, then just age out
+    // afterward instead of turning into a false alarm.
+    if(!statusField) return;
     getActive(key).forEach(rec=>{
       const d = rec[dateField];
       if(!d || d >= today) return;
-      if(statusField && doneValues.indexOf(rec[statusField]) !== -1) return;
+      if(doneValues.indexOf(rec[statusField]) !== -1) return;
       const mod = MODULES[key];
       items.push({ moduleKey:key, label:label, date:d, title: rec[mod.titleField] || '(untitled)' });
     });
