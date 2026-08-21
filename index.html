@@ -1158,6 +1158,21 @@ const MODULES = {
     {key:'followUpDate', label:'Follow-up Date', type:'date'},
     {key:'status', label:'Status', type:'select', options:['Pending','Resolved'], default:'Pending'}
   ]},
+  // A "quiet" scratchpad — jot something down on the Dashboard with no menu
+  // to pick and no form to fill in first, then optionally assign it to a
+  // specific class/committee/project/etc. later by editing it and filling
+  // in "Assign To". Reuses the exact same moduleRef/recordRef "Related To"
+  // pair Meetings/Action Items/Reminders already use, so once assigned, a
+  // Quick Note shows up on that record's own "🔗 Linked" tab for free (see
+  // polyrefSourceModules/findLinkedRecords) — no separate wiring needed.
+  // No nav entry, same as Meetings/Action Items/Reminders/Office
+  // Follow-ups — reached from the Dashboard widget, deep links, and Admin
+  // & Settings ▸ Data Management.
+  'quick-notes': { label:'Quick Notes', menu:'quick-notes', icon:'🗒️', titleField:'text', dateField:null, fields:[
+    {key:'text', label:'Note', type:'textarea', required:true},
+    {key:'relatedModule', label:'Assign To — Menu', hint:'Optional — attach this note to a class, project, committee, or any other record, any time later', type:'moduleRef'},
+    {key:'relatedRecordId', label:'Assign To — Specific Record', type:'recordRef', dependsOn:'relatedModule'}
+  ]},
   'responsibilities': { label:'Responsibilities', menu:'responsibilities', icon:'📋', titleField:'title', dateField:null, fields:[
     {key:'title', label:'Title', hint:'e.g. Class Teacher', type:'text', required:true},
     {key:'classSection', label:'Class / Section', type:'text'},
@@ -1936,15 +1951,21 @@ function findLinkedRecords(targetModuleKey, targetId){
 /* ============================================================
    AUTH — a single-faculty app, so "auth" is just: has a PIN been
    set (first-run), and does the PIN typed in match it. The signed-in
-   state is held in a plain in-memory flag (NOT persisted to
-   localStorage) so that opening the app — a fresh page load, a PWA
-   relaunch, a browser restart — always lands on the PIN screen first,
-   every time, rather than silently skipping straight to the last
-   screen because an old session was still "valid". Once unlocked for
-   this page load, in-app navigation (hash changes) keeps working
-   without re-prompting, since that's still the same running page.
+   state is held in sessionStorage (NOT localStorage) — it survives an
+   ordinary page refresh/reload (so refreshing the tab was signing
+   people out for no reason, which this fixes) but is still gone the
+   moment the tab or browser itself is closed, a PWA is relaunched
+   fresh, or a different tab opens the app — each of those still lands
+   on the PIN screen, same as before. Signing out (the explicit Logout
+   button, or a wrong-enough PIN lockout) is the only thing that clears
+   it early. try/catch guards every access since sessionStorage can
+   throw in some private-browsing contexts — auth just falls back to
+   "not signed in" rather than the app breaking outright.
    ============================================================ */
-let SESSION_ACTIVE = false;
+const SESSION_KEY = 'fams_session_active';
+function readSessionFlag(){ try{ return sessionStorage.getItem(SESSION_KEY) === '1'; }catch(e){ return false; } }
+function writeSessionFlag(active){ try{ if(active) sessionStorage.setItem(SESSION_KEY, '1'); else sessionStorage.removeItem(SESSION_KEY); }catch(e){} }
+let SESSION_ACTIVE = readSessionFlag();
 const PIN_FAIL_KEY = 'fams_pin_fails';
 const PIN_LOCK_KEY = 'fams_pin_lock_until';
 const PIN_MAX_FAILS = 5;
@@ -1966,9 +1987,10 @@ function isAuthed(){ return SESSION_ACTIVE; }
  *  updated in place) picks up whatever it created. */
 function startSession(){
   SESSION_ACTIVE = true;
+  writeSessionFlag(true);
   autoSyncClassLogFromTimetable().catch(e => console.error('Class Log auto-sync failed:', e));
 }
-function endSession(){ SESSION_ACTIVE = false; }
+function endSession(){ SESSION_ACTIVE = false; writeSessionFlag(false); }
 
 function pinLocked(){ return Number(localStorage.getItem(PIN_LOCK_KEY) || 0) > Date.now(); }
 function pinLockRemainingSec(){ return Math.max(0, Math.ceil((Number(localStorage.getItem(PIN_LOCK_KEY) || 0) - Date.now())/1000)); }
@@ -2024,7 +2046,7 @@ const AREA_COLORS = {
   mentoring:'#0891b2', 'extra-classes':'#d97706', research:'#059669',
   projects:'#c99a3c', incharge:'#dc2626', committees:'#ea580c', meetings:'#4f46e5', 'action-items':'#6d5bd0',
   reminders:'#db2777', 'office-followups':'#a8386d', responsibilities:'#0f766e', 'responsibility-areas':'#6d28d9', analytics:'#6fa3f5', reports:'#8a92a6',
-  calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b', 'custom-modules':'#6d4aa8', 'mail-merge':'#c2410c'
+  calendar:'#4f46e5', admin:'#9aa4c2', 'audit-log':'#64748b', 'custom-modules':'#6d4aa8', 'mail-merge':'#c2410c', 'quick-notes':'#b08a3e'
 };
 
 /* Sidebar menus clubbed into broad categories (collapsible accordions) so
@@ -3729,9 +3751,17 @@ async function removeLogEntry(moduleKey, id, arrayKey, entryId){
  *  hardcoded to Researcher Network, so any future module gets the same
  *  hint for free just by declaring the same shape. */
 function saveFirstHintHtml(mod){
-  const phrases = (mod.logTabs || []).map(t=>t.hintPhrase).filter(Boolean);
+  // Every module gets a "🔗 Linked" tab and a "Notes" tab (see
+  // openModuleForm) the moment a record has an id to attach them to — but
+  // there's nothing to attach them to yet on a brand-new, unsaved record,
+  // so both are simply absent from the Add form. Without this hint, that
+  // reads as "there's no notes section on Action Items/Reminders" (or any
+  // other module) rather than "save it first" — 'add notes' is always the
+  // first phrase here so every module's Add form explains where the
+  // complete-details space went; logTabs/profileExport modules get their
+  // own extra phrases folded in alongside it.
+  const phrases = ['add notes'].concat((mod.logTabs || []).map(t=>t.hintPhrase).filter(Boolean));
   if(mod.profileExport) phrases.push('export a profile PDF');
-  if(!phrases.length) return '';
   const noun = mod.recordNoun || mod.label.toLowerCase();
   const joined = phrases.length > 1 ? (phrases.slice(0, -1).join(', ') + ', and ' + phrases[phrases.length - 1]) : phrases[0];
   return '<div style="font-size:12px;color:var(--text-dim);margin-top:10px;">Save this ' + escapeHtml(noun) + ' first, then you can ' + escapeHtml(joined) + '.</div>';
@@ -4722,7 +4752,40 @@ function renderDashboard(){
     : '<div class="empty">Charts need an internet connection the first time they load.</div>')
     + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:10px 0 0;font-size:11.5px;">Nothing logged yet — add Work Diary entries, mark classes Held in Class Log, or fill in an optional Duration on Meetings/Invigilation Duty/Extra Classes/Lab Exams/Research Events.</div>' : '') + '</div>';
 
-  return '<div class="dash-layout"><div class="dash-main">' + html + '</div><div class="dash-side">' + dashboardTickerHtml() + chartsHtml + '</div></div>';
+  return '<div class="dash-layout"><div class="dash-main">' + html + '</div><div class="dash-side">' + dashboardTickerHtml() + quickNotesCardHtml() + chartsHtml + '</div></div>';
+}
+/** A deliberately "quiet" scratchpad, tucked into the Dashboard's side
+ *  column below the ticker rather than competing with Today's Schedule/
+ *  Upcoming for attention — type something and hit Add, no menu to pick
+ *  and no form to fill in first. Each note can be assigned to a specific
+ *  record in any menu later (see the 'quick-notes' module's Assign To —
+ *  Menu/Specific Record fields) by opening it, the same "Related To" pair
+ *  every other polyref module uses — once assigned, it shows up on that
+ *  record's own "🔗 Linked" tab automatically. Shows the 8 most recent. */
+function quickNotesCardHtml(){
+  const notes = getActive('quick-notes').slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0, 8);
+  let html = '<div class="card" id="quick-notes-card" style="margin-top:16px;">'
+    + '<h3>🗒️ Quick Notes<a href="#/module/quick-notes" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View all →</a></h3>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin:-6px 0 10px;">A quiet place to jot something down — assign it to any menu later.</div>'
+    + '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;">'
+    + '<textarea class="input" id="quick-note-input" rows="1" placeholder="Jot something down…" style="flex:1;resize:vertical;min-height:36px;font-size:12.5px;"></textarea>'
+    + '<button class="btn btn-primary btn-sm" id="quick-note-add-btn" type="button">Add</button>'
+    + '</div>';
+  if(!notes.length){
+    html += '<div class="empty" style="padding:4px 0;">Nothing jotted down yet.</div>';
+  }else{
+    html += '<div class="notes-list">' + notes.map(n=>{
+      const assignedMod = n.relatedModule && MODULES[n.relatedModule];
+      const assignedLabel = assignedMod ? refLabel(n.relatedModule, n.relatedRecordId) : '';
+      const assignedTag = assignedMod ? (' <span style="font-size:10px;font-weight:700;color:var(--gold);background:#fbf3e2;padding:2px 6px;border-radius:8px;white-space:nowrap;">→ ' + escapeHtml(assignedMod.icon || '') + ' ' + escapeHtml(assignedLabel) + '</span>') : '';
+      return '<div class="note-item" style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">'
+        + '<div style="flex:1;cursor:pointer;" data-quick-note-open="' + n.id + '" title="Open — assign this to a menu, or edit it"><div class="ts">' + escapeHtml(fmtDateTime(n.createdAt)) + assignedTag + '</div>' + escapeHtml(n.text) + '</div>'
+        + '<button type="button" class="btn btn-ghost btn-sm" data-quick-note-delete="' + n.id + '" title="Delete">✕</button>'
+        + '</div>';
+    }).join('') + '</div>';
+  }
+  html += '</div>';
+  return html;
 }
 /** A small auto-scrolling "New Updates" ticker for the right side of the
  *  Dashboard — up to 10 items from the separate New Updates menu (just an
@@ -4763,6 +4826,39 @@ function dashboardTickerHtml(){
     + '<div class="news-ticker-viewport' + (needsScroll ? '' : ' news-ticker-viewport-auto') + '">'
     + '<div class="news-ticker-track' + (needsScroll ? '' : ' news-ticker-track-static') + '">' + trackHtml + '</div></div></div>';
 }
+/** Wires the Quick Notes card's own inline add/open/delete — kept separate
+ *  from the rest of wireDashboard() since that function returns early when
+ *  Chart.js hasn't loaded (no internet the first time), and Quick Notes
+ *  must keep working regardless of whether the charts did. */
+function wireQuickNotesCard(){
+  const card = document.getElementById('quick-notes-card');
+  if(!card) return;
+  const input = document.getElementById('quick-note-input');
+  const addBtn = document.getElementById('quick-note-add-btn');
+  const addNote = async ()=>{
+    const text = input.value.trim();
+    if(!text) return;
+    addBtn.disabled = true;
+    await createRecord('quick-notes', { text: text });
+    render();
+  };
+  addBtn.addEventListener('click', addNote);
+  input.addEventListener('keydown', e=>{
+    // Enter adds the note (matches the "quick" capture idea); Shift+Enter
+    // still inserts a newline for a note that's more than one line.
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); addNote(); }
+  });
+  card.querySelectorAll('[data-quick-note-open]').forEach(el=>{
+    el.addEventListener('click', ()=>openModuleForm('quick-notes', el.dataset.quickNoteOpen));
+  });
+  card.querySelectorAll('[data-quick-note-delete]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Delete this note? You can restore it later from "Show deleted" in Quick Notes.')) return;
+      await softDeleteRecord('quick-notes', btn.dataset.quickNoteDelete);
+      render();
+    });
+  });
+}
 let DASHBOARD_CHARTS = [];
 function destroyDashboardCharts(){ DASHBOARD_CHARTS.forEach(c=>{ try{ c.destroy(); }catch(e){} }); DASHBOARD_CHARTS = []; }
 function wireDashboard(){
@@ -4771,6 +4867,7 @@ function wireDashboard(){
   });
   document.querySelectorAll('.stat-num[data-count]').forEach(el=>animateCount(el, Number(el.dataset.count), 750));
   document.querySelectorAll('.ring-num[data-count]').forEach(el=>animateCount(el, Number(el.dataset.count), 750, '%'));
+  wireQuickNotesCard();
 
   destroyDashboardCharts();
   if(typeof Chart === 'undefined') return;
