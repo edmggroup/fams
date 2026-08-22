@@ -236,16 +236,20 @@ a.stat-card{color:inherit;text-decoration:none;cursor:pointer;}
 .stat-card.compact .stat-icon{width:36px;height:36px;font-size:16px;border-radius:10px;}
 .stat-card.compact .stat-num{font-size:19px;}
 
-/* Dashboard "Snapshots" — a CSS multi-column (masonry-style) flow, not a
-   fixed-width sidebar. A single 280px side column wasted the rest of a wide
-   screen while cramming every small card into one narrow strip; column-width
-   instead lets the browser fit as many card-columns as the window actually
-   has room for (2 on a laptop, 3-4 on a wide monitor, 1 on mobile — no
-   media query needed), and break-inside:avoid keeps each card whole rather
-   than split across columns. This is what actually "uses the space
-   effectively" for a growing number of snapshot cards. */
-.dash-snapshots{column-width:290px;column-gap:16px;margin-top:16px;}
-.dash-snapshots>*{break-inside:avoid;margin:0 0 16px;}
+/* Dashboard "Priority Grid" — everything below the stat strip (Today's
+   Schedule, the three Open lists, Quick Notes, New Updates, Research
+   Updates, Upcoming, Progress, Deadlines by Area, the two mini charts) laid
+   out as one explicit 3-column grid, filled row by row in a fixed priority
+   order (see renderDashboard) rather than the previous mix of separate
+   grid-2/grid-3 blocks plus a masonry side section — per the user's
+   explicit request for "three columns" with content in "row 1, row 2 etc."
+   align-items:start keeps a short card (e.g. Open Reminders with one item)
+   from being stretched to match a tall neighbor (e.g. the New Updates
+   ticker) in the same row. Falls back to 2 columns, then 1, on narrower
+   screens so it stays usable on a laptop or phone. */
+.dash-priority-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;align-items:start;}
+@media (max-width:1024px){ .dash-priority-grid{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:640px){ .dash-priority-grid{grid-template-columns:1fr;} }
 .news-ticker{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:16px;}
 .news-ticker h3{margin:0 0 10px;font-size:14.5px;display:flex;align-items:center;gap:8px;}
@@ -4756,12 +4760,11 @@ function renderDashboard(){
   }
 
   const scheduleItems = todaysScheduleItems();
-  html += '<div class="grid grid-2">';
-  html += '<div class="card"><h3>📅 Today\'s Schedule</h3>';
+  let scheduleCardHtml = '<div class="card"><h3>📅 Today\'s Schedule</h3>';
   if(dayStatus.holiday){
-    html += '<div class="activity-item urgency-later" style="padding-left:8px;background:#f1f3f9;border-radius:6px;margin-bottom:8px;">🏖️ <b>Holiday today:</b>&nbsp;' + escapeHtml(dayStatus.holiday.name || '') + ' — no classes. <i>(auto-detected from Holidays)</i></div>';
+    scheduleCardHtml += '<div class="activity-item urgency-later" style="padding-left:8px;background:#f1f3f9;border-radius:6px;margin-bottom:8px;">🏖️ <b>Holiday today:</b>&nbsp;' + escapeHtml(dayStatus.holiday.name || '') + ' — no classes. <i>(auto-detected from Holidays)</i></div>';
   }else if(dayStatus.leave){
-    html += '<div class="activity-item urgency-today" style="padding-left:8px;background:#fff7ec;border-radius:6px;margin-bottom:8px;">🗓️ <b>You are on approved ' + escapeHtml(dayStatus.leave.type || 'Leave') + ' today.</b> Classes below may need rescheduling. <i>(auto-detected from Leave / OD)</i></div>';
+    scheduleCardHtml += '<div class="activity-item urgency-today" style="padding-left:8px;background:#fff7ec;border-radius:6px;margin-bottom:8px;">🗓️ <b>You are on approved ' + escapeHtml(dayStatus.leave.type || 'Leave') + ' today.</b> Classes below may need rescheduling. <i>(auto-detected from Leave / OD)</i></div>';
   }
   // Today's Schedule combines Timetable classes with anything else dated
   // today that carries a real time (Meetings, Invigilation Duty, Extra
@@ -4770,7 +4773,7 @@ function renderDashboard(){
   // classes specifically); other rows keep their own module's color and a
   // strike-through only if that individual record's own Status is
   // Cancelled.
-  html += (scheduleItems.length
+  scheduleCardHtml += (scheduleItems.length
     ? scheduleItems.map(it=>{
         const dimmed = (dayStatus.holiday && it.moduleKey === 'timetable') || it.cancelled;
         const borderColor = (dayStatus.holiday || dayStatus.leave) && it.moduleKey === 'timetable' ? 'var(--warn,#d97706)' : (AREA_COLORS[MODULES[it.moduleKey].menu] || AREA_COLORS.teaching);
@@ -4778,26 +4781,23 @@ function renderDashboard(){
         return '<a href="#/module/' + it.moduleKey + '" class="dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);border-left:3px solid ' + borderColor + ';font-size:13px;' + (dimmed ? 'opacity:.55;text-decoration:line-through;' : '') + '">' + it.icon + ' <b>' + timeLabel + '</b>&nbsp; ' + escapeHtml(it.title) + (it.meta ? ' <span style="color:var(--text-dim);">(' + escapeHtml(it.meta) + ')</span>' : '') + '</a>';
       }).join('')
     : '<div class="empty">Nothing scheduled today. Enjoy the breathing room.</div>') + '</div>';
-  html += '<div class="card"><h3>⏰ Upcoming (next 30 days)</h3>' + (upcoming.length
+
+  const upcomingCardHtml = '<div class="card"><h3>⏰ Upcoming (next 30 days)</h3>' + (upcoming.length
     ? upcoming.slice(0,10).map(it=>'<a href="#/module/' + it.moduleKey + '" class="' + urgencyClass(it.date) + ' dash-link" style="padding:8px 0 8px 10px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;gap:8px;"><span><b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span><span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></a>').join('')
     : '<div class="empty">Nothing due in the next 30 days.</div>') + '</div>';
-  html += '</div>';
 
   // Open Action Items / Reminders / Office Follow-ups — the actual open
   // list for each, not just the count already shown in the stat cards
   // above, styled the same way as Today's Schedule / Upcoming.
-  html += '<div class="grid grid-3" style="margin-top:16px;">';
-  html += dashboardOpenListCardHtml('action-items', '☑️', 'Open Action Items', openActionsList, 'dueDate', 'action', 'Nothing open — all action items are done.');
-  html += dashboardOpenListCardHtml('reminders', '🔔', 'Open Reminders', openRemindersList, 'dueDate', 'title', 'Nothing open — no active reminders.');
-  html += dashboardOpenListCardHtml('office-followups', '📮', 'Open Office Follow-ups', openFollowupsList, 'followUpDate', 'subject', 'Nothing open — no pending follow-ups.');
-  html += '</div>';
+  const openActionsCardHtml = dashboardOpenListCardHtml('action-items', '☑️', 'Open Action Items', openActionsList, 'dueDate', 'action', 'Nothing open — all action items are done.');
+  const openRemindersCardHtml = dashboardOpenListCardHtml('reminders', '🔔', 'Open Reminders', openRemindersList, 'dueDate', 'title', 'Nothing open — no active reminders.');
+  const openFollowupsCardHtml = dashboardOpenListCardHtml('office-followups', '📮', 'Open Office Follow-ups', openFollowupsList, 'followUpDate', 'subject', 'Nothing open — no pending follow-ups.');
 
-  html += '<div class="grid grid-2" style="margin-top:16px;">';
-  html += '<div class="card"><h3>📈 Progress</h3><div style="display:flex;flex-direction:column;gap:16px;">'
+  const progressCardHtml = '<div class="card"><h3>📈 Progress</h3><div style="display:flex;flex-direction:column;gap:16px;">'
     + progressRingHtml(actionPct, AREA_COLORS.meetings, 'Action Items Closed', doneActions + ' of ' + totalActions + ' total', '#/module/action-items')
     + progressRingHtml(weekPct, AREA_COLORS.teaching, 'Classes Logged This Week', classLogThisWeek + ' of ' + timetableSlots + ' weekly slots', '#/module/class-log')
     + '</div></div>';
-  html += '<div class="card"><h3>🧭 Deadlines by Area <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(overdue + next 30 days)</span></h3>'
+  const deadlinesCardHtml = '<div class="card"><h3>🧭 Deadlines by Area <span style="font-weight:400;font-size:11.5px;color:var(--text-dim);">(overdue + next 30 days)</span></h3>'
     + (areaChips.length > 0
       ? '<div class="area-chip-row">' + areaChips.map(a=>{
           const linkKey = MODULE_KEYS.find(k=>MODULES[k].menu===a.menu);
@@ -4805,28 +4805,41 @@ function renderDashboard(){
           return '<' + tag + (linkKey ? ' href="#/module/' + linkKey + '"' : '') + ' class="area-chip"><span class="dot" style="background:' + a.color + ';"></span>' + escapeHtml(a.label) + ' <span class="n">' + a.count + '</span></' + tag + '>';
         }).join('') + '</div>'
       : '<div class="empty">Nothing overdue or due in the next 30 days.</div>') + '</div>';
-  html += '</div>';
 
-  // These two mini pie charts are deliberately small snapshot cards, one
-  // tile among several in the Snapshots section below (not off in their own
-  // sidebar column) — per the user's explicit request that they be "very
-  // small" and shown below the main dashboard content.
-  let chartsHtml = '<div class="card dash-mini-chart-card"><h3>📘 This Week\'s Teaching Load<a href="#/module/timetable" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>' + (chartsAvailable
+  // These two mini pie charts are deliberately small cards, not full-size
+  // ones — per the user's earlier explicit request that they be "very
+  // small".
+  const teachingLoadChartHtml = '<div class="card dash-mini-chart-card"><h3>📘 This Week\'s Teaching Load<a href="#/module/timetable" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>' + (chartsAvailable
     ? '<div class="dash-mini-chart-wrap"><canvas id="dash-chart-week"></canvas></div>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>') + '</div>';
-  chartsHtml += '<div class="card dash-mini-chart-card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + '<a href="#/module/work-diary" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>' + (chartsAvailable
+  const timeSpentChartHtml = '<div class="card dash-mini-chart-card"><h3>📔 Time Spent ' + (workDiaryHours.fallback ? '(All Time)' : 'This Month') + '<a href="#/module/work-diary" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>' + (chartsAvailable
     ? '<div class="dash-mini-chart-wrap"><canvas id="dash-chart-time"></canvas></div>'
     : '<div class="empty">Charts need an internet connection the first time they load.</div>')
     + (Object.keys(workDiaryHours.byCat).length === 0 ? '<div class="empty" style="padding:10px 0 0;font-size:11.5px;">Nothing logged yet — add Work Diary entries, mark classes Held in Class Log, or fill in an optional Duration on Meetings/Invigilation Duty/Extra Classes/Lab Exams/Research Events.</div>' : '') + '</div>';
 
-  // "Snapshots" — a masonry-style flow of smaller cards (New Updates,
-  // Research, Quick Notes, the two mini charts) that packs as many as fit
-  // side by side on a wide screen instead of stacking them all in one
-  // narrow fixed-width sidebar (see .dash-snapshots). New snapshot cards
-  // can simply be appended to this string — the layout adapts on its own.
-  const snapshotsHtml = '<div class="dash-snapshots">' + dashboardTickerHtml() + researchSnapshotHtml() + quickNotesCardHtml() + chartsHtml + '</div>';
+  // Below the stat strip, everything is one 3-column grid (see
+  // .dash-priority-grid), filled row by row in the user's explicit
+  // priority order: Today's Schedule, Open Action Items, Open Reminders,
+  // Open Office Follow-ups, Quick Notes, New Updates, Research Updates —
+  // then the remaining cards (Upcoming, Progress, Deadlines by Area, the
+  // two mini charts) continue filling out the grid after that priority
+  // set. New cards can simply be appended to this list.
+  const priorityGridHtml = '<div class="dash-priority-grid">'
+    + scheduleCardHtml
+    + openActionsCardHtml
+    + openRemindersCardHtml
+    + openFollowupsCardHtml
+    + quickNotesCardHtml()
+    + dashboardTickerHtml()
+    + researchUpdatesTickerHtml()
+    + upcomingCardHtml
+    + progressCardHtml
+    + deadlinesCardHtml
+    + teachingLoadChartHtml
+    + timeSpentChartHtml
+    + '</div>';
 
-  return html + snapshotsHtml;
+  return html + priorityGridHtml;
 }
 /** A deliberately "quiet" scratchpad, tucked into the Dashboard's side
  *  column below the ticker rather than competing with Today's Schedule/
@@ -4869,61 +4882,41 @@ function quickNotesCardHtml(){
   html += '</div>';
   return html;
 }
-/** A compact Dashboard snapshot of the Research menus (Plans, Publications,
- *  Collaborations, Conferences/Workshops, Peer Review & Editorial) — the
- *  user's explicit request for "Research section updates in the Dashboard".
- *  Two parts: a row of small counts across every research module (so
- *  Publications/Collaborations, which don't carry a single date, are still
- *  represented) and, below that, the nearest research-related dates in the
- *  next 30 days — event dates, abstract-submission deadlines, plan target
- *  dates, and peer-review deadlines — sorted soonest first, same styling as
- *  the main "Upcoming" card. Researcher's Database is a contact list with no
- *  dates/lifecycle of its own, so it isn't part of this snapshot. */
-function researchSnapshotHtml(){
-  const targets = getActive('research-targets');
-  const pubs = getActive('publications');
-  const collabs = getActive('collaborations');
-  const events = getActive('research-events');
-  const reviews = getActive('peer-reviews');
-  const openTargets = targets.filter(t=>t.status !== 'Completed').length;
-  const publishedPubs = pubs.filter(p=>p.status === 'Published').length;
-  const activeCollabs = collabs.filter(c=>c.status !== 'Completed').length;
-  const pendingReviews = reviews.filter(r=>r.status !== 'Completed').length;
-
-  const today = todayStr();
-  const in30 = addDaysStr(today, 30);
+/** A scrolling "Research Updates" ticker, built the same way as the New
+ *  Updates ticker (📰 above) — per the user's explicit request that it
+ *  "scroll like New Updates" — pulling from the three Research-menu sources
+ *  that actually carry a real date: Plans (targetDate), Conferences/
+ *  Workshops (date), and Projects & Grants (endDate). Publications,
+ *  Collaborations, Peer Review, and Researcher's Database are left out
+ *  since the user named this specific set. Sorted newest/latest date first,
+ *  same as New Updates, so it reads as one combined "what's been entered
+ *  across Research recently" feed rather than a strict to-do list. */
+function researchUpdatesTickerHtml(){
   const items = [];
-  events.forEach(e=>{
-    if(e.date) items.push({ moduleKey:'research-events', icon:'🎤', label:'Event', title: e.eventName || '(untitled)', date: e.date });
-    if(e.abstractDeadline) items.push({ moduleKey:'research-events', icon:'📝', label:'Abstract due', title: e.eventName || '(untitled)', date: e.abstractDeadline });
+  getActive('research-targets').forEach(t=>{
+    if(t.targetDate) items.push({ moduleKey:'research-targets', icon:'🎯', date:t.targetDate, text:'Plan: ' + (t.description || '(untitled)') });
   });
-  targets.forEach(t=>{
-    if(t.targetDate && t.status !== 'Completed') items.push({ moduleKey:'research-targets', icon:'🎯', label:'Plan due', title: t.description || '(untitled)', date: t.targetDate });
+  getActive('research-events').forEach(e=>{
+    if(e.date) items.push({ moduleKey:'research-events', icon:'🎤', date:e.date, text:(e.eventType || 'Event') + ': ' + (e.eventName || '(untitled)') });
   });
-  reviews.forEach(r=>{
-    if(r.deadline && r.status !== 'Completed') items.push({ moduleKey:'peer-reviews', icon:'🧾', label:'Review due', title: r.paperTitle || r.venue || '(untitled)', date: r.deadline });
+  getActive('project-grants').forEach(p=>{
+    if(p.endDate) items.push({ moduleKey:'project-grants', icon:'💰', date:p.endDate, text:'Project/Grant: ' + (p.title || '(untitled)') });
   });
-  const upcoming = items.filter(it=>it.date >= today && it.date <= in30).sort((a,b)=>a.date.localeCompare(b.date)).slice(0, 6);
-
-  const chip = (moduleKey, num, label) => '<a href="#/module/' + moduleKey + '" class="dash-link" style="flex:1;min-width:80px;text-align:center;background:var(--surface,#f8f9fc);border-radius:8px;padding:8px 6px;">'
-    + '<div style="font-size:17px;font-weight:700;">' + num + '</div><div style="font-size:10.5px;color:var(--text-dim);">' + escapeHtml(label) + '</div></a>';
-
-  let html = '<div class="card" id="research-snapshot-card">'
-    + '<h3>🔬 Research<a href="#/module/research-events" class="dash-link" style="display:inline;margin-left:auto;font-size:11px;font-weight:600;color:var(--gold,#c99a3c);white-space:nowrap;">View →</a></h3>'
-    + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'
-    + chip('research-targets', openTargets, 'Plans open')
-    + chip('publications', publishedPubs + '/' + pubs.length, 'Published')
-    + chip('collaborations', activeCollabs, 'Collabs active')
-    + chip('peer-reviews', pendingReviews, 'Reviews pending')
-    + '</div>';
-  html += '<div style="font-size:11px;font-weight:600;color:var(--text-dim);margin:8px 0 4px;">Next 30 days</div>';
-  html += upcoming.length
-    ? upcoming.map(it=>'<a href="#/module/' + it.moduleKey + '" class="' + urgencyClass(it.date) + ' dash-link" style="padding:7px 0 7px 8px;border-bottom:1px solid var(--border);font-size:12.5px;display:flex;justify-content:space-between;gap:8px;">'
-        + '<span>' + it.icon + ' <b>' + escapeHtml(it.label) + ':</b> ' + escapeHtml(it.title) + '</span>'
-        + '<span class="mono" style="color:var(--text-dim);white-space:nowrap;">' + escapeHtml(fmtDate(it.date)) + '</span></a>').join('')
-    : '<div class="empty" style="padding:4px 0;">Nothing research-related due in the next 30 days.</div>';
-  html += '</div>';
-  return html;
+  items.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const shown = items.slice(0, 10);
+  const manageLink = '<a href="#/module/research-events" class="dash-link" style="font-size:11px;font-weight:600;color:var(--gold,#c99a3c);margin-left:auto;white-space:nowrap;">View →</a>';
+  if(shown.length === 0){
+    return '<div class="news-ticker" id="research-updates-ticker"><h3>🔬 Research Updates' + manageLink + '</h3><div class="empty">Nothing entered yet in Plans, Conferences/Workshops, or Projects &amp; Grants.</div></div>';
+  }
+  const itemHtml = shown.map(it=>'<a href="#/module/' + it.moduleKey + '" class="ticker-item dash-link" title="' + escapeHtml(it.text) + '">' + it.icon + ' ' + escapeHtml(it.text) + ' <span style="color:var(--text-dim);">(' + escapeHtml(fmtDate(it.date)) + ')</span></a>').join('');
+  // Same "don't duplicate the track unless there's enough to actually
+  // scroll" rule as New Updates — a couple of items shown twice reads as a
+  // bug, not a ticker.
+  const needsScroll = shown.length > 5;
+  const trackHtml = needsScroll ? (itemHtml + itemHtml) : itemHtml;
+  return '<div class="news-ticker" id="research-updates-ticker"><h3>🔬 Research Updates' + manageLink + '</h3>'
+    + '<div class="news-ticker-viewport' + (needsScroll ? '' : ' news-ticker-viewport-auto') + '">'
+    + '<div class="news-ticker-track' + (needsScroll ? '' : ' news-ticker-track-static') + '">' + trackHtml + '</div></div></div>';
 }
 /** Enter-key handler for the Quick Notes textarea: if the line the cursor
  *  is currently on starts with "N. " (a numbered point), Enter continues
