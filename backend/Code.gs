@@ -26,7 +26,7 @@ var LOG_LIMIT = 500;
  * ------------------------------------------------------------------ */
 
 function doGet() {
-  return json({ ok: true, app: 'fams-lite', ready: !!readKey('config') });
+  return json({ ok: true, app: 'fams-lite', ready: !!readFresh('config') });
 }
 
 function doPost(e) {
@@ -41,7 +41,7 @@ function doPost(e) {
     var action = req.action;
 
     // Open actions: no token needed.
-    if (action === 'status') return json({ ok: true, ready: !!readKey('config') });
+    if (action === 'status') return json({ ok: true, ready: !!readFresh('config') });
     if (action === 'firstRun') return json(firstRun(req));
     if (action === 'unlock') return json(unlock(req));
 
@@ -123,6 +123,22 @@ function readKey(key) {
   return value;
 }
 
+/**
+ * Reads straight from the sheet, ignoring the cache. Anything that decides
+ * whether the workspace exists must use this: the cache holds a copy for six
+ * hours, so a config deleted by hand would otherwise still look present.
+ */
+function readFresh(key) {
+  var row = rowOf(key);
+  if (!row) {
+    try { CacheService.getScriptCache().remove(key); } catch (e) {}
+    return null;
+  }
+  var raw = sheet().getRange(row, 2).getValue();
+  if (raw === '' || raw === null) return null;
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
 function writeKey(key, value) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -179,7 +195,7 @@ function randomString(len) {
 
 /** Creates the config, the seeded index, and sets the PIN. Runs once. */
 function firstRun(req) {
-  if (readKey('config')) return { ok: false, error: 'Already set up. Use changePin instead.' };
+  if (readFresh('config')) return { ok: false, error: 'Already set up. Use changePin instead.' };
   var pin = String(req.pin || '');
   if (!/^\d{4}$/.test(pin)) return { ok: false, error: 'The PIN must be exactly 4 digits.' };
 
@@ -591,6 +607,36 @@ function logAction(kind, message) {
     if (log.length > LOG_LIMIT) log = log.slice(0, LOG_LIMIT);
     writeKey('log', log);
   } catch (e) { /* the log is never allowed to break a real action */ }
+}
+
+/* ------------------------------------------------------------------ *
+ * Starting over
+ * ------------------------------------------------------------------ */
+
+/**
+ * Run this from the Apps Script editor (pick it in the function dropdown and
+ * press Run) to wipe the workspace and start from first run again. Deleting
+ * the Store sheet by hand is not enough on its own, because the script keeps
+ * a six hour cache and the lockout counter separately.
+ */
+function resetWorkspace() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_NAME);
+  if (sh) ss.deleteSheet(sh);
+  sheet(); // recreate it empty, with its header row
+
+  try {
+    var cache = CacheService.getScriptCache();
+    cache.remove('config');
+    cache.remove('index');
+  } catch (e) {}
+
+  var props = PropertiesService.getScriptProperties();
+  props.deleteProperty('attempts');
+  props.deleteProperty('lockUntil');
+
+  return 'Workspace cleared. Open the site, use "Change the backend URL" or add '
+    + '?reset to the address, then set a new PIN.';
 }
 
 /* ------------------------------------------------------------------ *

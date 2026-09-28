@@ -194,7 +194,9 @@ function api(action, payload) {
     body: JSON.stringify(body),
     redirect: 'follow'
   }).then(function (r) { return r.json(); }).then(function (res) {
-    if (res && res.ok === false && /session expired/i.test(res.error || '')) {
+    if (res && res.ok === false && /session expired|not set up/i.test(res.error || '')) {
+      // Either the session lapsed or the backend was reset underneath us.
+      if (/not set up/i.test(res.error || '')) state.needsSetup = true;
       signOut(true);
       throw new Error(res.error);
     }
@@ -786,6 +788,8 @@ function screenPin() {
     + (needsSetup ? 'Create workspace' : 'Unlock') + '</button></div>'
     + '<div class="note bad" id="toast" style="display:none"></div>'
     + '<p class="small muted" style="margin-top:18px">Five wrong tries locks this for 15 minutes.</p>'
+    + '<button class="plain small" data-act="changeEndpoint" style="margin-top:6px">'
+    + 'Change the backend URL</button>'
     + '</div></div>';
 }
 
@@ -911,6 +915,24 @@ function handle(action, el, ev) {
     }
 
     case 'signOut': signOut(); break;
+
+    /* The way back when the backend has moved or been rebuilt. Clears the
+       saved URL and session on this device only; nothing in the Sheet moves. */
+    case 'changeEndpoint':
+      state.endpoint = '';
+      state.token = '';
+      state.index = null;
+      state.records = {};
+      state.needsSetup = false;
+      lsDel('fams.endpoint');
+      lsDel('fams.token');
+      lsDel('fams.index');
+      Object.keys(localStorage).forEach(function (k) {
+        if (k.indexOf('fams.recs.') === 0) lsDel(k);
+      });
+      state.lastPaint = '';
+      render();
+      break;
 
     case 'changePin': {
       var oldp = (document.getElementById('pinOld') || {}).value || '';
@@ -1235,6 +1257,21 @@ function signOut(silent) {
 /* ==================================================================
    Boot
    ================================================================== */
+
+/* Opening the site with ?reset on the end wipes this device's saved URL,
+   session and cached copy, then starts from the connect screen. Nothing in
+   your Sheet is touched. Useful when the backend has been rebuilt. */
+if (/[?&]reset\b/.test(location.search)) {
+  try {
+    Object.keys(localStorage).forEach(function (k) {
+      if (k.indexOf('fams.') === 0 && k !== 'fams.theme') localStorage.removeItem(k);
+    });
+  } catch (e) {}
+  state.endpoint = '';
+  state.token = '';
+  state.index = null;
+  history.replaceState(null, '', location.pathname);
+}
 
 render();                                   // from cache, before any network call
 
