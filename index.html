@@ -4,10 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>FAMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=IBM+Plex+Mono:wght@500;700&display=optional">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="theme-color" content="#f7f6f3">
+<meta name="theme-color" content="#0f1f3d">
 
 <script>
 /* Runs before the browser paints anything. It decides the theme and whether
@@ -34,107 +37,228 @@
 
 <style>
 :root{
-  --bg:#f7f6f3; --card:#ffffff; --sunk:#f1efe8;
-  --fg:#23231f; --fg2:#5f5e5a; --fg3:#8d8b83;
-  --line:rgba(0,0,0,.10); --line2:rgba(0,0,0,.18);
-  --accent:#185fa5; --accent-bg:#e6f1fb;
-  --danger:#a32d2d; --danger-bg:#fcebeb;
-  --warn:#854f0b; --warn-bg:#faeeda;
-  --ok:#0f6e56; --ok-bg:#e1f5ee;
-  --r:10px; --r2:14px;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --navy:#0f1f3d; --navy-2:#1c2c58; --gold:#c99a3c; --gold-2:#e0b558;
+  --bg:#f0f3fa; --card:#ffffff; --sunk:#f7f9fd;
+  --border:#e3e7f0; --border-strong:#cbd1db;
+  --text:#0f1424; --text-dim:#404a68; --text-faint:#68718c;
+  --ok:#1f8a52; --ok-wash:#e4f4ec;
+  --warn:#b9741c; --warn-wash:#fbf0dd;
+  --danger:#b3273b; --danger-wash:#fbeae9;
+  --info:#2a63c9; --info-wash:#e7eef8;
+  --radius:10px;
+  --shadow:0 1px 3px rgba(20,30,60,.08), 0 1px 2px rgba(20,30,60,.06);
+  --shadow-md:0 4px 14px rgba(20,30,60,.10);
+  --shadow-lg:0 10px 30px rgba(15,25,60,.18);
+  --sans:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 html[data-theme=dark]:root{
-  --bg:#191917; --card:#23231f; --sunk:#2c2c28;
-  --fg:#eceae2; --fg2:#a9a7a0; --fg3:#7d7b74;
-  --line:rgba(255,255,255,.12); --line2:rgba(255,255,255,.22);
-  --accent:#85b7eb; --accent-bg:#0c447c;
-  --danger:#f09595; --danger-bg:#501313;
-  --warn:#fac775; --warn-bg:#412402;
-  --ok:#5dcaa5; --ok-bg:#04342c;
+  --navy:#101a30; --navy-2:#18243f; --bg:#0e1424; --card:#161d31; --sunk:#111829;
+  --border:#232c44; --border-strong:#35405c;
+  --text:#e8ecf6; --text-dim:#a8b2cb; --text-faint:#7c88a5;
+  --ok:#4ec08a; --ok-wash:#11301f;
+  --warn:#e2a244; --warn-wash:#33250d;
+  --danger:#ef7b8a; --danger-wash:#3a1419;
+  --info:#6fa2f0; --info-wash:#132540;
+  --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-md:0 4px 14px rgba(0,0,0,.45);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.55);
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
-  font-family:var(--sans);font-size:15px;line-height:1.5;
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);font-size:15px;line-height:1.5;color:var(--text);
+  background:var(--bg);-webkit-font-smoothing:antialiased;padding-bottom:64px;
   -webkit-text-size-adjust:100%}
-body{padding:0 0 64px}
-.wrap{max-width:880px;margin:0 auto;padding:0 14px}
-a{color:var(--accent);text-decoration:none}
-button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line2);
-  border-radius:var(--r);padding:7px 12px;cursor:pointer}
-button:active{transform:scale(.985)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-html[data-theme=dark] button.primary{color:#04203c}
-button.danger{color:var(--danger);border-color:var(--danger)}
-button.plain{background:transparent;border-color:transparent;color:var(--fg2);padding:6px 8px}
-input,select,textarea{font:inherit;color:var(--fg);background:var(--card);
-  border:1px solid var(--line2);border-radius:var(--r);padding:8px 10px;width:100%}
-textarea{min-height:76px;resize:vertical}
-label{display:block;font-size:12px;color:var(--fg2);margin:0 0 4px}
-h1,h2,h3{font-weight:500;margin:0}
-.muted{color:var(--fg3)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 18px}
+a{color:var(--info);text-decoration:none}
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:.1px}
+.mono{font-family:var(--mono)}
+.muted{color:var(--text-faint)}
 .small{font-size:12px}
-.row{display:flex;align-items:center;gap:8px}
+.row{display:flex;align-items:center;gap:9px}
 .grow{flex:1;min-width:0}
 .trunc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-header.bar{position:sticky;top:0;z-index:20;background:var(--bg);
-  border-bottom:1px solid var(--line)}
-header.bar .wrap{display:flex;align-items:center;gap:8px;height:52px}
-.brand{font-weight:500}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 4px}
-.chip{font-size:12px;border:1px solid var(--line);border-radius:var(--r);
-  padding:5px 11px;background:transparent;color:var(--fg2);cursor:pointer}
-.chip.on{border-color:transparent}
-.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:14px}
-.ev{border-radius:var(--r);padding:8px 11px;cursor:pointer;background:var(--card);
-  border:1px solid var(--line)}
-.ev.late{background:var(--danger-bg);border-color:transparent}
-.ev.soon{background:var(--warn-bg);border-color:transparent}
-.ev .when{font-size:11px}
-.ev .what{font-size:13px}
-.ev .who{font-size:11px;color:var(--fg3)}
-.seclabel{font-size:12px;color:var(--fg2);margin:18px 0 7px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:9px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);
-  padding:11px 13px;cursor:pointer;min-height:84px;display:flex;flex-direction:column}
-.card:hover{border-color:var(--line2)}
-.card .tag{height:3px;width:26px;border-radius:2px;margin-bottom:9px;flex:none}
-.card .nm{font-size:14px;font-weight:500}
-.card .sub{font-size:11px;color:var(--fg3);margin-top:3px;flex:1}
-.card .meta{font-size:11px;color:var(--fg3);margin-top:8px}
-.card .meta.late{color:var(--danger)}
-.card .meta.soon{color:var(--warn)}
-.more{display:flex;align-items:center;justify-content:center;color:var(--fg2);font-size:12px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);
-  overflow:hidden;margin-top:10px}
-.lrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+button{font:inherit;font-weight:600;font-size:13px;color:var(--text-dim);
+  background:var(--card);border:1px solid var(--border-strong);border-radius:8px;
+  padding:7px 13px;cursor:pointer;transition:.13s}
+button:hover{border-color:var(--text-faint);color:var(--text)}
+button:active{transform:scale(.985)}
+button.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+button.primary:hover{background:var(--navy-2);color:#fff}
+button.gold{background:transparent;border-color:var(--gold);color:var(--gold)}
+button.gold:hover{background:var(--gold);color:#1a1205;border-color:var(--gold)}
+button.danger{color:var(--danger);border-color:var(--danger)}
+button.plain{background:transparent;border-color:transparent;color:var(--text-faint);padding:6px 9px}
+button.plain:hover{color:var(--text);background:var(--sunk)}
+
+input,select,textarea{font:inherit;font-size:14px;color:var(--text);background:var(--sunk);
+  border:1px solid var(--border-strong);border-radius:8px;padding:9px 11px;width:100%;
+  transition:.12s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--info);
+  background:var(--card);box-shadow:0 0 0 3px var(--info-wash)}
+textarea{min-height:80px;resize:vertical}
+label{display:block;font-size:11px;font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--text-faint);margin:0 0 5px}
+
+/* ---------- top navigation ---------- */
+.topnav{position:sticky;top:0;z-index:40;background:var(--card);
+  border-bottom:1px solid var(--border);box-shadow:0 2px 10px rgba(15,25,60,.05)}
+.topnav .wrap{display:flex;align-items:center;gap:10px;height:58px}
+.logo{width:26px;height:26px;flex:none;border-radius:6px;background:var(--navy);
+  display:flex;align-items:center;justify-content:center;color:var(--gold-2);
+  font-size:11px;font-weight:700;letter-spacing:.5px}
+.navtitle{font-size:14.5px;font-weight:700;letter-spacing:.2px}
+.navsep{width:1px;height:22px;background:var(--border);margin:0 3px}
+.syncdot{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;
+  color:var(--text-faint);font-weight:600}
+.syncdot i{width:6px;height:6px;border-radius:50%;background:var(--ok);display:block}
+
+/* ---------- hero ---------- */
+.hero{background:linear-gradient(100deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;
+  border-radius:12px;padding:17px 21px;margin:18px 0 4px;position:relative;
+  overflow:hidden;box-shadow:var(--shadow-md)}
+.hero::before{content:'';position:absolute;top:-62%;right:-5%;width:240px;height:240px;
+  border-radius:50%;background:radial-gradient(circle,rgba(201,154,60,.22),transparent 65%)}
+.hero-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;
+  flex-wrap:wrap;position:relative;z-index:1}
+.hero h1{font-size:18px;line-height:1.3;font-weight:700}
+.hero .dept{font-size:12px;color:#b8c1e0;margin-top:3px}
+.hero .inst{font-size:11.5px;color:var(--gold-2);margin-top:4px;letter-spacing:.2px}
+.hero-clock{text-align:right;flex:none}
+.hero-clock .time{font-family:var(--mono);font-size:18px;font-weight:700}
+.hero-clock .date{font-size:11px;color:#b8c1e0;margin-top:2px}
+.hero-stats{display:flex;gap:26px;margin-top:15px;padding-top:13px;position:relative;z-index:1;
+  flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.13)}
+.hero-stats div{font-size:10.5px;color:#9daad0;text-transform:uppercase;letter-spacing:.05em}
+.hero-stats b{display:block;font-family:var(--mono);font-size:19px;color:#fff;font-weight:700;
+  letter-spacing:-.5px;margin-bottom:1px}
+.hero-stats b.alert{color:#ffb3b3}
+
+/* ---------- section labels ---------- */
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--text-faint);margin:24px 0 10px;
+  display:flex;align-items:center;gap:11px}
+.section-label .line{flex:1;height:1px;background:var(--border)}
+.section-label .n{font-family:var(--mono);font-weight:700;color:var(--text-faint)}
+
+/* ---------- upcoming ---------- */
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:10px}
+.ev{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border-strong);
+  border-radius:0 var(--radius) var(--radius) 0;padding:11px 14px;cursor:pointer;
+  box-shadow:var(--shadow);transition:.15s}
+.ev:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.ev.late{border-left-color:var(--danger);background:var(--danger-wash)}
+.ev.soon{border-left-color:var(--warn);background:var(--warn-wash)}
+.ev .when{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text-faint);font-size:10px;letter-spacing:.06em}
+.ev.late .when{color:var(--danger)}
+.ev.soon .when{color:var(--warn)}
+.ev .what{font-size:13px;font-weight:600;margin-top:3px;color:var(--text)}
+.ev .who{font-size:11px;color:var(--text-faint);margin-top:2px}
+
+/* ---------- work cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);cursor:pointer;overflow:hidden;display:flex;flex-direction:column;
+  transition:box-shadow .15s,transform .15s,border-color .15s;position:relative}
+.card::after{content:'';position:absolute;left:0;top:0;height:2px;width:100%;
+  background:var(--c,var(--border-strong))}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--border-strong)}
+.card .cover{height:74px;width:100%;object-fit:cover;display:block;background:var(--sunk)}
+.card .body{padding:13px 14px 11px;display:flex;flex-direction:column;flex:1}
+.chead{display:flex;align-items:center;gap:9px;min-width:0}
+.card .ico{width:26px;height:26px;border-radius:7px;flex:none;display:flex;
+  align-items:center;justify-content:center;
+  background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c)}
+html[data-theme=dark] .card .ico{background:color-mix(in srgb,var(--c) 22%,transparent);
+  color:color-mix(in srgb,var(--c) 62%,white)}
+.card .ico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.card .nm{font-size:13.5px;font-weight:700;letter-spacing:.1px;line-height:1.3;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .sub{font-size:11.5px;color:var(--text-faint);margin-top:7px;line-height:1.45;flex:1;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .foot{margin-top:11px;padding-top:9px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-faint);
+  font-family:var(--mono);letter-spacing:-.2px}
+.card .foot .sep{opacity:.45}
+.badge{font-size:10px;font-weight:700;letter-spacing:.02em;padding:2px 7px;
+  border-radius:4px;background:var(--sunk);color:var(--text-faint);
+  font-family:var(--sans);margin-left:auto}
+.badge.late{background:var(--danger-wash);color:var(--danger)}
+.badge.soon{background:var(--warn-wash);color:var(--warn)}
+.badge.ok{background:var(--ok-wash);color:var(--ok)}
+.card .go{display:none}
+.card.more{align-items:center;justify-content:center;min-height:104px;
+  border-style:dashed;box-shadow:none;background:transparent;color:var(--text-dim);
+  font-size:12px;font-weight:600}
+.card.more::after{display:none}
+
+/* ---------- chips ---------- */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 2px}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+  padding:6px 12px;border-radius:7px;background:var(--card);border:1px solid var(--border);
+  color:var(--text-dim);cursor:pointer;box-shadow:var(--shadow);transition:.13s}
+.chip:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.chip .n{font-family:var(--mono);font-weight:700;opacity:.75}
+.chip i{width:7px;height:7px;border-radius:2px;background:var(--c,var(--border-strong));display:block}
+
+/* ---------- panels, rows, records ---------- */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;margin-top:11px}
+.lrow{display:flex;align-items:center;gap:11px;padding:12px 15px;
+  border-bottom:1px solid var(--border)}
 .lrow:last-child{border-bottom:none}
-.lrow .dot{width:8px;height:8px;border-radius:2px;flex:none}
-.lrow .ic{font-size:13px;color:var(--fg2);background:transparent;border:none;
-  padding:4px 6px;cursor:pointer}
-.note{border-radius:var(--r);padding:10px 12px;margin-top:12px;font-size:13px}
-.note.bad{background:var(--danger-bg);color:var(--danger)}
-.note.good{background:var(--ok-bg);color:var(--ok)}
-.note.warn{background:var(--warn-bg);color:var(--warn)}
-.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:12px}
-.form .wide{grid-column:1/-1}
-.pin{max-width:320px;margin:14vh auto 0;text-align:center}
-.pin input{text-align:center;letter-spacing:.5em;font-size:22px;padding:12px}
-.dots{display:flex;gap:6px;justify-content:center;margin-top:10px}
-.sync{font-size:11px;color:var(--fg3);margin-left:auto}
-.fields{margin-top:10px}
-.fieldrow{display:grid;grid-template-columns:1fr 1fr 110px auto;gap:8px;align-items:center;
-  padding:8px 0;border-bottom:1px solid var(--line)}
-.rec{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.lrow:hover{background:var(--sunk)}
+.lrow .dot{width:9px;height:9px;border-radius:3px;flex:none}
+.ic{font-size:12px;font-weight:700;color:var(--text-faint);background:transparent;
+  border:none;padding:5px 7px;cursor:pointer;border-radius:6px}
+.ic:hover{background:var(--bg);color:var(--text)}
+.ic.danger:hover{background:var(--danger-wash);color:var(--danger)}
+.rec{padding:12px 15px;border-bottom:1px solid var(--border);cursor:pointer}
 .rec:last-child{border-bottom:none}
-.rec .t{font-size:14px}
-.rec .d{font-size:11px;color:var(--fg3);margin-top:2px}
-.tabs{display:flex;gap:4px;overflow-x:auto;margin-top:12px;padding-bottom:2px}
-.tabs .chip{white-space:nowrap}
-@media (max-width:520px){
-  .fieldrow{grid-template-columns:1fr 1fr;}
-  .cards{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.rec:hover{background:var(--sunk)}
+.rec .t{font-size:14px;font-weight:700}
+.rec .d{font-size:11.5px;color:var(--text-faint);margin-top:3px}
+
+/* ---------- forms, notes ---------- */
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;margin-top:14px}
+.form .wide{grid-column:1/-1}
+.note{border-radius:8px;padding:11px 14px;margin-top:13px;font-size:13px;font-weight:600}
+.note.bad{background:var(--danger-wash);color:var(--danger)}
+.note.good{background:var(--ok-wash);color:var(--ok)}
+.note.warn{background:var(--warn-wash);color:var(--warn)}
+.fields{margin-top:11px}
+.fieldrow{display:grid;grid-template-columns:1fr 1fr 118px auto;gap:9px;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--border)}
+.iconpick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.iconpick button{width:36px;height:36px;padding:0;display:flex;align-items:center;
+  justify-content:center;border-radius:8px}
+.iconpick button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.iconpick button.on{border-color:var(--navy);color:var(--navy);background:var(--info-wash)}
+
+/* ---------- auth ---------- */
+.authwrap{min-height:88vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{width:420px;max-width:94vw;background:var(--card);border-radius:16px;
+  box-shadow:var(--shadow-lg);padding:34px 30px;text-align:center;
+  border-top:4px solid var(--gold)}
+.auth-card .mark{width:46px;height:46px;border-radius:12px;background:var(--navy);
+  color:var(--gold-2);display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15px;margin:0 auto 16px;letter-spacing:.5px}
+.auth-card h2{font-size:18px}
+.auth-card p.lead{font-size:12.5px;color:var(--text-faint);margin:7px 0 20px}
+.pin-input{text-align:center;font-family:var(--mono);font-size:26px;letter-spacing:.42em;
+  padding:13px 10px;text-indent:.42em}
+
+@media (max-width:640px){
+  .wrap{padding:0 14px}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+  .card .body{padding:12px 12px 10px}
+  .hero{padding:16px 17px}
+  .hero-clock{text-align:left}
+  .fieldrow{grid-template-columns:1fr 1fr}
+  .topnav .wrap{height:54px}
 }
 </style>
 </head>
@@ -156,6 +280,7 @@ var state = {
   index: BOOT.index || null,
   records: {},          // workId -> array, hydrated from cache on demand
   editMode: false,
+  expanded: {},          // category id -> showing every card in it
   syncing: false,
   syncNote: '',
   lastPaint: ''         // JSON of what is on screen, so identical data never repaints
@@ -356,14 +481,92 @@ function paint(html) {
   window.scrollTo(0, y);
 }
 
+/* A compact stroke-icon set, inline so there is nothing to download. */
+var ICONS = {
+  book:   '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/>',
+  flask:  '<path d="M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M9 3h6"/><path d="M7 15h10"/>',
+  clip:   '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 12h6"/><path d="M9 16h4"/>',
+  users:  '<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6"/><path d="M18 20a5 5 0 0 0-2-4"/>',
+  cal:    '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  award:  '<circle cx="12" cy="9" r="5"/><path d="M9 14l-2 7 5-3 5 3-2-7"/>',
+  doc:    '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/>',
+  chart:  '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  globe:  '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>',
+  layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9c-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  mic:    '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>',
+  seed:   '<path d="M12 21c0-6 3-9 8-9c0 6-3 9-8 9z"/><path d="M12 21c0-5-2.5-8-7-8c0 5 2.5 8 7 8z"/><path d="M12 21v-5"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-4 2 2-5z"/>',
+  bank:   '<path d="M3 10h18"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8"/><path d="M12 3l9 5H3z"/><path d="M3 21h18"/>'
+};
+var ICON_KEYS = Object.keys(ICONS);
+
+function iconSvg(key) {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[key] || ICONS.doc) + '</svg>';
+}
+function workIcon(w) {
+  if (w.icon && ICONS[w.icon]) return w.icon;
+  var c = cat(w.categoryId).name.toLowerCase();
+  if (c.indexOf('teach') === 0) return 'book';
+  if (c.indexOf('research') === 0) return 'flask';
+  return 'clip';
+}
+function profile() {
+  var p = (state.index && state.index.profile) || {};
+  return {
+    name: p.name || 'Academic workspace',
+    department: p.department || '',
+    institution: p.institution || '',
+    year: p.year || '2026-27'
+  };
+}
+
+/* The top bar. Admin sits on its own, to the right of a divider, so it never
+   reads as one more work. */
 function header(title, back) {
-  return '<header class="bar"><div class="wrap">'
-    + (back ? '<button class="plain" data-go="' + esc(back) + '">&larr;</button>' : '')
-    + '<span class="brand">' + esc(title) + '</span>'
-    + '<span class="sync" id="syncNote">synced ' + clockNow() + '</span>'
-    + '<button class="plain" data-act="toggleEdit">' + (state.editMode ? 'done' : 'edit') + '</button>'
-    + '<button class="plain" data-act="menu">&#8942;</button>'
-    + '</div></header>';
+  var p = profile();
+  return '<nav class="topnav"><div class="wrap">'
+    + (back
+        ? '<button class="plain" data-go="' + esc(back) + '" aria-label="Back">&larr;</button>'
+        : '<span class="logo">' + esc((p.name.match(/\b[A-Za-z]/g) || ['F']).slice(0, 2)
+            .join('').toUpperCase()) + '</span>')
+    + '<span class="navtitle trunc">' + esc(title) + '</span>'
+    + '<span class="grow"></span>'
+    + '<span class="syncdot" id="syncNote"><i></i>synced ' + clockNow() + '</span>'
+    + '<span class="navsep"></span>'
+    + '<button class="plain" data-act="toggleEdit">' + (state.editMode ? 'Done' : 'Edit') + '</button>'
+    + '<button class="gold" data-go="#/admin">Admin</button>'
+    + '</div></nav>';
+}
+
+function heroHtml() {
+  var p = profile();
+  var evs = liveEvents();
+  var late = evs.filter(function (e) { return daysFrom(e.date) < 0; }).length;
+  var week = evs.filter(function (e) {
+    var d = daysFrom(e.date); return d >= 0 && d <= 7;
+  }).length;
+  var month = evs.filter(function (e) {
+    var d = daysFrom(e.date); return d >= 0 && d <= 30;
+  }).length;
+  var now = new Date();
+
+  return '<div class="hero"><div class="hero-row">'
+    + '<div><h1>' + esc(p.name) + '</h1>'
+    + (p.department ? '<div class="dept">' + esc(p.department) + '</div>' : '')
+    + (p.institution ? '<div class="inst">' + esc(p.institution)
+        + (p.year ? '  &middot;  ' + esc(p.year) : '') + '</div>' : '')
+    + '</div>'
+    + '<div class="hero-clock"><div class="time" id="heroTime">' + clockNow() + '</div>'
+    + '<div class="date">' + esc(now.toLocaleDateString(undefined,
+        { weekday: 'long', day: 'numeric', month: 'long' })) + '</div></div>'
+    + '</div><div class="hero-stats">'
+    + '<div><b class="' + (late ? 'alert' : '') + '">' + late + '</b>overdue</div>'
+    + '<div><b>' + week + '</b>this week</div>'
+    + '<div><b>' + month + '</b>this month</div>'
+    + '<div><b>' + visibleWorks().length + '</b>active works</div>'
+    + '</div></div>';
 }
 
 /* ---------------- home ---------------- */
@@ -377,15 +580,19 @@ function screenHome() {
 
   var evs = liveEvents().slice(0, 6);
   var stripHtml = evs.length
-    ? '<div class="strip">' + evs.map(function (ev) {
+    ? '<div class="section-label">Upcoming<span class="line"></span>'
+      + '<span class="n">' + liveEvents().length + '</span></div>'
+      + '<div class="strip">' + evs.map(function (ev) {
         var d = daysFrom(ev.date);
         var cls = d < 0 ? 'late' : (d <= 7 ? 'soon' : '');
         return '<div class="ev ' + cls + '" data-go="#/w/' + esc(ev.workId) + '">'
           + '<div class="when">' + esc(whenLabel(ev.date)) + '</div>'
           + '<div class="what trunc">' + esc(ev.title) + '</div>'
-          + '<div class="who trunc">' + esc(ev.workName) + '</div></div>';
+          + '<div class="who trunc">' + esc(ev.workName) + ' &middot; ' + esc(ev.label)
+          + '</div></div>';
       }).join('') + '</div>'
-    : '<p class="small muted" style="margin-top:14px">Nothing due in the next 45 days.</p>';
+    : '<div class="section-label">Upcoming<span class="line"></span></div>'
+      + '<p class="small muted">Nothing due in the next 45 days.</p>';
 
   var cats = (idx.categories || []).slice().sort(function (a, b) {
     return (a.order || 0) - (b.order || 0);
@@ -394,36 +601,34 @@ function screenHome() {
 
   var chips = cats.map(function (c) {
     var n = works.filter(function (w) { return w.categoryId === c.id; }).length;
-    return '<button class="chip on" data-jump="sec_' + esc(c.id) + '" '
-      + 'style="background:' + esc(c.color) + '22;color:' + esc(c.color) + '">'
-      + esc(c.name.toLowerCase()) + ' ' + n + '</button>';
+    if (!n) return '';
+    return '<button class="chip" data-jump="sec_' + esc(c.id) + '" '
+      + 'style="--c:' + esc(c.color) + '"><i></i>' + esc(c.name)
+      + '<span class="n">' + n + '</span></button>';
   }).join('');
 
   var sections = cats.map(function (c) {
     var mine = works.filter(function (w) { return w.categoryId === c.id; });
     if (!mine.length) return '';
-    var collapsed = mine.length > 6 && !state.editMode;
-    var shown = collapsed ? mine.slice(0, 4) : mine;
+    var collapsed = mine.length > 8 && !state.expanded[c.id];
+    var shown = collapsed ? mine.slice(0, 6) : mine;
     var cardsHtml = shown.map(function (w) { return cardHtml(w, c); }).join('');
     if (collapsed) {
       cardsHtml += '<div class="card more" data-act="expand" data-cat="' + esc(c.id) + '">'
-        + (mine.length - 4) + ' more</div>';
+        + '+ ' + (mine.length - 6) + ' more</div>';
     }
-    return '<div class="seclabel" id="sec_' + esc(c.id) + '">' + esc(c.name) + '</div>'
+    return '<div class="section-label" id="sec_' + esc(c.id) + '">' + esc(c.name)
+      + '<span class="line"></span><span class="n">' + mine.length + '</span></div>'
       + '<div class="cards">' + cardsHtml + '</div>';
   }).join('');
 
   return header('FAMS')
     + '<div class="wrap">'
+    + heroHtml()
     + '<div class="note" id="toast" style="display:none"></div>'
     + stripHtml
-    + '<div class="chips">' + chips
-    + '<button class="chip" data-go="#/admin">manage</button></div>'
+    + '<div class="chips">' + chips + '</div>'
     + sections
-    + (state.editMode
-        ? '<p class="small muted" style="margin-top:18px">Edit mode is on. '
-          + 'Use <b>manage</b> to add, reorder, or remove works.</p>'
-        : '')
     + '</div>';
 }
 
@@ -435,18 +640,34 @@ function cardHtml(w, c) {
   var soon = evs.filter(function (ev) {
     var d = daysFrom(ev.date); return d >= 0 && d <= 7;
   }).length;
-  var meta, mcls = '';
-  if (late) { meta = late + ' overdue'; mcls = ' late'; }
-  else if (soon) { meta = soon + ' due this week'; mcls = ' soon'; }
-  else if (evs.length) { meta = evs.length + ' dates'; }
-  else { meta = ''; }              // the summary is already on the line above
+  var badge = '';
+  if (late) badge = '<span class="badge late">' + late + ' overdue</span>';
+  else if (soon) badge = '<span class="badge soon">' + soon + ' this week</span>';
+  else if (w.status === 'On hold') badge = '<span class="badge">on hold</span>';
 
-  return '<div class="card" data-go="#/w/' + esc(w.id) + '">'
-    + '<div class="tag" style="background:' + esc(c.color) + '"></div>'
-    + '<div class="nm trunc">' + esc(w.name) + '</div>'
-    + '<div class="sub trunc">' + esc(w.summary || '') + '</div>'
-    + '<div class="meta' + mcls + '">' + meta + '</div>'
-    + '</div>';
+  // The footer carries facts, not decoration: how much is in here, and when
+  // the next thing falls due. The count rides in the index, so no records load.
+  var n = (w.count === undefined) ? (loadRecords(w.id) || []).length : w.count;
+  var facts = [n + (n === 1 ? ' entry' : ' entries')];
+  var next = evs.slice().sort(function (a, b) {
+    return String(a.date).localeCompare(String(b.date));
+  })[0];
+  if (next) facts.push('next ' + whenLabel(next.date));
+
+  return '<article class="card" style="--c:' + esc(c.color) + '" '
+    + 'data-go="#/w/' + esc(w.id) + '">'
+    + (w.image
+        ? '<img class="cover" src="' + esc(w.image) + '" alt="" loading="lazy" '
+          + 'onerror="this.remove()">'
+        : '')
+    + '<div class="body">'
+    + '<div class="chead"><span class="ico">' + iconSvg(workIcon(w)) + '</span>'
+    + '<div class="nm">' + esc(w.name) + '</div></div>'
+    + '<div class="sub">' + esc(w.summary || '') + '</div>'
+    + '<div class="foot">'
+    + facts.map(esc).join('<span class="sep">&middot;</span>')
+    + badge + '</div>'
+    + '</div></article>';
 }
 
 /* ---------------- one work ---------------- */
@@ -475,7 +696,7 @@ function screenWork(id) {
 
   var body = '';
   Object.keys(groups).sort().forEach(function (k) {
-    if (k) body += '<div class="seclabel">' + esc(k) + '</div>';
+    if (k) body += '<div class="section-label">' + esc(k) + '</div>';
     body += '<div class="panel">' + groups[k].map(function (r) {
       return recRow(w, r);
     }).join('') + '</div>';
@@ -575,7 +796,7 @@ function screenAdmin() {
       .sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
 
     var rows = mine.map(function (w) {
-      var n = (loadRecords(w.id) || []).length;
+      var n = (w.count === undefined) ? (loadRecords(w.id) || []).length : w.count;
       var evs = (idx.events || []).filter(function (e) { return e.workId === w.id; }).length;
       return '<div class="lrow" data-work="' + esc(w.id) + '">'
         + '<button class="ic" data-act="up" data-work="' + esc(w.id) + '" title="move up">&uarr;</button>'
@@ -590,7 +811,7 @@ function screenAdmin() {
         + '</div>';
     }).join('');
 
-    return '<div class="seclabel">' + esc(c.name) + '</div>'
+    return '<div class="section-label">' + esc(c.name) + '</div>'
       + '<div class="panel">' + rows
       + '<div class="lrow" style="color:var(--fg2);cursor:pointer" '
       + 'data-act="newWork" data-cat="' + esc(c.id) + '">+ Add a work to '
@@ -603,7 +824,7 @@ function screenAdmin() {
     + '<div class="wrap">'
     + '<div class="note" id="toast" style="display:none"></div>'
     + blocks
-    + '<div class="seclabel">Categories</div>'
+    + '<div class="section-label">Categories</div>'
     + '<div class="panel">' + cats.map(function (c) {
         return '<div class="lrow">'
           + '<span class="dot" style="background:' + esc(c.color) + '"></span>'
@@ -614,7 +835,7 @@ function screenAdmin() {
     + '<div class="lrow" style="color:var(--fg2);cursor:pointer" data-act="newCat">'
     + '+ Add a category</div></div>'
     + (archived.length
-        ? '<div class="seclabel">Archived &middot; ' + archived.length + '</div><div class="panel">'
+        ? '<div class="section-label">Archived &middot; ' + archived.length + '</div><div class="panel">'
           + archived.map(function (w) {
               return '<div class="lrow"><span class="grow trunc">' + esc(w.name) + '</span>'
                 + '<span class="small muted">' + esc(w.academicYear || '') + '</span>'
@@ -670,8 +891,17 @@ function workForm(w, catId) {
       }).join('') + '</select></div>'
     + '<div><label>Group the list by</label><input data-w="groupBy" value="'
     + esc(w.groupBy || '') + '" placeholder="field key, optional"></div>'
+    + '<div class="wide"><label>Cover image URL</label><input data-w="image" value="'
+    + esc(w.image || '') + '" placeholder="optional, any direct image link"></div>'
+    + '<div class="wide"><label>Icon</label><div class="iconpick" id="iconPick">'
+    + ICON_KEYS.map(function (k) {
+        return '<button type="button" data-act="pickIcon" data-icon="' + esc(k) + '"'
+          + (w.icon === k ? ' class="on"' : '') + '>' + iconSvg(k) + '</button>';
+      }).join('')
+    + '</div><input type="hidden" data-w="icon" id="iconVal" value="'
+    + esc(w.icon || '') + '"></div>'
     + '</div>'
-    + '<div class="seclabel">Fields &middot; tick timeline to send a date to the home page</div>'
+    + '<div class="section-label">Fields &middot; tick timeline to send a date to the home page</div>'
     + '<div class="fields" id="fieldList">' + fieldRows + '</div>'
     + '<button data-act="addField" style="margin-top:10px">+ Add a field</button>'
     + '<div class="note bad" id="workErr" style="display:none"></div>'
@@ -682,7 +912,7 @@ function workForm(w, catId) {
 }
 
 function deleteBox(w) {
-  var n = (loadRecords(w.id) || []).length;
+  var n = (w.count === undefined) ? (loadRecords(w.id) || []).length : w.count;
   var evs = (state.index.events || []).filter(function (e) { return e.workId === w.id; }).length;
   return '<div class="panel" style="padding:12px 13px">'
     + '<div class="note bad" style="margin-top:0">'
@@ -740,24 +970,35 @@ function screenSettings() {
   return header('Settings', '#/')
     + '<div class="wrap">'
     + '<div class="note" id="toast" style="display:none"></div>'
-    + '<div class="seclabel">Backend</div>'
+    + '<div class="section-label">Your details<span class="line"></span></div>'
+    + '<div class="panel" style="padding:15px 16px"><div class="form" id="profileForm">'
+    + '<div><label>Name</label><input data-p="name" value="' + esc(profile().name) + '"></div>'
+    + '<div><label>Department</label><input data-p="department" value="'
+    + esc(profile().department) + '"></div>'
+    + '<div><label>Institution</label><input data-p="institution" value="'
+    + esc(profile().institution) + '"></div>'
+    + '<div><label>Academic year</label><input data-p="year" value="'
+    + esc(profile().year) + '"></div></div>'
+    + '<div class="row" style="margin-top:12px">'
+    + '<button class="primary" data-act="saveProfile">Save</button></div></div>'
+    + '<div class="section-label">Backend<span class="line"></span></div>'
     + '<div class="panel" style="padding:12px 13px">'
     + '<label>Apps Script web app URL</label>'
     + '<input id="epInput" value="' + esc(state.endpoint) + '">'
     + '<div class="row" style="margin-top:10px">'
     + '<button class="primary" data-act="saveEndpoint">Save</button></div></div>'
-    + '<div class="seclabel">PIN</div>'
+    + '<div class="section-label">PIN</div>'
     + '<div class="panel" style="padding:12px 13px"><div class="form">'
     + '<div><label>Current PIN</label><input id="pinOld" inputmode="numeric" maxlength="4"></div>'
     + '<div><label>New PIN</label><input id="pinNew" inputmode="numeric" maxlength="4"></div>'
     + '</div><div class="row" style="margin-top:10px">'
     + '<button class="primary" data-act="changePin">Change PIN</button></div></div>'
-    + '<div class="seclabel">Appearance</div>'
+    + '<div class="section-label">Appearance</div>'
     + '<div class="panel" style="padding:12px 13px"><div class="row">'
     + '<button data-act="theme" data-theme="light">Light</button>'
     + '<button data-act="theme" data-theme="dark">Dark</button>'
     + '<button data-act="theme" data-theme="auto">Match system</button></div></div>'
-    + '<div class="seclabel">This device</div>'
+    + '<div class="section-label">This device</div>'
     + '<div class="panel" style="padding:12px 13px">'
     + '<p class="small muted" style="margin:0 0 10px">Locking clears the saved session and '
     + 'the local copy of your data on this device only.</p>'
@@ -766,29 +1007,33 @@ function screenSettings() {
 }
 
 function screenSetup() {
-  return '<div class="wrap"><div class="pin">'
-    + '<h2 style="font-size:18px">Connect your workspace</h2>'
-    + '<p class="small muted">Paste the Apps Script web app URL from SETUP.md step 4.</p>'
+  return '<div class="authwrap"><div class="auth-card">'
+    + '<div class="mark">FA</div>'
+    + '<h2>Connect your workspace</h2>'
+    + '<p class="lead">Paste the Apps Script web app URL from step 3 of the setup guide.</p>'
     + '<input id="epInput" placeholder="https://script.google.com/macros/s/&hellip;/exec" '
-    + 'style="text-align:left;letter-spacing:normal;font-size:14px">'
-    + '<div class="row" style="margin-top:12px;justify-content:center">'
-    + '<button class="primary" data-act="saveEndpoint">Continue</button></div>'
+    + 'style="text-align:left;font-size:13px">'
+    + '<div style="margin-top:14px"><button class="primary" data-act="saveEndpoint" '
+    + 'style="width:100%;padding:11px">Continue</button></div>'
     + '<div class="note bad" id="toast" style="display:none"></div>'
     + '</div></div>';
 }
 
 function screenPin() {
   var needsSetup = state.needsSetup;
-  return '<div class="wrap"><div class="pin">'
-    + '<h2 style="font-size:18px">' + (needsSetup ? 'Choose a 4-digit PIN' : 'Enter your PIN') + '</h2>'
-    + '<input id="pinInput" inputmode="numeric" maxlength="4" autocomplete="off" '
-    + 'placeholder="&bull;&bull;&bull;&bull;">'
-    + '<div class="row" style="margin-top:12px;justify-content:center">'
-    + '<button class="primary" data-act="' + (needsSetup ? 'doSetupPin' : 'doUnlock') + '">'
+  return '<div class="authwrap"><div class="auth-card">'
+    + '<div class="mark">FA</div>'
+    + '<h2>' + (needsSetup ? 'Choose a 4-digit PIN' : 'Enter your PIN') + '</h2>'
+    + '<p class="lead">' + (needsSetup
+        ? 'This is the only key to your workspace. Pick something you will not forget.'
+        : 'Five wrong tries locks this device for 15 minutes.') + '</p>'
+    + '<input id="pinInput" class="pin-input" inputmode="numeric" maxlength="4" '
+    + 'autocomplete="off" placeholder="&bull;&bull;&bull;&bull;">'
+    + '<div style="margin-top:16px"><button class="primary" data-act="'
+    + (needsSetup ? 'doSetupPin' : 'doUnlock') + '" style="width:100%;padding:11px">'
     + (needsSetup ? 'Create workspace' : 'Unlock') + '</button></div>'
     + '<div class="note bad" id="toast" style="display:none"></div>'
-    + '<p class="small muted" style="margin-top:18px">Five wrong tries locks this for 15 minutes.</p>'
-    + '<button class="plain small" data-act="changeEndpoint" style="margin-top:6px">'
+    + '<button class="plain small" data-act="changeEndpoint" style="margin-top:12px">'
     + 'Change the backend URL</button>'
     + '</div></div>';
 }
@@ -861,7 +1106,7 @@ function handle(action, el, ev) {
       break;
 
     case 'expand':
-      state.editMode = true;           // showing everything is the edit-mode view
+      state.expanded[el.getAttribute('data-cat')] = true;
       state.lastPaint = '';
       render();
       break;
@@ -910,6 +1155,21 @@ function handle(action, el, ev) {
         state.lastPaint = '';
         go('#/');
         render();
+      }).catch(function (err) { toast(err.message, 'bad'); });
+      break;
+    }
+
+    case 'saveProfile': {
+      var pf = document.getElementById('profileForm');
+      var p = {};
+      pf.querySelectorAll('[data-p]').forEach(function (i) {
+        p[i.getAttribute('data-p')] = i.value.trim();
+      });
+      api('saveProfile', { profile: p }).then(function (res) {
+        cacheIndex(res.index);
+        state.lastPaint = '';
+        render();
+        toast('Saved.', 'good');
       }).catch(function (err) { toast(err.message, 'bad'); });
       break;
     }
@@ -1026,6 +1286,14 @@ function handle(action, el, ev) {
     }
 
     case 'rmField': el.closest('.fieldrow').remove(); break;
+
+    case 'pickIcon':
+      document.querySelectorAll('#iconPick button').forEach(function (b) {
+        b.classList.remove('on');
+      });
+      el.classList.add('on');
+      document.getElementById('iconVal').value = el.getAttribute('data-icon');
+      break;
 
     case 'saveWork': {
       var wf = document.getElementById('workForm');
@@ -1284,6 +1552,13 @@ if (state.endpoint && !state.token) {
 }
 
 sync();                                      // quiet confirmation in the background
+
+/* The clock is the one thing allowed to change on its own. It writes into a
+   single text node, so it never triggers a repaint of anything around it. */
+setInterval(function () {
+  var t = document.getElementById('heroTime');
+  if (t) t.textContent = clockNow();
+}, 20000);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(function () {});

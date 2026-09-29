@@ -70,14 +70,16 @@ After that it opens like an app, with no browser bar, and works offline.
 
 ## Day to day
 
-- **Adding a work:** tap **manage** on the home page, then "Add a work to …".
-  Give it a name and its fields. Tick **timeline** on any date field you want to
-  appear in the Upcoming strip on the home page.
-- **Reordering:** the arrows in **manage** set the order the cards appear in.
+- **Adding a work:** tap **Admin** in the top bar, then "Add a work to …". Give
+  it a name, pick an icon, and set its fields. Tick **timeline** on any date
+  field you want in the Upcoming strip on the home page. A cover image is
+  optional: paste any direct image link and the card shows it.
+- **Your name in the banner:** Settings, under "Your details".
+- **Reordering:** the arrows in **Admin** set the order the cards appear in.
 - **Year end:** **archive** a work rather than deleting it. It leaves the home
   page and its records stay whole.
 - **Deleting:** you must type the work's name. It goes to the recycle bin for 30
-  days, and **manage ▸ Recycle bin** restores it with its records.
+  days, and **Admin ▸ Recycle bin** restores it with its records.
 - **Locking:** **Settings ▸ Lock this device** clears the session and the local
   copy on that device only.
 

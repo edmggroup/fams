@@ -41,13 +41,27 @@ home page stays the same size whether you have 50 records or 5,000.
 ## Works
 
 Seeded with 14: three teaching, four research, and the 13 responsibility areas
-carried over from FAMS+. All of them are editable from **manage** — add, rename,
-recolour, reorder, hide, archive, or delete, including inventing new ones with
-their own fields. Nothing about a work is written into the code.
+carried over from FAMS+. All of them are editable from **Admin** — add, rename,
+recolour, re-icon, reorder, hide, archive, or delete, including inventing new
+ones with their own fields. Nothing about a work is written into the code.
 
 Tick **timeline** on any date field and that date joins the Upcoming strip on the
 home page. That one rule is what keeps the reminder system working for works
 that do not exist yet.
+
+## Design
+
+The look is carried over from FAMS+: navy and gold, one accent colour per area,
+hairline borders over soft shadows, Plus Jakarta Sans with IBM Plex Mono for
+figures. Two departures, both for speed. The webfont loads with
+`font-display: optional`, so it is used once cached and simply skipped on a
+cold first visit rather than swapping fonts in front of you. And the icons are
+inline SVG rather than an icon font, so there is nothing to download and
+nothing to wait for.
+
+Cover images are optional per work and lazy-loaded, so an empty grid stays as
+fast as it was. Admin sits apart in the top bar, behind its own divider, so it
+never reads as one more work.
 
 ## Safety without a second PIN
 

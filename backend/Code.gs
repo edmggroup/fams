@@ -54,6 +54,7 @@ function doPost(e) {
       case 'saveRecord':    return json(saveRecord(req));
       case 'deleteRecord':  return json(deleteRecord(req));
       case 'saveWork':      return json(saveWork(req));
+      case 'saveProfile':   return json(saveProfile(req));
       case 'deleteWork':    return json(deleteWork(req));
       case 'reorderWorks':  return json(reorderWorks(req));
       case 'saveCategory':  return json(saveCategory(req));
@@ -323,6 +324,14 @@ function bumpVersion(index) {
  * Works and categories
  * ------------------------------------------------------------------ */
 
+function saveProfile(req) {
+  var index = readKey('index');
+  index.profile = req.profile || {};
+  writeKey('index', bumpVersion(index));
+  logAction('profile', 'Updated the workspace details');
+  return { ok: true, index: index };
+}
+
 function saveWork(req) {
   var index = readKey('index');
   var work = req.work || {};
@@ -342,6 +351,7 @@ function saveWork(req) {
     work.order = index.works.length;
     work.status = work.status || 'Active';
     work.fields = work.fields || defaultFields();
+    work.count = 0;
     index.works.push(work);
     writeKey('work:' + work.id, { records: [] });
     logAction('work.add', 'Added work "' + work.name + '"');
@@ -505,7 +515,14 @@ function workName(index, id) {
 function rebuildEvents(index, workId, records) {
   index.events = index.events || [];
 
+  function setCount(id, n) {
+    for (var k = 0; k < index.works.length; k++) {
+      if (index.works[k].id === id) { index.works[k].count = n; return; }
+    }
+  }
+
   if (workId) {
+    setCount(workId, (records || []).length);
     index.events = index.events.filter(function (ev) { return ev.workId !== workId; });
     var work = null;
     for (var i = 0; i < index.works.length; i++) {
@@ -516,7 +533,9 @@ function rebuildEvents(index, workId, records) {
     var all = [];
     index.works.forEach(function (w) {
       var payload = readKey('work:' + w.id);
-      all = all.concat(eventsFor(w, (payload && payload.records) || []));
+      var recs = (payload && payload.records) || [];
+      w.count = recs.length;
+      all = all.concat(eventsFor(w, recs));
     });
     index.events = all;
   }
@@ -579,6 +598,7 @@ function restore(req) {
   var index = readKey('index');
   var work = item.work;
   work.order = index.works.length;
+  work.count = (item.records || []).length;
   index.works.push(work);
   writeKey('work:' + work.id, { records: item.records || [] });
   bin.items.splice(bin.items.indexOf(item), 1);
@@ -655,9 +675,9 @@ function defaultFields() {
 
 function seedIndex() {
   var cats = [
-    { id: 'cat_teach',  name: 'Teaching',       color: '#EF9F27', order: 0 },
-    { id: 'cat_res',    name: 'Research',       color: '#1D9E75', order: 1 },
-    { id: 'cat_admin',  name: 'Administrative', color: '#7F77DD', order: 2 }
+    { id: 'cat_teach',  name: 'Teaching',       color: '#2a63c9', order: 0 },
+    { id: 'cat_res',    name: 'Research',       color: '#059669', order: 1 },
+    { id: 'cat_admin',  name: 'Administrative', color: '#7c3aed', order: 2 }
   ];
 
   function work(name, catId, summary, fields, titleField, groupBy) {
@@ -794,7 +814,35 @@ function seedIndex() {
     ], 'title', ''));
   });
 
-  works.forEach(function (w, i) { w.order = i; });
+  // One icon per work, so the grid reads as a set rather than a repeat.
+  var iconByName = {
+    'Timetable': 'cal', 'Class log': 'book', 'Examinations': 'clip',
+    'Publications': 'doc', 'Projects and grants': 'bank',
+    'Conferences and service': 'mic', 'Researchers': 'globe',
+    'UG research': 'flask', 'Service learning': 'users', 'ITEP': 'award',
+    'Science forum': 'chart', 'Frontiers in Nano': 'layers', 'Daksh': 'target',
+    'SAINTS 2027': 'award', 'Placements': 'users', 'Class teachership': 'users',
+    'Student mentoring': 'compass', 'ESPRo': 'seed', 'CSA and CSP': 'shield',
+    'IQAC criterion': 'doc'
+  };
 
-  return { version: 1, categories: cats, works: works, events: [] };
+  works.forEach(function (w, i) {
+    w.order = i;
+    w.count = 0;
+    w.icon = iconByName[w.name] || 'doc';
+    w.image = '';
+  });
+
+  return {
+    version: 1,
+    profile: {
+      name: 'Dr. Krishna Kumar M',
+      department: 'Department of Physics and Electronics',
+      institution: 'CHRIST (Deemed to be University), Bengaluru',
+      year: '2026-27'
+    },
+    categories: cats,
+    works: works,
+    events: []
+  };
 }
