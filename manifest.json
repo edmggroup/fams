@@ -1,16 +1,16 @@
 {
-  "name": "FAMS",
-  "short_name": "FAMS",
-  "description": "Private academic work and reminder workspace",
+  "name": "FAMS+ — Faculty Activity Management System",
+  "short_name": "FAMS+",
+  "description": "Faculty Activity Management System — Dr. Krishna Kumar M, Department of Physics and Electronics, CHRIST (Deemed to be University), Bengaluru",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f7f6f3",
-  "theme_color": "#f7f6f3",
+  "background_color": "#f4f6fb",
+  "theme_color": "#0f1f3d",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

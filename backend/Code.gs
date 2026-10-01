@@ -1,848 +1,523 @@
 /**
- * FAMS Lite — backend
+ * FAMS+ — Faculty Activity Management System — Google Sheets backend
+ * -------------------------------------------------------------------
+ * Turns a Google Sheet (living in your own Drive) into the live database
+ * for the app, and sends email notifications (daily digest, deadline
+ * reminders, mail merge, direct emails) via Gmail.
  *
- * One Google Sheet is the database. This script is the only thing that can
- * read or write it, and it will not answer a single question without a valid
- * session token. Deploy as a web app: "Execute as me", "Anyone" access.
- * Access is safe because the PIN gate lives in here, not in the page.
+ * This backend is deliberately simple: ONE sheet, ONE key→value table.
+ * Every module in the app (Teaching, Research, Mentoring, etc.) just
+ * stores its own named JSON array under one key ('timetable', 'mentees',
+ * 'publications', ...) — there is no per-module sheet, no schema table,
+ * no generic entity engine. This is what makes the whole system reliable
+ * and easy to deploy: fewer moving parts, nothing to keep in sync.
  *
- * Storage layout, in a sheet named "Store" with two columns, key and value:
- *   config       { pinHash, pinSalt, secret, academicYear, version }
- *   index        { version, categories[], works[], events[] }   <- home bundle
- *   work:<id>    { records: [...] }                             <- loaded on demand
- *   bin          { items: [...] }                               <- 30 day recycle bin
- *   log          [ ... last 500 actions ... ]
+ * SETUP (one-time, ~5 minutes) — see SETUP.md for the full walkthrough.
+ * Short version:
+ * 1. Create a new Google Sheet (sheets.new).
+ * 2. Extensions > Apps Script, paste this whole file in, save.
+ * 3. Deploy > New deployment > Web app > Execute as "Me" > Access "Anyone".
+ * 4. Copy the Web app URL (ends in /exec) into index.html's DATA_API_URL.
+ * 5. Copy APP_KEY below into index.html's APP_KEY constant — they must match.
+ *
+ * EMAIL QUOTA: Gmail accounts can send ~100 emails/day this way (Google
+ * Workspace accounts get more). That's normally plenty for one faculty
+ * member's notifications. If it's ever exceeded, notifications silently
+ * stop for the rest of the day but the app itself keeps working.
+ *
+ * FILE LAYOUT (everything below is grouped in this order):
+ *   1. Configuration        — every value you're likely to want to change lives here
+ *   2. HTTP entry points     — doGet / doPost, the only functions the app actually calls
+ *   3. Auth                  — the shared-key check
+ *   4. Sheet & cache helpers — low-level read/write plumbing
+ *   5. Email template        — the shared "Hello, ... Regards," structure every email uses
+ *   6. Email notifications   — mail merge / direct send / deadline digest
+ *   7. Manual test tool      — run directly from the Apps Script editor, not the app
+ *   8. Daily automatic backup
+ *   9. Daily deadline reminders
+ *   10. Daily working-day digest email
  */
 
-var SHEET_NAME = 'Store';
-var TOKEN_DAYS = 30;
-var MAX_ATTEMPTS = 5;
-var LOCKOUT_MINUTES = 15;
-var BIN_DAYS = 30;
-var LOG_LIMIT = 500;
 
-/* ------------------------------------------------------------------ *
- * Entry points
- * ------------------------------------------------------------------ */
+/* ============================================================
+   1. CONFIGURATION — everything you're likely to want to change
+   ============================================================ */
 
-function doGet() {
-  return json({ ok: true, app: 'fams-lite', ready: !!readFresh('config') });
+const SHEET_NAME = 'data';
+
+// A shared secret so random visitors who stumble on your Web App URL can't
+// read/write data or send emails through it. Change this to your own
+// random string, and copy the SAME value into index.html's APP_KEY constant.
+const APP_KEY = 'change-this-to-your-own-random-string-2026';
+
+// Optional short prefix added to every notification email's subject line.
+// Leave as '' for no prefix. Left blank on purpose — the faculty member
+// types their own subject line for every email sent from the app, so no
+// app-name prefix is added on top of it.
+const APP_NAME = '';
+
+// Faculty's real office email — every email FAMS+ sends is attempted from
+// this address as a Gmail "Send As" alias first (see SETUP.md §6); if that
+// alias isn't verified yet, it falls back to sending as the Google account
+// this script is deployed under, and always reports which address was used
+// so nothing fails silently.
+const OFFICE_EMAIL = 'krishnakumar.m@christuniversity.in';
+
+const SYSTEM_SIGN_OFF = 'FAMS+ — Faculty Activity Management System\nDr. Krishna Kumar M, Department of Physics and Electronics\nCHRIST (Deemed to be University), Bengaluru';
+
+// How long a cached read is considered fresh. Any write immediately clears
+// the cache, so this only affects back-to-back reads — it never serves
+// stale data across a save. Keep this short; it's a speed boost only.
+const CACHE_TTL_SECONDS = 25;
+
+const DAILY_BACKUP_FILE_NAME = 'fams-plus-daily-backup.json';
+const CACHE_KEY = 'all_rows_v1';
+
+// Which working days the daily digest / deadline reminders run on.
+// 0=Sunday .. 6=Saturday.
+const WORKING_DAYS = [1, 2, 3, 4, 5]; // Mon–Fri
+
+
+/* ============================================================
+   2. HTTP ENTRY POINTS — the only functions the web app calls
+   ============================================================ */
+
+function doGet(e) {
+  if (!checkKey_(e.parameter.key_check)) return jsonOut_({ error: 'Unauthorized' });
+  const action = e.parameter.action;
+
+  if (action === 'get') {
+    const map = getAllRowsCached_();
+    const v = map[e.parameter.key];
+    return jsonOut_({ key: e.parameter.key, value: (v !== undefined && v !== '') ? v : null });
+  }
+
+  if (action === 'getAll') {
+    // Reads the sheet ONCE (or serves from cache) and returns every requested
+    // key in a single response — this is what makes load time fast instead
+    // of one round-trip (and one sheet read) per collection.
+    const keys = (e.parameter.keys || '').split(',').filter(Boolean);
+    const map = getAllRowsCached_();
+    const result = {};
+    keys.forEach(function (k) {
+      const v = map[k];
+      result[k] = (v !== undefined && v !== '') ? v : null;
+    });
+    return jsonOut_({ values: result });
+  }
+
+  return jsonOut_({ error: 'Unknown action: ' + action });
 }
 
 function doPost(e) {
-  var req;
+  let body;
   try {
-    req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    body = JSON.parse(e.postData.contents);
   } catch (err) {
-    return json({ ok: false, error: 'Could not read the request.' });
+    return jsonOut_({ error: 'Invalid JSON body' });
   }
 
-  try {
-    var action = req.action;
+  if (!checkKey_(body.appKey)) return jsonOut_({ error: 'Unauthorized' });
 
-    // Open actions: no token needed.
-    if (action === 'status') return json({ ok: true, ready: !!readFresh('config') });
-    if (action === 'firstRun') return json(firstRun(req));
-    if (action === 'unlock') return json(unlock(req));
-
-    // Everything below needs a valid session.
-    requireToken(req.token);
-
-    switch (action) {
-      case 'sync':          return json(sync(req));
-      case 'getWork':       return json(getWork(req));
-      case 'saveRecord':    return json(saveRecord(req));
-      case 'deleteRecord':  return json(deleteRecord(req));
-      case 'saveWork':      return json(saveWork(req));
-      case 'saveProfile':   return json(saveProfile(req));
-      case 'deleteWork':    return json(deleteWork(req));
-      case 'reorderWorks':  return json(reorderWorks(req));
-      case 'saveCategory':  return json(saveCategory(req));
-      case 'deleteCategory':return json(deleteCategory(req));
-      case 'listBin':       return json({ ok: true, bin: pruneBin().items });
-      case 'restore':       return json(restore(req));
-      case 'purgeBin':      return json(purgeBin());
-      case 'listLog':       return json({ ok: true, log: readKey('log') || [] });
-      case 'changePin':     return json(changePin(req));
-      default:              return json({ ok: false, error: 'Unknown action: ' + action });
+  if (body.action === 'notify') {
+    try {
+      sendNotification_(body.type, body.payload || {});
+      return jsonOut_({ ok: true });
+    } catch (err) {
+      return jsonOut_({ ok: false, error: String(err) });
     }
+  }
+
+  if (body.action === 'testEmail') {
+    try {
+      if (!body.to) return jsonOut_({ ok: false, error: 'No recipient email provided' });
+      sendAs_(body.to, subjectFor_('Test email'),
+        emailBody_('If you received this, email notifications are working correctly for this deployment. This was sent at ' + new Date().toString() + '.', SYSTEM_SIGN_OFF)
+      );
+      return jsonOut_({ ok: true, remainingQuota: MailApp.getRemainingDailyQuota(), sentAs: lastSendAsUsed_ });
+    } catch (err) {
+      return jsonOut_({ ok: false, error: String(err), remainingQuota: MailApp.getRemainingDailyQuota() });
+    }
+  }
+
+  if (body.action === 'mailMerge') {
+    try {
+      const results = runMailMerge_(body.recipients || [], body.subject || '', body.bodyTemplate || '');
+      return jsonOut_({ ok: true, results: results, remainingQuota: MailApp.getRemainingDailyQuota() });
+    } catch (err) {
+      return jsonOut_({ ok: false, error: String(err) });
+    }
+  }
+
+  const sheet = getSheet_();
+  if (!body.key) return jsonOut_({ error: 'Missing key' });
+
+  if (body.action === 'delete') {
+    deleteKey_(sheet, body.key);
+    invalidateCache_();
+    return jsonOut_({ ok: true, deleted: body.key });
+  }
+
+  setValue_(sheet, body.key, body.value);
+  invalidateCache_();
+  return jsonOut_({ ok: true, key: body.key });
+}
+
+
+/* ============================================================
+   3. AUTH
+   ============================================================ */
+
+function checkKey_(providedKey) {
+  return providedKey === APP_KEY;
+}
+
+
+/* ============================================================
+   4. SHEET & CACHE HELPERS — low-level read/write plumbing
+   ============================================================ */
+
+function getSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(['key', 'value']);
+    sheet.setFrozenRows(1);
+    sheet.getRange('A:A').setNumberFormat('@'); // keys are always plain text
+  }
+  return sheet;
+}
+
+function getAllRowsCached_() {
+  const cache = CacheService.getScriptCache();
+  try {
+    const cached = cache.get(CACHE_KEY);
+    if (cached) return JSON.parse(cached);
   } catch (err) {
-    return json({ ok: false, error: String((err && err.message) || err) });
+    // Cache miss or corrupt cache entry — fall through to a real read.
+  }
+  const sheet = getSheet_();
+  const rows = sheet.getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < rows.length; i++) {
+    map[rows[i][0]] = rows[i][1];
+  }
+  try {
+    // CacheService caps each value at 100KB. If the data grows past that,
+    // this silently fails and every read just falls back to a normal
+    // (still correct, just not cache-accelerated) sheet read.
+    cache.put(CACHE_KEY, JSON.stringify(map), CACHE_TTL_SECONDS);
+  } catch (err) { /* too large to cache — fine, reads just go straight to the sheet */ }
+  return map;
+}
+
+function invalidateCache_() {
+  try { CacheService.getScriptCache().remove(CACHE_KEY); } catch (err) { /* no-op */ }
+}
+
+function findRow_(sheet, key) {
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] === key) return i + 1; // 1-indexed sheet row
+  }
+  return -1;
+}
+
+function getValue_(sheet, key) {
+  const row = findRow_(sheet, key);
+  if (row === -1) return null;
+  const val = sheet.getRange(row, 2).getValue();
+  return val === '' ? null : val;
+}
+
+function setValue_(sheet, key, value) {
+  const row = findRow_(sheet, key);
+  if (row === -1) {
+    sheet.appendRow([key, value]);
+  } else {
+    sheet.getRange(row, 2).setValue(value);
   }
 }
 
-function json(obj) {
+function deleteKey_(sheet, key) {
+  const row = findRow_(sheet, key);
+  if (row !== -1) sheet.deleteRow(row);
+}
+
+function jsonOut_(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-/* ------------------------------------------------------------------ *
- * Key/value store over the sheet
- * ------------------------------------------------------------------ */
-
-function sheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(SHEET_NAME);
-  if (!sh) {
-    sh = ss.insertSheet(SHEET_NAME);
-    sh.getRange(1, 1, 1, 2).setValues([['key', 'value']]);
-    sh.setFrozenRows(1);
-  }
-  return sh;
+function getCollection_(key) {
+  const raw = getValue_(getSheet_(), key);
+  try { return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
 }
 
-function rowOf(key) {
-  var sh = sheet();
-  var last = sh.getLastRow();
-  if (last < 2) return 0;
-  var keys = sh.getRange(2, 1, last - 1, 1).getValues();
-  for (var i = 0; i < keys.length; i++) {
-    if (String(keys[i][0]) === key) return i + 2;
-  }
-  return 0;
+
+/* ============================================================
+   5. EMAIL TEMPLATE
+   ============================================================ */
+
+function subjectFor_(text) {
+  return APP_NAME ? (APP_NAME + ': ' + text) : text;
 }
 
-function readKey(key) {
-  // The index bundle is read on nearly every request, so it is cached.
-  var cache = CacheService.getScriptCache();
-  if (key === 'index' || key === 'config') {
-    var hit = cache.get(key);
-    if (hit) {
-      try { return JSON.parse(hit); } catch (e) { /* fall through to the sheet */ }
-    }
-  }
-  var row = rowOf(key);
-  if (!row) return null;
-  var raw = sheet().getRange(row, 2).getValue();
-  if (raw === '' || raw === null) return null;
-  var value;
-  try { value = JSON.parse(raw); } catch (e) { return null; }
-  if (key === 'index' || key === 'config') {
-    try { cache.put(key, JSON.stringify(value), 21600); } catch (e) { /* too big to cache */ }
-  }
-  return value;
+function emailBody_(message, signOff, greeting) {
+  return (greeting || 'Hello,') + '\n\n' + message + '\n\nRegards,\n' + signOff;
 }
 
-/**
- * Reads straight from the sheet, ignoring the cache. Anything that decides
- * whether the workspace exists must use this: the cache holds a copy for six
- * hours, so a config deleted by hand would otherwise still look present.
- */
-function readFresh(key) {
-  var row = rowOf(key);
-  if (!row) {
-    try { CacheService.getScriptCache().remove(key); } catch (e) {}
-    return null;
-  }
-  var raw = sheet().getRange(row, 2).getValue();
-  if (raw === '' || raw === null) return null;
-  try { return JSON.parse(raw); } catch (e) { return null; }
-}
-
-function writeKey(key, value) {
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
+// Tries to send as the real office email (a verified Gmail "Send As" alias)
+// first; if that alias isn't verified yet, falls back to sending as
+// whichever Google account this script is deployed under. Either way it
+// records which address was actually used, so nothing fails silently —
+// see SETUP.md §6 for how to verify the alias.
+var lastSendAsUsed_ = '';
+function sendAs_(to, subject, body) {
   try {
-    var sh = sheet();
-    var row = rowOf(key);
-    var raw = JSON.stringify(value);
-    if (!row) {
-      sh.appendRow([key, raw]);
-    } else {
-      sh.getRange(row, 2).setValue(raw);
+    const aliases = GmailApp.getAliases();
+    if (aliases.indexOf(OFFICE_EMAIL) !== -1) {
+      GmailApp.sendEmail(to, subject, body, { from: OFFICE_EMAIL });
+      lastSendAsUsed_ = OFFICE_EMAIL;
+      return;
     }
-    if (key === 'index' || key === 'config') {
-      try { CacheService.getScriptCache().put(key, raw, 21600); } catch (e) {}
-    }
-  } finally {
-    lock.releaseLock();
+  } catch (err) { /* fall through to default send */ }
+  MailApp.sendEmail(to, subject, body);
+  lastSendAsUsed_ = Session.getActiveUser().getEmail() || '(deployment account)';
+}
+
+
+/* ============================================================
+   6. EMAIL NOTIFICATIONS — mail merge, direct send, deadline digest
+   ============================================================ */
+
+const NOTIFICATION_HANDLERS = {
+  // A generic "send one email now" action, used by every module's
+  // "Email this person" / "WhatsApp" button flow for the email half.
+  directEmail: function (p) {
+    if (!p.to) return;
+    sendAs_(p.to, subjectFor_(p.subject || 'Message from FAMS+'), emailBody_(p.message || '', SYSTEM_SIGN_OFF, p.greeting));
   }
-  return value;
+};
+
+function sendNotification_(type, p) {
+  const handler = NOTIFICATION_HANDLERS[type];
+  if (handler) handler(p);
 }
 
-function dropKey(key) {
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    var row = rowOf(key);
-    if (row) sheet().deleteRow(row);
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-/* ------------------------------------------------------------------ *
- * PIN, lockout, session tokens
- * ------------------------------------------------------------------ */
-
-function sha256(text) {
-  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text, Utilities.Charset.UTF_8);
-  return Utilities.base64EncodeWebSafe(bytes);
-}
-
-function hashPin(pin, salt) {
-  return sha256(salt + '|' + String(pin) + '|fams-lite');
-}
-
-function randomString(len) {
-  var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  var out = '';
-  for (var i = 0; i < (len || 32); i++) {
-    out += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return out;
-}
-
-/** Creates the config, the seeded index, and sets the PIN. Runs once. */
-function firstRun(req) {
-  if (readFresh('config')) return { ok: false, error: 'Already set up. Use changePin instead.' };
-  var pin = String(req.pin || '');
-  if (!/^\d{4}$/.test(pin)) return { ok: false, error: 'The PIN must be exactly 4 digits.' };
-
-  var salt = randomString(24);
-  writeKey('config', {
-    pinHash: hashPin(pin, salt),
-    pinSalt: salt,
-    secret: randomString(48),
-    academicYear: req.academicYear || '2026-27',
-    version: 1
-  });
-  writeKey('index', seedIndex());
-  writeKey('bin', { items: [] });
-  writeKey('log', []);
-  logAction('setup', 'Workspace created');
-  return { ok: true };
-}
-
-function attemptState() {
-  var props = PropertiesService.getScriptProperties();
-  return {
-    attempts: Number(props.getProperty('attempts') || 0),
-    lockUntil: Number(props.getProperty('lockUntil') || 0)
-  };
-}
-
-function unlock(req) {
-  var config = readKey('config');
-  if (!config) return { ok: false, error: 'Not set up yet.', needsSetup: true };
-
-  var state = attemptState();
-  var now = Date.now();
-  if (state.lockUntil > now) {
-    return { ok: false, error: 'Too many wrong attempts. Try again in '
-      + Math.ceil((state.lockUntil - now) / 60000) + ' minutes.', locked: true };
-  }
-
-  var props = PropertiesService.getScriptProperties();
-  var given = String(req.pin || '');
-  if (hashPin(given, config.pinSalt) !== config.pinHash) {
-    var attempts = state.attempts + 1;
-    props.setProperty('attempts', String(attempts));
-    if (attempts >= MAX_ATTEMPTS) {
-      props.setProperty('lockUntil', String(now + LOCKOUT_MINUTES * 60000));
-      props.setProperty('attempts', '0');
-      logAction('locked', 'Locked out after ' + MAX_ATTEMPTS + ' wrong PIN attempts');
-      return { ok: false, error: 'Too many wrong attempts. Locked for '
-        + LOCKOUT_MINUTES + ' minutes.', locked: true };
-    }
-    return { ok: false, error: 'Wrong PIN. ' + (MAX_ATTEMPTS - attempts) + ' attempts left.' };
-  }
-
-  props.setProperty('attempts', '0');
-  props.deleteProperty('lockUntil');
-  return { ok: true, token: mintToken(config), index: readKey('index') };
-}
-
-function mintToken(config) {
-  var payload = Utilities.base64EncodeWebSafe(JSON.stringify({
-    exp: Date.now() + TOKEN_DAYS * 86400000,
-    n: randomString(8)
-  }));
-  var sig = Utilities.base64EncodeWebSafe(
-    Utilities.computeHmacSha256Signature(payload, config.secret)
-  );
-  return payload + '.' + sig;
-}
-
-function requireToken(token) {
-  var config = readKey('config');
-  if (!config) throw new Error('Not set up yet.');
-  var parts = String(token || '').split('.');
-  if (parts.length !== 2) throw new Error('Session expired. Enter your PIN again.');
-  var expected = Utilities.base64EncodeWebSafe(
-    Utilities.computeHmacSha256Signature(parts[0], config.secret)
-  );
-  if (parts[1] !== expected) throw new Error('Session expired. Enter your PIN again.');
-  var payload;
-  try {
-    payload = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString());
-  } catch (e) {
-    throw new Error('Session expired. Enter your PIN again.');
-  }
-  if (!payload.exp || payload.exp < Date.now()) {
-    throw new Error('Session expired. Enter your PIN again.');
-  }
-  return true;
-}
-
-function changePin(req) {
-  var config = readKey('config');
-  var pin = String(req.newPin || '');
-  if (!/^\d{4}$/.test(pin)) return { ok: false, error: 'The PIN must be exactly 4 digits.' };
-  if (hashPin(String(req.currentPin || ''), config.pinSalt) !== config.pinHash) {
-    return { ok: false, error: 'Current PIN is wrong.' };
-  }
-  var salt = randomString(24);
-  config.pinSalt = salt;
-  config.pinHash = hashPin(pin, salt);
-  config.secret = randomString(48); // invalidates every existing session
-  writeKey('config', config);
-  logAction('pin', 'PIN changed');
-  return { ok: true };
-}
-
-/* ------------------------------------------------------------------ *
- * Sync
- * ------------------------------------------------------------------ */
-
-/** The cheapest call in the app: usually just a version comparison. */
-function sync(req) {
-  var index = readKey('index');
-  if (req.version && Number(req.version) === Number(index.version)) {
-    return { ok: true, same: true, version: index.version };
-  }
-  return { ok: true, same: false, index: index };
-}
-
-function bumpVersion(index) {
-  index.version = Number(index.version || 0) + 1;
-  return index;
-}
-
-/* ------------------------------------------------------------------ *
- * Works and categories
- * ------------------------------------------------------------------ */
-
-function saveProfile(req) {
-  var index = readKey('index');
-  index.profile = req.profile || {};
-  writeKey('index', bumpVersion(index));
-  logAction('profile', 'Updated the workspace details');
-  return { ok: true, index: index };
-}
-
-function saveWork(req) {
-  var index = readKey('index');
-  var work = req.work || {};
-  if (!String(work.name || '').trim()) return { ok: false, error: 'The work needs a name.' };
-
-  var existing = null;
-  for (var i = 0; i < index.works.length; i++) {
-    if (index.works[i].id === work.id) { existing = index.works[i]; break; }
-  }
-
-  if (existing) {
-    work.order = (work.order === undefined) ? existing.order : work.order;
-    index.works[index.works.indexOf(existing)] = work;
-    logAction('work.edit', 'Edited work "' + work.name + '"');
-  } else {
-    work.id = work.id || 'w_' + randomString(10);
-    work.order = index.works.length;
-    work.status = work.status || 'Active';
-    work.fields = work.fields || defaultFields();
-    work.count = 0;
-    index.works.push(work);
-    writeKey('work:' + work.id, { records: [] });
-    logAction('work.add', 'Added work "' + work.name + '"');
-  }
-
-  rebuildEvents(index);
-  writeKey('index', bumpVersion(index));
-  return { ok: true, index: index };
-}
-
-function deleteWork(req) {
-  var index = readKey('index');
-  var id = req.id;
-  var work = null;
-  for (var i = 0; i < index.works.length; i++) {
-    if (index.works[i].id === id) { work = index.works[i]; break; }
-  }
-  if (!work) return { ok: false, error: 'That work no longer exists.' };
-
-  if (req.mode === 'archive') {
-    work.status = 'Completed';
-    work.archivedAt = new Date().toISOString();
-    work.note = req.note || '';
-    logAction('work.archive', 'Archived work "' + work.name + '"');
-  } else {
-    if (String(req.confirmName || '').trim() !== String(work.name).trim()) {
-      return { ok: false, error: 'Type the work\'s name exactly to confirm the delete.' };
-    }
-    var payload = readKey('work:' + id) || { records: [] };
-    var bin = pruneBin();
-    bin.items.push({
-      binId: 'b_' + randomString(8),
-      deletedAt: new Date().toISOString(),
-      work: work,
-      records: payload.records
-    });
-    writeKey('bin', bin);
-    dropKey('work:' + id);
-    index.works.splice(index.works.indexOf(work), 1);
-    logAction('work.delete', 'Deleted work "' + work.name + '" with '
-      + payload.records.length + ' records (recoverable for ' + BIN_DAYS + ' days)');
-  }
-
-  rebuildEvents(index);
-  writeKey('index', bumpVersion(index));
-  return { ok: true, index: index };
-}
-
-function reorderWorks(req) {
-  var index = readKey('index');
-  var order = req.ids || [];
-  index.works.forEach(function (w) {
-    var at = order.indexOf(w.id);
-    if (at !== -1) w.order = at;
-  });
-  index.works.sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
-  writeKey('index', bumpVersion(index));
-  logAction('work.reorder', 'Reordered works');
-  return { ok: true, index: index };
-}
-
-function saveCategory(req) {
-  var index = readKey('index');
-  var cat = req.category || {};
-  if (!String(cat.name || '').trim()) return { ok: false, error: 'The category needs a name.' };
-  var found = -1;
-  for (var i = 0; i < index.categories.length; i++) {
-    if (index.categories[i].id === cat.id) { found = i; break; }
-  }
-  if (found === -1) {
-    cat.id = cat.id || 'c_' + randomString(8);
-    cat.order = index.categories.length;
-    index.categories.push(cat);
-    logAction('cat.add', 'Added category "' + cat.name + '"');
-  } else {
-    cat.order = index.categories[found].order;
-    index.categories[found] = cat;
-    logAction('cat.edit', 'Edited category "' + cat.name + '"');
-  }
-  writeKey('index', bumpVersion(index));
-  return { ok: true, index: index };
-}
-
-function deleteCategory(req) {
-  var index = readKey('index');
-  var inUse = index.works.filter(function (w) { return w.categoryId === req.id; });
-  if (inUse.length) {
-    return { ok: false, error: inUse.length + ' work(s) still use this category. '
-      + 'Move them first, then delete it.' };
-  }
-  index.categories = index.categories.filter(function (c) { return c.id !== req.id; });
-  writeKey('index', bumpVersion(index));
-  logAction('cat.delete', 'Deleted a category');
-  return { ok: true, index: index };
-}
-
-/* ------------------------------------------------------------------ *
- * Records
- * ------------------------------------------------------------------ */
-
-function getWork(req) {
-  var payload = readKey('work:' + req.id);
-  if (!payload) return { ok: true, records: [] };
-  return { ok: true, records: payload.records || [] };
-}
-
-function saveRecord(req) {
-  var key = 'work:' + req.workId;
-  var payload = readKey(key) || { records: [] };
-  var rec = req.record || {};
-  var found = -1;
-  for (var i = 0; i < payload.records.length; i++) {
-    if (payload.records[i].id === rec.id) { found = i; break; }
-  }
-  if (found === -1) {
-    rec.id = rec.id || 'r_' + randomString(10);
-    rec.createdAt = new Date().toISOString();
-    payload.records.push(rec);
-  } else {
-    rec.updatedAt = new Date().toISOString();
-    payload.records[found] = rec;
-  }
-  writeKey(key, payload);
-
-  var index = readKey('index');
-  rebuildEvents(index, req.workId, payload.records);
-  writeKey('index', bumpVersion(index));
-  logAction('record.save', 'Saved a record in ' + workName(index, req.workId));
-  return { ok: true, record: rec, index: index };
-}
-
-function deleteRecord(req) {
-  var key = 'work:' + req.workId;
-  var payload = readKey(key) || { records: [] };
-  payload.records = payload.records.filter(function (r) { return r.id !== req.recordId; });
-  writeKey(key, payload);
-
-  var index = readKey('index');
-  rebuildEvents(index, req.workId, payload.records);
-  writeKey('index', bumpVersion(index));
-  logAction('record.delete', 'Deleted a record from ' + workName(index, req.workId));
-  return { ok: true, index: index };
-}
-
-function workName(index, id) {
-  for (var i = 0; i < index.works.length; i++) {
-    if (index.works[i].id === id) return index.works[i].name;
-  }
-  return 'a work';
-}
-
-/* ------------------------------------------------------------------ *
- * Event derivation — what feeds the home page's upcoming strip
- * ------------------------------------------------------------------ */
-
-/**
- * Any field flagged timeline:true becomes an event. Passing workId and its
- * records rebuilds only that work's events; calling it bare rebuilds all,
- * which is what a work or category change needs.
- */
-function rebuildEvents(index, workId, records) {
-  index.events = index.events || [];
-
-  function setCount(id, n) {
-    for (var k = 0; k < index.works.length; k++) {
-      if (index.works[k].id === id) { index.works[k].count = n; return; }
-    }
-  }
-
-  if (workId) {
-    setCount(workId, (records || []).length);
-    index.events = index.events.filter(function (ev) { return ev.workId !== workId; });
-    var work = null;
-    for (var i = 0; i < index.works.length; i++) {
-      if (index.works[i].id === workId) { work = index.works[i]; break; }
-    }
-    if (work) index.events = index.events.concat(eventsFor(work, records || []));
-  } else {
-    var all = [];
-    index.works.forEach(function (w) {
-      var payload = readKey('work:' + w.id);
-      var recs = (payload && payload.records) || [];
-      w.count = recs.length;
-      all = all.concat(eventsFor(w, recs));
-    });
-    index.events = all;
-  }
-
-  index.events.sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); });
-  return index;
-}
-
-function eventsFor(work, records) {
-  var dated = (work.fields || []).filter(function (f) {
-    return f.timeline && (f.type === 'date' || f.type === 'datetime');
-  });
-  if (!dated.length) return [];
-
-  var out = [];
-  records.forEach(function (rec) {
-    dated.forEach(function (f) {
-      var value = rec[f.key];
-      if (!value) return;
-      out.push({
-        workId: work.id,
-        workName: work.name,
-        categoryId: work.categoryId,
-        recordId: rec.id,
-        date: String(value).slice(0, 10),
-        label: f.label,
-        title: rec[work.titleField] || rec.title || f.label,
-        done: rec.done === true || rec.status === 'Done' || rec.status === 'Completed'
+// Mail merge: sends the same templated message to a list of recipients,
+// substituting {{field}} placeholders per-recipient. Returns a per-recipient
+// result list so the UI can show exactly who succeeded/failed and why.
+function runMailMerge_(recipients, subject, bodyTemplate) {
+  const results = [];
+  recipients.forEach(function (r) {
+    if (!r.email) { results.push({ email: '', name: r.name || '', ok: false, error: 'No email address' }); return; }
+    try {
+      let subj = subject, body = bodyTemplate;
+      Object.keys(r).forEach(function (k) {
+        const re = new RegExp('\\{\\{' + k + '\\}\\}', 'g');
+        subj = subj.replace(re, r[k] == null ? '' : String(r[k]));
+        body = body.replace(re, r[k] == null ? '' : String(r[k]));
       });
+      sendAs_(r.email, subjectFor_(subj), body);
+      results.push({ email: r.email, name: r.name || '', ok: true });
+    } catch (err) {
+      results.push({ email: r.email, name: r.name || '', ok: false, error: String(err) });
+    }
+  });
+  return results;
+}
+
+
+/* ============================================================
+   7. MANUAL TEST TOOL
+   ------------------------------------------------------------
+   Not called by the app at all — this is here so you can select
+   "testMail" from the function dropdown at the top of the Apps
+   Script editor and click Run, as a quick sanity check that this
+   script is allowed to send email at all, independent of the app.
+   ============================================================ */
+
+function testMail() {
+  sendAs_(OFFICE_EMAIL, 'FAMS+ Test', emailBody_('If you receive this, Apps Script email is working. Sent as: ' + lastSendAsUsed_, SYSTEM_SIGN_OFF));
+}
+
+
+/* ============================================================
+   8. DAILY AUTOMATIC BACKUP
+   ------------------------------------------------------------
+   dailyBackup_() writes every collection currently stored in the
+   sheet to ONE Drive file (DAILY_BACKUP_FILE_NAME), overwriting
+   it each time — so Drive never accumulates a new file per day,
+   just one always-current snapshot.
+
+   ONE-TIME SETUP (~30 seconds):
+     1. In the Apps Script editor, select "setUpDailyBackupTrigger"
+        from the function dropdown at the top.
+     2. Click Run. Approve the authorization prompt if asked.
+     3. Done — it now runs automatically once a day from here on.
+   ============================================================ */
+
+function dailyBackup_() {
+  const map = getAllRowsCached_();
+  const content = JSON.stringify({ backedUpAt: new Date().toISOString(), data: map }, null, 2);
+  const existing = DriveApp.getFilesByName(DAILY_BACKUP_FILE_NAME);
+  if (existing.hasNext()) {
+    existing.next().setContent(content);
+  } else {
+    DriveApp.createFile(DAILY_BACKUP_FILE_NAME, content, MimeType.PLAIN_TEXT);
+  }
+}
+
+function setUpDailyBackupTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'dailyBackup_') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('dailyBackup_').timeBased().everyDays(1).atHour(23).create();
+}
+
+
+/* ============================================================
+   9. DAILY DEADLINE REMINDERS
+   ------------------------------------------------------------
+   Emails a summary of anything due within the next 3 days across
+   every module that has a date field — leave, exams, meetings,
+   action items, reminders, project deadlines, and more. Nothing
+   is sent if there's nothing due.
+
+   Same one-time setup as the daily backup above, selecting
+   "setUpDailyReminderTrigger" instead.
+   ============================================================ */
+
+// [ collectionKey, dateField, statusField, "done" values to skip, label ]
+const DEADLINE_SOURCES = [
+  ['leave-records', 'fromDate', 'status', ['Rejected'], 'Leave/OD'],
+  ['invigilation-duties', 'date', null, [], 'Invigilation Duty'],
+  ['evaluations', 'deadline', 'status', ['Completed'], 'Evaluation'],
+  ['mentee-meetings', 'date', null, [], 'Mentoring Meeting'],
+  ['lab-exams', 'date', null, [], 'Lab Exam'],
+  ['extra-classes', 'date', null, [], 'Extra Class'],
+  ['research-targets', 'targetDate', 'status', ['Completed'], 'Research Target'],
+  ['project-grants', 'endDate', 'status', ['Closed', 'Completed'], 'Project/Grant deadline'],
+  ['committees', null, null, [], ''], // no date field, skipped
+  ['meetings', 'date', 'status', ['Completed'], 'Meeting'],
+  ['action-items', 'dueDate', 'status', ['Done'], 'Action Item'],
+  ['reminders', 'dueDate', 'status', ['Done'], 'Reminder'],
+  ['office-followups', 'followUpDate', 'status', ['Resolved'], 'Office Follow-up']
+];
+
+function dailyDeadlineReminders_() {
+  const today = new Date();
+  const windowEnd = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const todayStr = today.toISOString().slice(0, 10);
+  const windowEndStr = windowEnd.toISOString().slice(0, 10);
+  const inWindow = function (d) { return d && d >= todayStr && d <= windowEndStr; };
+
+  const lines = [];
+  DEADLINE_SOURCES.forEach(function (src) {
+    const key = src[0], dateField = src[1], statusField = src[2], doneValues = src[3], label = src[4];
+    if (!dateField) return;
+    getCollection_(key).forEach(function (item) {
+      if (item.deleted) return;
+      const d = item[dateField];
+      if (!inWindow(d)) return;
+      if (statusField && doneValues.indexOf(item[statusField]) !== -1) return;
+      const title = item.title || item.subject || item.description || item.eventName || item.examName || '(untitled)';
+      lines.push(label + ': "' + title + '" — ' + d);
     });
   });
-  return out;
+
+  if (lines.length === 0) return;
+  const message = lines.length + ' item(s) due in the next 3 days:\n\n' + lines.map(function (l) { return '- ' + l; }).join('\n') + '\n\nOpen FAMS+ to see full details.';
+  sendAs_(OFFICE_EMAIL, subjectFor_('Upcoming deadlines — next 3 days'), emailBody_(message, SYSTEM_SIGN_OFF));
 }
 
-/* ------------------------------------------------------------------ *
- * Recycle bin
- * ------------------------------------------------------------------ */
-
-function pruneBin() {
-  var bin = readKey('bin') || { items: [] };
-  var cutoff = Date.now() - BIN_DAYS * 86400000;
-  var kept = bin.items.filter(function (it) {
-    return new Date(it.deletedAt).getTime() > cutoff;
+function setUpDailyReminderTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'dailyDeadlineReminders_') ScriptApp.deleteTrigger(t);
   });
-  if (kept.length !== bin.items.length) {
-    bin.items = kept;
-    writeKey('bin', bin);
-  }
-  return bin;
+  ScriptApp.newTrigger('dailyDeadlineReminders_').timeBased().everyDays(1).atHour(7).create();
 }
 
-function restore(req) {
-  var bin = pruneBin();
-  var item = null;
-  for (var i = 0; i < bin.items.length; i++) {
-    if (bin.items[i].binId === req.binId) { item = bin.items[i]; break; }
-  }
-  if (!item) return { ok: false, error: 'That deleted work is no longer in the bin.' };
 
-  var index = readKey('index');
-  var work = item.work;
-  work.order = index.works.length;
-  work.count = (item.records || []).length;
-  index.works.push(work);
-  writeKey('work:' + work.id, { records: item.records || [] });
-  bin.items.splice(bin.items.indexOf(item), 1);
-  writeKey('bin', bin);
+/* ============================================================
+   10. DAILY WORKING-DAY DIGEST EMAIL
+   ------------------------------------------------------------
+   A short "here's today" summary — today's timetable slots, and
+   anything due today specifically — sent only on working days
+   (WORKING_DAYS above), skipping weekends and any date listed in
+   the Holidays module automatically.
 
-  rebuildEvents(index, work.id, item.records || []);
-  writeKey('index', bumpVersion(index));
-  logAction('work.restore', 'Restored work "' + work.name + '"');
-  return { ok: true, index: index };
+   Same one-time setup, selecting "setUpDailyDigestTrigger".
+   ============================================================ */
+
+function isWorkingDayToday_() {
+  const day = new Date().getDay();
+  if (WORKING_DAYS.indexOf(day) === -1) return false;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isHoliday = getCollection_('holidays').some(function (h) { return h.date === todayStr && !h.deleted; });
+  return !isHoliday;
 }
 
-function purgeBin() {
-  writeKey('bin', { items: [] });
-  logAction('bin.purge', 'Emptied the recycle bin');
-  return { ok: true };
-}
+const DOW_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/* ------------------------------------------------------------------ *
- * Activity log
- * ------------------------------------------------------------------ */
+function dailyDigest_() {
+  if (!isWorkingDayToday_()) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dow = DOW_NAMES[new Date().getDay()];
 
-function logAction(kind, message) {
-  try {
-    var log = readKey('log') || [];
-    log.unshift({ at: new Date().toISOString(), kind: kind, message: message });
-    if (log.length > LOG_LIMIT) log = log.slice(0, LOG_LIMIT);
-    writeKey('log', log);
-  } catch (e) { /* the log is never allowed to break a real action */ }
-}
+  const classesToday = getCollection_('timetable')
+    .filter(function (t) { return !t.deleted && t.day === dow; })
+    .sort(function (a, b) { return (a.startTime || '').localeCompare(b.startTime || ''); });
 
-/* ------------------------------------------------------------------ *
- * Starting over
- * ------------------------------------------------------------------ */
-
-/**
- * Run this from the Apps Script editor (pick it in the function dropdown and
- * press Run) to wipe the workspace and start from first run again. Deleting
- * the Store sheet by hand is not enough on its own, because the script keeps
- * a six hour cache and the lockout counter separately.
- */
-function resetWorkspace() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(SHEET_NAME);
-  if (sh) ss.deleteSheet(sh);
-  sheet(); // recreate it empty, with its header row
-
-  try {
-    var cache = CacheService.getScriptCache();
-    cache.remove('config');
-    cache.remove('index');
-  } catch (e) {}
-
-  var props = PropertiesService.getScriptProperties();
-  props.deleteProperty('attempts');
-  props.deleteProperty('lockUntil');
-
-  return 'Workspace cleared. Open the site, use "Change the backend URL" or add '
-    + '?reset to the address, then set a new PIN.';
-}
-
-/* ------------------------------------------------------------------ *
- * Seed — the 14 works from the FAMS+ inventory
- * ------------------------------------------------------------------ */
-
-function defaultFields() {
-  return [
-    { key: 'title',  label: 'Title',  type: 'text',     timeline: false, required: true },
-    { key: 'due',    label: 'Due',    type: 'date',     timeline: true },
-    { key: 'status',  label: 'Status', type: 'select',   timeline: false,
-      options: ['Open', 'In progress', 'Done'] },
-    { key: 'notes',  label: 'Notes',  type: 'longtext', timeline: false }
-  ];
-}
-
-function seedIndex() {
-  var cats = [
-    { id: 'cat_teach',  name: 'Teaching',       color: '#2a63c9', order: 0 },
-    { id: 'cat_res',    name: 'Research',       color: '#059669', order: 1 },
-    { id: 'cat_admin',  name: 'Administrative', color: '#7c3aed', order: 2 }
-  ];
-
-  function work(name, catId, summary, fields, titleField, groupBy) {
-    return {
-      id: 'w_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
-      name: name,
-      categoryId: catId,
-      summary: summary || '',
-      status: 'Active',
-      academicYear: '2026-27',
-      hidden: false,
-      titleField: titleField || 'title',
-      groupBy: groupBy || '',
-      fields: fields || defaultFields()
-    };
-  }
-
-  var F = {
-    text: function (k, l, o) { return merge({ key: k, label: l, type: 'text' }, o); },
-    longtext: function (k, l, o) { return merge({ key: k, label: l, type: 'longtext' }, o); },
-    date: function (k, l, o) { return merge({ key: k, label: l, type: 'date' }, o); },
-    number: function (k, l, o) { return merge({ key: k, label: l, type: 'number' }, o); },
-    amount: function (k, l, o) { return merge({ key: k, label: l, type: 'amount' }, o); },
-    select: function (k, l, opts, o) {
-      return merge({ key: k, label: l, type: 'select', options: opts }, o);
-    },
-    email: function (k, l, o) { return merge({ key: k, label: l, type: 'email' }, o); },
-    link: function (k, l, o) { return merge({ key: k, label: l, type: 'link' }, o); },
-    people: function (k, l, o) { return merge({ key: k, label: l, type: 'people' }, o); }
-  };
-
-  function merge(base, extra) {
-    if (extra) for (var k in extra) base[k] = extra[k];
-    return base;
-  }
-
-  var works = [
-    work('Timetable', 'cat_teach', 'Theory and lab sessions, hours remaining', [
-      F.text('subject', 'Subject', { required: true }),
-      F.select('kind', 'Type', ['Theory', 'Laboratory']),
-      F.select('day', 'Day', ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']),
-      F.text('slot', 'Time slot'),
-      F.text('classGroup', 'Class or batch'),
-      F.number('hoursTotal', 'Hours for the term'),
-      F.number('hoursTaken', 'Hours taken')
-    ], 'subject', 'kind'),
-
-    work('Class log', 'cat_teach', 'Topics covered, rosters, extra classes', [
-      F.date('date', 'Date'),
-      F.text('subject', 'Subject', { required: true }),
-      F.text('topic', 'Topic'),
-      F.select('kind', 'Class type', ['Regular', 'Extra', 'Remedial']),
-      F.people('attendance', 'Attendance'),
-      F.longtext('notes', 'Notes')
-    ], 'topic', 'subject'),
-
-    work('Examinations', 'cat_teach', 'Invigilation, question bank, evaluation, CIA marks', [
-      F.select('kind', 'Kind of work',
-        ['Invigilation', 'Question bank', 'Evaluation', 'Internal marks', 'Lab exam']),
-      F.text('subject', 'Subject'),
-      F.text('paper', 'Paper or exam'),
-      F.date('due', 'Due', { timeline: true }),
-      F.select('status', 'Status', ['Open', 'In progress', 'Done']),
-      F.number('count', 'Scripts or items'),
-      F.longtext('notes', 'Notes')
-    ], 'paper', 'kind'),
-
-    work('Publications', 'cat_res', 'Papers and their status', [
-      F.text('title', 'Title', { required: true }),
-      F.text('journal', 'Journal or venue'),
-      F.select('stage', 'Stage',
-        ['Draft', 'Submitted', 'Under review', 'Revision', 'Accepted', 'Published']),
-      F.date('nextDate', 'Next deadline', { timeline: true }),
-      F.text('authors', 'Authors'),
-      F.link('doi', 'DOI or link'),
-      F.longtext('notes', 'Notes')
-    ], 'title', 'stage'),
-
-    work('Projects and grants', 'cat_res', 'Funded work and milestones', [
-      F.text('title', 'Project', { required: true }),
-      F.text('agency', 'Funding agency'),
-      F.amount('amount', 'Sanctioned amount'),
-      F.select('stage', 'Stage', ['Proposed', 'Submitted', 'Sanctioned', 'Ongoing', 'Closed']),
-      F.date('milestone', 'Next milestone', { timeline: true }),
-      F.date('endDate', 'End date', { timeline: true }),
-      F.longtext('notes', 'Notes')
-    ], 'title', 'stage'),
-
-    work('Conferences and service', 'cat_res', 'Events, peer review, collaborations', [
-      F.select('kind', 'Kind', ['Conference', 'Workshop', 'Peer review', 'Editorial', 'Collaboration']),
-      F.text('title', 'Name', { required: true }),
-      F.text('host', 'Host or journal'),
-      F.date('due', 'Date or deadline', { timeline: true }),
-      F.select('status', 'Status', ['Open', 'In progress', 'Done']),
-      F.longtext('notes', 'Notes')
-    ], 'title', 'kind'),
-
-    work('Researchers', 'cat_res', 'Contact database', [
-      F.text('name', 'Name', { required: true }),
-      F.text('affiliation', 'Affiliation'),
-      F.select('sector', 'Sector',
-        ['University', 'Industry', 'Government', 'National lab', 'Research institute', 'Other']),
-      F.text('city', 'City'),
-      F.email('email', 'Email'),
-      F.link('profile', 'Profile link'),
-      F.longtext('notes', 'Notes')
-    ], 'name', 'sector')
-  ];
-
-  // The 13 responsibility areas, from the seed sheet in the uploaded app.
-  var areas = [
-    ['UG research', 'Academic programme'],
-    ['Service learning', 'Academic programme'],
-    ['ITEP', 'Academic programme'],
-    ['Science forum', 'Event coordination'],
-    ['Frontiers in Nano', 'Event coordination'],
-    ['Daksh', 'Event coordination'],
-    ['SAINTS 2027', 'Event coordination'],
-    ['Placements', 'Student management'],
-    ['Class teachership', 'Student management'],
-    ['Student mentoring', 'Mentoring'],
-    ['ESPRo', 'Project management'],
-    ['CSA and CSP', 'Committee work'],
-    ['IQAC criterion', 'Documentation']
-  ];
-
-  areas.forEach(function (a) {
-    works.push(work(a[0], 'cat_admin', a[1], [
-      F.text('title', 'Item', { required: true }),
-      F.date('due', 'Due', { timeline: true }),
-      F.select('status', 'Status', ['Open', 'In progress', 'Done']),
-      F.people('people', 'People'),
-      F.longtext('notes', 'Notes')
-    ], 'title', ''));
+  const dueToday = [];
+  DEADLINE_SOURCES.forEach(function (src) {
+    const key = src[0], dateField = src[1], statusField = src[2], doneValues = src[3], label = src[4];
+    if (!dateField) return;
+    getCollection_(key).forEach(function (item) {
+      if (item.deleted) return;
+      if (item[dateField] !== todayStr) return;
+      if (statusField && doneValues.indexOf(item[statusField]) !== -1) return;
+      const title = item.title || item.subject || item.description || item.eventName || item.examName || '(untitled)';
+      dueToday.push(label + ': "' + title + '"');
+    });
   });
 
-  // One icon per work, so the grid reads as a set rather than a repeat.
-  var iconByName = {
-    'Timetable': 'cal', 'Class log': 'book', 'Examinations': 'clip',
-    'Publications': 'doc', 'Projects and grants': 'bank',
-    'Conferences and service': 'mic', 'Researchers': 'globe',
-    'UG research': 'flask', 'Service learning': 'users', 'ITEP': 'award',
-    'Science forum': 'chart', 'Frontiers in Nano': 'layers', 'Daksh': 'target',
-    'SAINTS 2027': 'award', 'Placements': 'users', 'Class teachership': 'users',
-    'Student mentoring': 'compass', 'ESPRo': 'seed', 'CSA and CSP': 'shield',
-    'IQAC criterion': 'doc'
-  };
+  const lines = [];
+  lines.push('Today is ' + todayStr + ' (' + dow + ').');
+  lines.push('');
+  if (classesToday.length) {
+    lines.push('Today\'s classes:');
+    classesToday.forEach(function (c) { lines.push('- ' + (c.startTime || '') + '–' + (c.endTime || '') + ' ' + (c.subject || '') + ' (' + (c.section || '') + ', ' + (c.venue || '') + ')'); });
+  } else {
+    lines.push('No classes scheduled today.');
+  }
+  lines.push('');
+  if (dueToday.length) {
+    lines.push('Due today:');
+    dueToday.forEach(function (l) { lines.push('- ' + l); });
+  } else {
+    lines.push('Nothing else due today.');
+  }
+  lines.push('');
+  lines.push('Open FAMS+ for full details.');
 
-  works.forEach(function (w, i) {
-    w.order = i;
-    w.count = 0;
-    w.icon = iconByName[w.name] || 'doc';
-    w.image = '';
+  sendAs_(OFFICE_EMAIL, subjectFor_('Daily digest — ' + todayStr), emailBody_(lines.join('\n'), SYSTEM_SIGN_OFF));
+}
+
+function setUpDailyDigestTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'dailyDigest_') ScriptApp.deleteTrigger(t);
   });
+  ScriptApp.newTrigger('dailyDigest_').timeBased().everyDays(1).atHour(7).nearMinute(30).create();
+}
 
-  return {
-    version: 1,
-    profile: {
-      name: 'Dr. Krishna Kumar M',
-      department: 'Department of Physics and Electronics',
-      institution: 'CHRIST (Deemed to be University), Bengaluru',
-      year: '2026-27'
-    },
-    categories: cats,
-    works: works,
-    events: []
-  };
+// Convenience: run all three setup functions in one click from the Apps
+// Script editor's function dropdown, instead of running each separately.
+function setUpAllTriggers() {
+  setUpDailyBackupTrigger();
+  setUpDailyReminderTrigger();
+  setUpDailyDigestTrigger();
 }
